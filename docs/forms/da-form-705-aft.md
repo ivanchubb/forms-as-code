@@ -1,6 +1,6 @@
 # DA Form 705-AFT example
 
-The single-file HTML template is `templates/da-form-705-aft.html`; the synthetic submission is `examples/da-form-705-aft.json`. The Fillink app owns common styles, data binding, JSON/CSV workflows, validation, and ZIP generation. The template contains its own presentation markup and metadata, but no external script, stylesheet, manifest, or data-schema dependency. The app resolves the template by trusted ID/version and fetches only this HTML file.
+The single-file HTML template is `../forms/da/705-aft/APR2026.html`; the synthetic submission is `examples/da-form-705-aft.json`. The Fillink app owns common styles, data binding, JSON/CSV workflows, validation, and ZIP generation. The template contains its own presentation markup and metadata, but no external script, stylesheet, manifest, or data-schema dependency. The app resolves the template by trusted ID/version and fetches only this HTML file.
 
 Both source pages repeat the scorecard header, soldier details, scoring note, and Privacy Act statement. Grader fields are initials-only. The alternate event score is derived in the HTML declaratively: GO gives 60 points and NOGO gives 0. These calculations are simple app-supported data attributes, not per-form JavaScript.
 

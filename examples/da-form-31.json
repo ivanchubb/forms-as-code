@@ -1,0 +1,21 @@
+{
+  "$schema": "../spec/submission.schema.json",
+  "formatVersion": "0.1.0",
+  "id": "b2b9b7d7-4b9b-4db9-8e25-1d3a9d0b4b31",
+  "createdAt": "2026-10-14T00:00:00Z",
+  "template": {"uri": "https://forms.example.org/fillink/da-form-31", "version": "2023-10.1"},
+  "locked": false,
+  "data": {
+    "controlNumber": "EX-31-001", "requestor": {"name": "Example Soldier", "dodId": "0000000000", "rank": "E5", "date": "2026-10-14"},
+    "leaveAddress": "123 Example Street, Example City, EX 00000", "organization": "EXAMPLE UNIT, EXAMPLE STATION, 555-0100",
+    "absenceCategory": "CHARGEABLE", "absenceTypes": ["Annual (Ordinary) Leave"], "request": {"from": "2026-11-01", "totalDays": "5", "to": "2026-11-05"},
+    "leaveBalance": "30", "chargeableLeave": "5", "nonChargeableAbsence": "0", "advanceOrExcess": "0",
+    "signatures": {"requestor": "Example Soldier", "requestorDate": "20261014"},
+    "supervisor": {"name": "Example Supervisor", "title": "Company Commander", "recommendation": "APPROVED", "rankGrade": "E7", "signature": "Example Supervisor", "date": "20261014"},
+    "approvingAuthority": {"name": "Example Authority", "title": "Approving Official", "action": "APPROVED", "rankGrade": "O3", "signature": "Example Authority", "date": "20261014"},
+    "travel": {"departureDate": "", "departureTime": "", "departureAuthority": "", "departureTitle": "", "departureSignature": "", "departureApprovalDate": "", "extensionDays": "", "extensionDate": "", "extensionSignature": "", "returnDate": "", "returnTime": "", "returnAuthority": "", "returnTitle": "", "returnSignature": "", "returnApprovalDate": ""},
+    "remarks": "Example remarks.",
+    "dependentTravel": {"departedUnit": "", "arrivedApod": "", "arrivedApoe": "", "arrivedHomeUnit": "", "dependents": "", "transportation": ""},
+    "authentication": {"headquarters": "", "accountingCitation": "", "dateIssued": "", "travelOrderNumber": "", "orderAuthorityName": "", "title": "", "signature": ""}
+  }
+}

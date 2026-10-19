@@ -13,7 +13,7 @@ Early scaffold. The submission format is a draft; the local Fillink app supports
 - [`.agents/skills/pdf-to-fillink/SKILL.md`](.agents/skills/pdf-to-fillink/SKILL.md) — repeatable workflow for adding one HTML template and one JSON example from a supplied PDF.
 - [`assets/fillink-base.css`](assets/fillink-base.css) — common presentation styles loaded by the app.
 - [`app/`](app/) — the single Fillink application: trusted HTML resolution, shared styling, data binding, validation, Save/Load/Lock, CSV, and ZIP workflows.
-- [`templates/`](templates/) — one self-contained HTML file per trusted form; templates contain no JavaScript or external assets.
+- The trusted Army form templates are maintained in the sibling [`../forms/`](../forms/) repository and loaded by URI/path through the app allowlist; Fillink does not store form templates.
 - [`examples/da-form-5960.json`](examples/da-form-5960.json) and [`examples/da-form-705-aft.json`](examples/da-form-705-aft.json) — synthetic Fillink submission examples.
 - [`spec/submission.schema.json`](spec/submission.schema.json) — draft JSON Schema for a Fillink submission envelope.
 - [`docs/forms/`](docs/forms/) — source notes, conversion adaptations, and limitations for the two Army form examples.
@@ -45,14 +45,22 @@ flowchart LR
   Submission -->|JSON only| Receive
 ```
 
-Each form is one versioned HTML file with its presentation markup, metadata, and `data-fillink` bindings. Common styling and all application logic live in Fillink. When opening a submission, the app resolves the template ID/version through a trusted allowlist and fetches only that HTML file; the template cannot load arbitrary scripts, stylesheets, or assets. The JSON submission carries its template reference and answers, not a duplicate of the presentation.
+Each form is one versioned HTML file with its presentation markup, metadata, and `data-fillink` bindings in the sibling `forms` repository. Fillink stores only the trusted URI/path registry and application logic. When opening a submission, the app resolves the template ID/version through a trusted allowlist and fetches only that HTML file; the template cannot load arbitrary scripts, stylesheets, or assets. The JSON submission carries its template reference and answers, not a duplicate of the presentation.
 
 ## Development
 
-Run the local Fillink app from the repository root:
+Run the local Fillink app from the workspace root so the app can fetch sibling-repository forms.
+The server must run from `/home/chubb`, not from the `fillink` directory, because templates are maintained in the sibling `forms` repository:
 
 ```sh
+cd /home/chubb
 python3 -m http.server 8000 --bind 127.0.0.1
+```
+
+Alternatively, run the included helper from the Fillink directory:
+
+```sh
+./serve.sh
 ```
 
 Open <http://localhost:8000/app/>. Start a blank template, open a JSON submission, or use a same-origin direct link such as <http://localhost:8000/app/?submission=../examples/da-form-705-aft.json>. The app uses a trusted allowlist and fetches only the referenced HTML template. This prototype has no build system or third-party runtime dependencies.

@@ -4,7 +4,7 @@ This is an exploratory contract, not a stable interoperability specification. Ex
 
 ## One app, one HTML template, one submission
 
-A form has one self-contained HTML file under `templates/`. It contains the form markup, its version and ID metadata, and `data-fillink` bindings. Common styles, data binding, CSV/ZIP workflows, and save/load behavior belong to the Fillink app, not each template. Templates contain no JavaScript and may not load external stylesheets or assets.
+A form has one self-contained HTML file in the trusted forms repository, outside Fillink. It contains the form markup, its version and ID metadata, and `data-fillink` bindings. Common styles are maintained canonically in Fillink and embedded into each portable template; data binding, CSV/ZIP workflows, and save/load behavior belong to the Fillink app. Templates contain no JavaScript and may not load external stylesheets or assets.
 
 A submission is a JSON file containing a format version, unique ID, reference to the template ID and immutable version, a boolean `locked` state, and structured `data`. The app resolves that exact reference through its trusted allowlist and fetches only the corresponding HTML file. It never blindly fetches a URI supplied by untrusted JSON. The current allowlist is local and hard-coded.
 

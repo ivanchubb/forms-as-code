@@ -1,0 +1,45 @@
+{
+  "$schema": "../spec/submission.schema.json",
+  "formatVersion": "0.1.0",
+  "id": "9a2f13f5-0cc0-4d96-bf4c-0d04c4a5e712",
+  "createdAt": "2026-10-13T00:00:00Z",
+  "template": {
+    "uri": "https://forms.example.org/fillink/dd-form-1750",
+    "version": "1970-09.1"
+  },
+  "locked": false,
+  "data": {
+    "packedBy": "Example, Alex Q. - Logistics Section",
+    "numberOfBoxes": "2",
+    "requisitionNumber": "EXAMPLE-REQ-001",
+    "orderNumber": "EXAMPLE-ORDER-001",
+    "endItem": "Fictional field communications kit",
+    "date": "20261013",
+    "pageNumber": "1",
+    "pageCount": "2",
+    "items": [
+      {"contents":"EXAMPLE-ITEM-001 - Radio case","unitOfIssue":"EA","initialOperation":"1","runningSpares":"0","total":"1"},
+      {"contents":"EXAMPLE-ITEM-002 - Power cable","unitOfIssue":"EA","initialOperation":"2","runningSpares":"1","total":"3"},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""},
+      {"contents":"","unitOfIssue":"","initialOperation":"","runningSpares":"","total":""}
+    ],
+    "certification": {
+      "typedNameAndTitle": "Example, Alex Q. - Logistics Section",
+      "signatureName": "Example, Alex Q."
+    }
+  }
+}

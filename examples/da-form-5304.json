@@ -1,0 +1,209 @@
+{
+  "$schema": "../spec/submission.schema.json",
+  "formatVersion": "0.1.0",
+  "id": "b5a8c3e1-2f41-4d62-9a7e-8c0f1b6d3e24",
+  "createdAt": "2026-10-13T00:00:00Z",
+  "template": {
+    "uri": "https://forms.example.org/fillink/da-form-5304",
+    "version": "2020-07.1"
+  },
+  "locked": false,
+  "data": {
+    "soldier": {
+      "name": "Example, Jordan Q.",
+      "date": "20261013",
+      "signature": "Example, Jordan Q."
+    },
+    "commander": {
+      "name": "Example, Taylor R.",
+      "email": "taylor.example@example.org",
+      "date": "20261013",
+      "signature": "Example, Taylor R.",
+      "unitAddress": "100 Example Avenue, Example City, EX 00000"
+    },
+    "spouse": {
+      "name": "Example, Morgan L.",
+      "signature": "Example, Morgan L.",
+      "date": "20261013"
+    },
+    "spouseCommander": {
+      "name": "Example, Casey N.",
+      "signature": "Example, Casey N.",
+      "email": "casey.example@example.org",
+      "date": "20261013",
+      "unitAddress": "200 Fictional Road, Example City, EX 00000"
+    },
+    "initials": {
+      "row1": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row2": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row3": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row4": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row5": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row6": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row7": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row8": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row9": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row10": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row11": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row12": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row13": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row14": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row15": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row16": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row17": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row18": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row19": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row20": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row21": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row22": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row23": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row24": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row25": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row26": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row27": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row28": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row29": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row30": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row31": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row32": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row33": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row34": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row35": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row36": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row37": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row38": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row39": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row40": {
+        "soldier": "JQ",
+        "commander": "TR"
+      },
+      "row41": {
+        "soldier": "JQ",
+        "commander": "TR"
+      }
+    },
+    "part1": {
+      "deadline": {
+        "ra": true,
+        "usarArng": false
+      }
+    }
+  }
+}

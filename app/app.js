@@ -3,11 +3,23 @@
   const FORMAT_VERSION = '0.1.0';
   const EXAMPLE_ROW_MARKER = 'EXAMPLE - REPLACE OR DELETE';
   const templates = new Map([
+    ['https://forms.example.org/fillink/da-form-5304@2020-07.1', {
+      uri: 'https://forms.example.org/fillink/da-form-5304', version: '2020-07.1', title: 'DA Form 5304', code: 'DA5304', path: '../../forms/da/5304/JUL2020.html'
+    }],
+    ['https://forms.example.org/fillink/da-form-1594@2019-12.1', {
+      uri: 'https://forms.example.org/fillink/da-form-1594', version: '2019-12.1', title: 'DA Form 1594', code: 'DA1594', path: '../../forms/da/1594/DEC2019.html'
+    }],
+    ['https://forms.example.org/fillink/dd-form-1750@1970-09.1', {
+      uri: 'https://forms.example.org/fillink/dd-form-1750', version: '1970-09.1', title: 'DD Form 1750', code: 'DD1750', path: '../../forms/dd/1750/SEP70-EG.html'
+    }],
+    ['https://forms.example.org/fillink/da-form-31@2023-10.1', {
+      uri: 'https://forms.example.org/fillink/da-form-31', version: '2023-10.1', title: 'DA Form 31', code: 'DA31', path: '../../forms/da/31/OCT2023.html'
+    }],
     ['https://forms.example.org/fillink/da-form-5960@2022-01.1', {
-      uri: 'https://forms.example.org/fillink/da-form-5960', version: '2022-01.1', title: 'DA Form 5960', code: 'DA5960', path: '../templates/da-form-5960.html'
+      uri: 'https://forms.example.org/fillink/da-form-5960', version: '2022-01.1', title: 'DA Form 5960', code: 'DA5960', path: '../../forms/da/5960/OCT2026.html'
     }],
     ['https://forms.example.org/fillink/da-form-705-aft@2026-04.1', {
-      uri: 'https://forms.example.org/fillink/da-form-705-aft', version: '2026-04.1', title: 'DA Form 705-AFT', code: 'DA705AFT', path: '../templates/da-form-705-aft.html'
+      uri: 'https://forms.example.org/fillink/da-form-705-aft', version: '2026-04.1', title: 'DA Form 705-AFT', code: 'DA705AFT', path: '../../forms/da/705-aft/APR2026.html'
     }]
   ]);
   const launcher = document.querySelector('#launcher');
@@ -84,9 +96,11 @@
     let locked = false;
 
     function valueOf(group) {
-      const first = group[0];
-      if (first.type === 'radio') return group.find(control => control.checked)?.value ?? '';
-      if (first.type === 'checkbox' && first.dataset.fillinkMode === 'multiple') return group.filter(control => control.checked).map(control => control.value);
+      const visible = group.filter(control => !control.closest('.fillink-hidden'));
+      const active = visible.length ? visible : group;
+      const first = active[0];
+      if (first.type === 'radio') return active.find(control => control.checked)?.value ?? '';
+      if (first.type === 'checkbox' && first.dataset.fillinkMode === 'multiple') return active.filter(control => control.checked).map(control => control.value);
       if (first.type === 'checkbox') return first.checked;
       if (first instanceof HTMLSelectElement && first.multiple) return [...first.selectedOptions].map(option => option.value);
       return first.value;
@@ -97,6 +111,20 @@
         if (!dependency) continue;
         const mapping = JSON.parse(control.dataset.fillinkDerivedMap || '{}');
         const source = getAt(data, dependency);
+        if (control.dataset.fillinkDerived === 'date-add-days') {
+          const from = Date.parse(`${getAt(data, control.dataset.fillinkDerivedStart) || ''}T00:00:00Z`);
+          const days = Number.parseInt(getAt(data, control.dataset.fillinkDerivedDays) || '', 10);
+          if (Number.isNaN(from) || !Number.isInteger(days) || days < 1) setAt(data, control.dataset.fillink, '');
+          else setAt(data, control.dataset.fillink, new Date(from + (days - 1) * 86400000).toISOString().slice(0, 10));
+          continue;
+        }
+        if (control.dataset.fillinkDerived === 'date-difference-inclusive') {
+          const from = Date.parse(`${getAt(data, control.dataset.fillinkDerivedStart || `${dependency}.from`) || ''}T00:00:00Z`);
+          const to = Date.parse(`${getAt(data, control.dataset.fillinkDerivedEnd || `${dependency}.to`) || ''}T00:00:00Z`);
+          const days = Number.isNaN(from) || Number.isNaN(to) ? '' : Math.floor((to - from) / 86400000) + 1;
+          setAt(data, control.dataset.fillink, days > 0 ? String(days) : '');
+          continue;
+        }
         setAt(data, control.dataset.fillink, Object.prototype.hasOwnProperty.call(mapping, source) ? mapping[source] : '');
       }
       return data;
@@ -109,6 +137,40 @@
     function syncDerivedControls() {
       const data = collectData();
       for (const control of controls) if (control.dataset.fillinkDerivedFrom) control.value = getAt(data, control.dataset.fillink) ?? '';
+    }
+    function matchesVisibilityRule(rule, data) {
+      return rule.split('||').some(clause => {
+        const at = clause.indexOf('~=');
+        if (at >= 0) {
+          const value = getAt(data, clause.slice(0, at).trim());
+          return Array.isArray(value) && value.includes(clause.slice(at + 2).trim());
+        }
+        const equals = clause.indexOf('=');
+        if (equals >= 0) return String(getAt(data, clause.slice(0, equals).trim()) ?? '') === clause.slice(equals + 1).trim();
+        return Boolean(getAt(data, clause.trim()));
+      });
+    }
+    function syncConditionalVisibility(data = collectData()) {
+      for (const element of form.querySelectorAll('[data-fillink-visible-when]')) {
+        const hidden = !matchesVisibilityRule(element.dataset.fillinkVisibleWhen, data);
+        element.classList.toggle('fillink-hidden', hidden);
+        if (hidden) for (const control of element.querySelectorAll('[data-fillink]')) {
+          if (control.type === 'checkbox' || control.type === 'radio') control.checked = false;
+          else control.value = '';
+        }
+      }
+    }
+    let automaticRemarks = '';
+    function syncAutomaticRemarks(data = collectData()) {
+      const remarks = form.querySelector('[data-fillink-auto-remarks]');
+      if (!remarks) return;
+      const types = getAt(data, 'absenceTypes') || [];
+      const statements = [];
+      if (Array.isArray(types) && types.includes('Permanent Change of Station (PCS)')) statements.push('FOR EMERGENCIES: First try to contact your gaining and losing commanders. The Army Travel Assistance Center (ATAC) supports Soldiers in a PCS status, and Family members traveling on official orders, with emergency leave extensions and changes in port call. Contact ATAC at 1-800-833-6622, Option 5, or at 1-800-582-5552, or email ASKHRC.ARMY@US.ARMY.MIL.');
+      if (getAt(data, 'absenceCategory') === 'NON-CHARGEABLE' || (Array.isArray(types) && types.some(type => type.includes('Non-Chargeable')))) statements.push('NON-CHARGEABLE ABSENCE: Is not directed by any official of the US Government. I cannot conduct public business under this authorization, and will not be reimbursed for travel, per diem, or any other expense. I may cancel this absence at any time and report back to my regular place of duty.');
+      const text = statements.join('\n\n');
+      if (!remarks.value || remarks.value === automaticRemarks) remarks.value = text;
+      automaticRemarks = text;
     }
     function syncConditionalRequired(data = collectData()) {
       for (const control of controls) {
@@ -189,7 +251,7 @@
           for (const option of first.options) option.selected = selected.includes(option.value);
         } else first.value = value == null ? '' : String(value);
       }
-      syncDerivedControls(); syncConditionalRequired(data);
+      syncDerivedControls(); syncConditionalVisibility(data); syncAutomaticRemarks(data); syncConditionalRequired(data);
     }
     function isLegacyPath(path) {
       return meta.legacyPaths.some(pattern => {
@@ -320,12 +382,12 @@
       catch (error) { setStatus(error.message); }
     });
     document.querySelector('#new-submission').addEventListener('click', () => {
-      form.reset(); setLocked(false); syncDerivedControls(); syncConditionalRequired(); setStatus('Started a blank submission.');
+      form.reset(); setLocked(false); syncDerivedControls(); syncConditionalVisibility(); syncConditionalRequired(); setStatus('Started a blank submission.');
     });
     document.querySelector('#print-form').addEventListener('click', () => window.print());
-    form.addEventListener('input', () => { syncDerivedControls(); syncConditionalRequired(); setStatus('Unsaved changes.'); });
-    form.addEventListener('change', () => { syncDerivedControls(); syncConditionalRequired(); setStatus('Unsaved changes.'); });
-    syncDerivedControls(); syncConditionalRequired();
+    form.addEventListener('input', () => { syncDerivedControls(); syncConditionalVisibility(); syncAutomaticRemarks(); syncConditionalRequired(); setStatus('Unsaved changes.'); });
+    form.addEventListener('change', () => { syncDerivedControls(); syncConditionalVisibility(); syncAutomaticRemarks(); syncConditionalRequired(); setStatus('Unsaved changes.'); });
+    syncDerivedControls(); syncConditionalVisibility(); syncConditionalRequired();
     return { form, loadSubmission, importCsv, collectData };
   }
 
@@ -424,7 +486,7 @@
     setStatus(`Fetching the ${template.title} HTML template…`);
     const url = new URL(template.path, document.baseURI);
     if (url.origin !== window.location.origin) throw new Error('Template must be served from the Fillink app origin.');
-    const response = await fetch(url, { credentials: 'same-origin' });
+    const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
     if (!response.ok) throw new Error(`Could not fetch the HTML template (${response.status}).`);
     const parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
     validateTemplateDocument(parsed, template);
