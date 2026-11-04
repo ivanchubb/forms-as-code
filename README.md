@@ -69,4 +69,3 @@ Open <http://localhost:8000/app/>. Start a blank template, open a JSON submissio
 
 Not selected yet. Choose a license before accepting contributions or distributing the project.
 
-Test
