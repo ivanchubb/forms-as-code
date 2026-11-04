@@ -1,11 +1,11 @@
 ---
-name: pdf-to-fillink
-description: Convert a supplied fillable PDF into one self-contained Fillink HTML template plus a synthetic JSON submission, using the shared Fillink app for rendering, validation, saving, bulk CSV, and print workflows. Use when the user provides a PDF form and asks to add a form to Fillink.
+name: pdf-to-forms-as-code
+description: Convert a supplied fillable PDF into one self-contained forms-as-code HTML template plus a synthetic JSON submission, using the shared forms-as-code app for rendering, validation, saving, bulk CSV, and print workflows. Use when the user provides a PDF form and asks to add a form to forms-as-code.
 ---
 
-# PDF to Fillink
+# PDF to forms-as-code
 
-Convert the supplied PDF into one versioned, self-contained HTML template and a synthetic JSON submission. Use the existing Fillink app for common behavior; keep templates simple and free of JavaScript. Work in the existing Fillink repository. Treat the PDF as the authoritative source for labels, wording, layout, and existing fields unless the user explicitly requests a semantic change.
+Convert the supplied PDF into one versioned, self-contained HTML template and a synthetic JSON submission. Use the existing forms-as-code app for common behavior; keep templates simple and free of JavaScript. Work in the existing forms-as-code repository. Treat the PDF as the authoritative source for labels, wording, layout, and existing fields unless the user explicitly requests a semantic change.
 
 ## 1. Locate and inspect the source PDF
 
@@ -32,14 +32,14 @@ If a field's meaning, valid values, or conditional requirements cannot be establ
 
 ## 3. Create one HTML template and one JSON example
 
-- Add `templates/<form-slug>.html`: one self-contained HTML file containing accessible form markup, embedded form-specific presentation CSS, template ID/version metadata, and controls bound through `data-fillink="nested.path"`.
+- Add `templates/<form-slug>.html`: one self-contained HTML file containing accessible form markup, embedded form-specific presentation CSS, template ID/version metadata, and controls bound through `data-forms-as-code="nested.path"`.
 - Add `examples/<form-slug>.json`: one synthetic submission using the current envelope. Never use personal data copied from a completed form.
 - Add `docs/forms/<form-slug>.md`: source PDF provenance, field mapping and adaptations, privacy warning, limitations, and verification status.
 - Register the trusted template ID/version and local HTML path in `app/app.js`. The app fetches only this HTML file when rendering a submission. It must not trust a URI or execute code from the submission.
-- Do not add a per-form manifest, JSON Schema, stylesheet, runtime script, or bulk helper. Common styling and workflows belong to Fillink. Templates must not load scripts, external stylesheets, or other assets. Keep calculations and conditional rules in native HTML constraints and declarative data attributes supported by the app; if a needed behavior is unsupported, extend the shared app rather than adding template-specific JavaScript.
+- Do not add a per-form manifest, JSON Schema, stylesheet, runtime script, or bulk helper. Common styling and workflows belong to forms-as-code. Templates must not load scripts, external stylesheets, or other assets. Keep calculations and conditional rules in native HTML constraints and declarative data attributes supported by the app; if a needed behavior is unsupported, extend the shared app rather than adding template-specific JavaScript.
 - Document that the HTML conversion is unofficial unless formally approved. Keep the form notice and app-level limitations clear.
 
-Use current envelope fields: `formatVersion`, unique `id`, `createdAt`, `template.uri`, `template.version`, required boolean `locked`, and `data`. New submissions start with `locked: false`. If `locked` is true, compatible Fillink clients must make bound fields read-only. This is only an application instruction until cryptographic integrity/signing is implemented.
+Use current envelope fields: `formatVersion`, unique `id`, `createdAt`, `template.uri`, `template.version`, required boolean `locked`, and `data`. New submissions start with `locked: false`. If `locked` is true, compatible forms-as-code clients must make bound fields read-only. This is only an application instruction until cryptographic integrity/signing is implemented.
 
 Keep the same binding paths in HTML, CSV columns, and the example JSON. Use native controls where possible:
 
@@ -55,15 +55,15 @@ The serializer must preserve strings as strings, checkboxes as booleans, multipl
 
 ### Single form
 
-Provide simple, consistent **Save**, **Load**, **Print**, and **Lock fields** actions. Call the app **Fillink**, not “Fillink Viewer”; the same app is the primary editor. Save creates a JSON file. Load accepts a compatible JSON submission and restores values plus its locked state. Lock fields sets `locked: true` and disables bound controls; the same button should become **Unlock fields** so the user can explicitly resume editing, then Save to persist `locked: false`. Clearly state that this flag is an application convenience, not a security boundary or signature.
+Provide simple, consistent **Save**, **Load**, **Print**, and **Lock fields** actions. Call the app **forms-as-code**, not “forms-as-code Viewer”; the same app is the primary editor. Save creates a JSON file. Load accepts a compatible JSON submission and restores values plus its locked state. Lock fields sets `locked: true` and disables bound controls; the same button should become **Unlock fields** so the user can explicitly resume editing, then Save to persist `locked: false`. Clearly state that this flag is an application convenience, not a security boundary or signature.
 
-The local Fillink app should accept a JSON file, resolve only a trusted template ID/version allowlist, and open the filled template in a new tab so it looks like the template loaded natively. Use origin- and source-checked `postMessage` with a readiness/acknowledgement handshake. Never fetch/execute an arbitrary URI supplied by untrusted JSON. Include a popup-blocked fallback. Keep submission data in the browser and make no network upload for local viewing.
+The local forms-as-code app should accept a JSON file, resolve only a trusted template ID/version allowlist, and open the filled template in a new tab so it looks like the template loaded natively. Use origin- and source-checked `postMessage` with a readiness/acknowledgement handshake. Never fetch/execute an arbitrary URI supplied by untrusted JSON. Include a popup-blocked fallback. Keep submission data in the browser and make no network upload for local viewing.
 
 For local development bind the static server to loopback, e.g. `python3 -m http.server 8000 --bind 127.0.0.1`; do not expose a development server to the LAN. A hosting URL is not permission to upload sensitive form data.
 
 ### Bulk CSV
 
-- Generate CSV headers from unique `data-fillink` paths in DOM order, plus a clearly marked example row derived from the template controls. The importer must skip the untouched reference row so it cannot accidentally create a synthetic submission.
+- Generate CSV headers from unique `data-forms-as-code` paths in DOM order, plus a clearly marked example row derived from the template controls. The importer must skip the untouched reference row so it cannot accidentally create a synthetic submission.
 - Load detects JSON vs CSV by extension/type. One populated CSV row creates one JSON submission; a successful CSV load produces a ZIP of all submissions.
 - Use RFC 4180-compatible quoting and UTF-8/BOM handling for Excel. Document the cell representation of choices, booleans, arrays, and dates. For DoD IDs, instruct Excel users to import the column as **Text** so leading zeroes survive.
 - Require the exact expected headers (allow reordering, reject duplicates/missing/unknown columns), skip entirely blank rows, impose a reasonable row limit, and validate every row before creating any ZIP. If one row fails, create no partial ZIP and report the CSV record number and reason.

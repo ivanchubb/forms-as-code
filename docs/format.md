@@ -4,7 +4,7 @@ This is an exploratory contract, not a stable interoperability specification. Ex
 
 ## One app, one HTML template, one submission
 
-A form has one self-contained HTML file in the trusted forms repository, outside Fillink. It contains the form markup, its version and ID metadata, and `data-fillink` bindings. Common styles are maintained canonically in Fillink and embedded into each portable template; data binding, CSV/ZIP workflows, and save/load behavior belong to the Fillink app. Templates contain no JavaScript and may not load external stylesheets or assets.
+A form has one self-contained HTML file in the trusted forms repository, outside forms-as-code. It contains the form markup, its version and ID metadata, and `data-forms-as-code` bindings. Common styles are maintained canonically in forms-as-code and embedded into each portable template; data binding, CSV/ZIP workflows, and save/load behavior belong to the forms-as-code app. Templates contain no JavaScript and may not load external stylesheets or assets.
 
 A submission is a JSON file containing a format version, unique ID, reference to the template ID and immutable version, a boolean `locked` state, and structured `data`. The app resolves that exact reference through its trusted allowlist and fetches only the corresponding HTML file. It never blindly fetches a URI supplied by untrusted JSON. The current allowlist is local and hard-coded.
 
@@ -28,7 +28,7 @@ A future renderer should:
 - reject or clearly report unknown data paths;
 - keep template identity and signed submission data tied together in any signing workflow.
 
-`data-fillink` and its small declarative attributes are a minimal binding convention, not a finalized templating language.
+`data-forms-as-code` and its small declarative attributes are a minimal binding convention, not a finalized templating language.
 
 ## Signing and bulk workflows
 
