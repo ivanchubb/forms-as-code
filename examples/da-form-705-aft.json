@@ -3,7 +3,7 @@
   "id": "196d0438-5456-4b02-95dc-07c75266ee94",
   "createdAt": "2026-10-08T17:12:05Z",
   "template": {
-    "uri": "https://forms.example.org/fillink/da-form-705-aft",
+    "uri": "https://forms.example.org/forms-as-code/da-form-705-aft",
     "version": "2026-04.1"
   },
   "locked": false,

@@ -1,0 +1,340 @@
+{
+  "$schema": "../spec/submission.schema.json",
+  "formatVersion": "0.1.0",
+  "id": "24040000-0000-4000-8000-000000000001",
+  "createdAt": "2026-11-06T00:00:00Z",
+  "template": {
+    "uri": "https://forms.example.org/forms-as-code/da-form-2404",
+    "version": "2026-08.1"
+  },
+  "locked": false,
+  "data": {
+    "organization": "EXAMPLE UNIT",
+    "equipment": {
+      "nomenclatureModel": "EXAMPLE VEHICLE",
+      "registrationSerialNsn": "Example"
+    },
+    "usage": {
+      "miles": "0",
+      "hours": "0",
+      "roundsFired": "0",
+      "hotStarts": "0"
+    },
+    "date": "20261106",
+    "inspection": {
+      "type": "Example"
+    },
+    "manhoursRequired": "0",
+    "reference": {
+      "one": {
+        "number": "Example",
+        "date": "20261106"
+      },
+      "two": {
+        "number": "Example",
+        "date": "20261106"
+      }
+    },
+    "signatures": {
+      "inspector": "Example, Jordan Q.",
+      "inspectionTime": "Example, Jordan Q.",
+      "maintenanceSupervisor": "Example, Jordan Q."
+    },
+    "items": {
+      "0": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "1": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "2": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "3": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "4": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "5": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "6": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "7": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "8": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "9": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "10": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "11": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "12": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "13": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "14": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "15": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "16": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "17": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "18": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "19": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "20": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "21": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "22": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "23": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "24": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "25": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "26": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "27": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "28": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "29": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "30": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "31": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "32": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "33": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "34": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "35": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "36": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "37": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "38": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "39": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "40": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      },
+      "41": {
+        "tmItemNumber": "",
+        "status": "",
+        "deficiency": "",
+        "correctiveAction": "",
+        "initials": ""
+      }
+    }
+  }
+}

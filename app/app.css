@@ -22,7 +22,7 @@ body { margin: 0; }
 #load-submission { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
 .button-label { display: inline-block; padding: .45rem .8rem; border: 1px solid #617386; border-radius: .25rem; color: #18344b; background: white; font: inherit; cursor: pointer; }
 #template-host { background: white; }
-#template-host > .fillink-template { min-height: 4rem; }
+#template-host > .forms-as-code-template { min-height: 4rem; }
 .template-notice { margin: .5rem 0; padding: .5rem .75rem; border-left: 3px solid #9a6724; color: #59421f; background: #fff8e8; font-size: .85rem; }
 .app-footer { max-width: 1100px; margin: 1rem auto; padding: 0 1rem; color: #52616e; font-size: .85rem; }
 @media print {
