@@ -26,6 +26,8 @@ Build a field inventory before coding: visible label/instructions, source widget
 - Preserve official wording and option labels verbatim where practical. Do not paraphrase attestations, privacy language, or instructions.
 - Infer semantics from both labels and PDF widgets. For example, a PDF may encode separate checkbox widgets for a “Select Only One” group; represent that as HTML radios because the form explicitly requires one choice.
 - Use text inputs for source free-text fields unless an enumerated choice is actually specified. Do not invent dropdown options or turn free text into a checkbox without the user's approval.
+- Use native `<input type="date">` controls for calendar dates whenever the field represents a complete date. Use a text input only when the source requires a partial date, a non-calendar value, or an exact display format that a native date control cannot represent.
+- Bottom-align fillable controls within their labeled boxes by default so labels remain at the top and the interactive area sits consistently along the lower edge. Use a different alignment only when the source layout or control semantics require it.
 - If the user requests a semantic improvement that differs from the PDF, implement it, but clearly record the difference in the form notes. Example: the DA Form 5960 source uses text widgets for physical/legal custody; the user requested boolean checkboxes in the HTML conversion.
 - Keep small fields where the PDF puts them. Initials fields should be real, bound text inputs; keep the “Read and Initial:” wording inline with each statement and put the small input in the original left-side position.
 - For tables that number rows, account for the row-number column in the header (often an empty first header cell) so labels align over their data columns.
@@ -47,7 +49,7 @@ Use current envelope fields: `formatVersion`, unique `id`, `createdAt`, `templat
 
 Keep the same binding paths in HTML, CSV columns, and the example JSON. Use native controls where possible:
 
-- text/date input for scalar text;
+- text input for scalar text and native date input for complete calendar dates;
 - radio group for exactly-one choices;
 - boolean checkbox for a single true/false field;
 - repeated checkbox group or `<select multiple>` for multi-value fields;
