@@ -38,7 +38,8 @@
     "signatures": {
       "inspector": "Example, Jordan Q.",
       "inspectionTime": "Example, Jordan Q.",
-      "maintenanceSupervisor": "Example, Jordan Q."
+      "maintenanceSupervisor": "Example, Jordan Q.",
+      "maintenanceSupervisorTime": "Example, Jordan Q."
     },
     "items": {
       "0": {
