@@ -146,6 +146,9 @@
           for (const attribute of [...element.attributes]) element.setAttribute(attribute.name, attribute.value
             .replaceAll('__INDEX__', String(index)).replaceAll('__ROWNUMBER__', String(index + 1)).replaceAll('__PAGE__', String(index + 2)));
         }
+        const textNodes = document.createTreeWalker(fragment, NodeFilter.SHOW_TEXT);
+        while (textNodes.nextNode()) textNodes.currentNode.nodeValue = textNodes.currentNode.nodeValue
+          .replaceAll('__INDEX__', String(index)).replaceAll('__ROWNUMBER__', String(index + 1)).replaceAll('__PAGE__', String(index + 2));
         for (const root of repeatRoots) {
           root.dataset.formsAsCodeRepeatItem = name;
           root.dataset.formsAsCodeRepeatIndex = String(index);
