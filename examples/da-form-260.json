@@ -1,0 +1,61 @@
+{
+  "$schema": "../spec/submission.schema.json",
+  "formatVersion": "0.1.0",
+  "id": "527b0f14-8e12-49c8-b8e6-f29f71dc7621",
+  "createdAt": "2026-11-05T00:00:00Z",
+  "template": {
+    "uri": "https://forms.example.org/forms-as-code/da-form-260",
+    "version": "2018-06.1"
+  },
+  "locked": false,
+  "data": {
+    "informationProtection": { "level": "UNCLASSIFIED" },
+    "submission": { "date": "20261105" },
+    "originatingAgency": {
+      "to": "Army Publishing Directorate, 9301 Chapek Road, Fort Belvoir, VA 22060",
+      "from": "Example Directorate, 100 Sample Avenue, Fort Example, VA 22000"
+    },
+    "contacts": {
+      "actionOfficer": { "name": "Example, Morgan A.", "phone": "555-0100", "email": "morgan.example@example.mil" },
+      "controlOfficer": { "name": "Sample, Riley B.", "phone": "555-0101", "email": "riley.sample@example.mil" },
+      "publishingChampion": { "name": "Fiction, Cameron C.", "phone": "555-0102", "email": "cameron.fiction@example.mil" }
+    },
+    "publication": {
+      "type": "ARMY REGULATION",
+      "action": "ADMINISTRATIVE REVISION",
+      "number": "AR 00-00",
+      "classified": "no",
+      "titleClassified": "no",
+      "title": "Example Administrative Publication",
+      "distributionRestricted": "no",
+      "cui": "no"
+    },
+    "multiService": {
+      "isMultiService": "no",
+      "reviewCompleted": "no",
+      "rowCount": 1,
+      "leadRow": "",
+      "rows": [
+        { "agency": "", "otherAgency": "", "reviewingOfficial": "", "email": "", "publicationNumber": "", "phone": "", "date": "", "signatureTypedName": "" }
+      ]
+    },
+    "staffing": { "etms2": "yes", "taskerNumber": "EXAMPLE-2026-001" },
+    "relatedPublications": { "hasRelated": false, "details": "" },
+    "supersededPublications": { "hasSuperseded": false, "details": "" },
+    "forms": {
+      "prescribed": { "yes": false, "details": "" },
+      "new": { "yes": false, "details": "" },
+      "revised": { "yes": false, "details": "" },
+      "collectingSsn": { "yes": false, "details": "" },
+      "ssnJustification": { "yes": false, "details": "" }
+    },
+    "package": { "cleanWordDraft": true, "figureFiles": false, "formFiles": false, "ddForms67": false, "ssnJustificationMemos": false, "staffingTrackedChanges": true, "consolidatedDa7874": false },
+    "approvals": {
+      "controlOfficer": { "name": "Sample, Riley B.", "rankGrade": "GS-12", "signatureTypedName": "Sample, Riley B.", "date": "20261105" },
+      "publishingChampion": { "name": "Fiction, Cameron C.", "rankGrade": "COL", "signatureTypedName": "Fiction, Cameron C.", "date": "20261105" },
+      "principalOfficial": { "name": "Demo, Avery D.", "rankGrade": "SES", "signatureTypedName": "", "date": "" }
+    },
+    "specialDistribution": { "enabled": false, "statement": "", "initialDistributionNumber": "", "details": {} },
+    "remarks": "Administrative revision. Fictional example data only."
+  }
+}

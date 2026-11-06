@@ -1,34 +1,34 @@
-/* Canonical shared styling for portable Fillink form templates. */
+/* Canonical shared styling for portable forms-as-code form templates. */
 :root {
   color-scheme: light;
-  --fillink-ink: #18212b;
-  --fillink-accent: #164b75;
-  --fillink-border: #89939c;
-  --fillink-field: #eef5ff;
-  --fillink-field-focus: #fff;
-  --fillink-focus: #3578b5;
+  --forms-as-code-ink: #18212b;
+  --forms-as-code-accent: #164b75;
+  --forms-as-code-border: #89939c;
+  --forms-as-code-field: #eef5ff;
+  --forms-as-code-field-focus: #fff;
+  --forms-as-code-focus: #3578b5;
 }
 *, *::before, *::after { box-sizing: border-box; }
-body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: var(--fillink-ink); }
-.fillink-main { max-width: 1100px; margin: 1.25rem auto 3rem; padding: 0 1rem; }
-.fillink-form { padding: clamp(1rem, 3vw, 2rem); border: 1px solid var(--fillink-border); background: #fff; box-shadow: 0 3px 16px #16233018; }
-.fillink-form input, .fillink-form textarea, .fillink-form select { color: inherit; font: inherit; }
-.fillink-form input:not([type="checkbox"]):not([type="radio"]), .fillink-form textarea, .fillink-form select { background: var(--fillink-field); }
-.fillink-form input:focus, .fillink-form textarea:focus, .fillink-form select:focus { outline: 2px solid var(--fillink-focus); outline-offset: 1px; background: var(--fillink-field-focus); }
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: var(--forms-as-code-ink); }
+.forms-as-code-main { max-width: 1100px; margin: 1.25rem auto 3rem; padding: 0 1rem; }
+.forms-as-code-form { padding: clamp(1rem, 3vw, 2rem); border: 1px solid var(--forms-as-code-border); background: #fff; box-shadow: 0 3px 16px #16233018; }
+.forms-as-code-form input, .forms-as-code-form textarea, .forms-as-code-form select { color: inherit; font: inherit; }
+.forms-as-code-form input:not([type="checkbox"]):not([type="radio"]), .forms-as-code-form textarea, .forms-as-code-form select { background: var(--forms-as-code-field); }
+.forms-as-code-form input:focus, .forms-as-code-form textarea:focus, .forms-as-code-form select:focus { outline: 2px solid var(--forms-as-code-focus); outline-offset: 1px; background: var(--forms-as-code-field-focus); }
 .form-heading { text-align: center; padding-bottom: .6rem; border-bottom: 2px solid #202830; }
 .form-heading h1 { margin: .2rem 0; font-size: clamp(1.15rem, 2.5vw, 1.65rem); line-height: 1.15; }
 .form-heading p { margin: .25rem 0; font-size: .85rem; }
 .field { min-width: 0; }
-.fillink-table-wrap { overflow-x: auto; }
-.fillink-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
-.fillink-table th, .fillink-table td { border: 1px solid var(--fillink-border); padding: .25rem; }
-.fillink-table thead th { text-align: center; font-weight: 600; }
+.forms-as-code-table-wrap { overflow-x: auto; }
+.forms-as-code-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.forms-as-code-table th, .forms-as-code-table td { border: 1px solid var(--forms-as-code-border); padding: .25rem; }
+.forms-as-code-table thead th { text-align: center; font-weight: 600; }
 .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .form-footer { display: flex; justify-content: space-between; gap: .5rem; padding-top: .6rem; font-size: .75rem; }
 @media (max-width: 720px) { .signatures { grid-template-columns: 1fr; } .form-footer { flex-wrap: wrap; } }
 @media print {
   :root { background: #fff; }
-  .fillink-main { max-width: none; margin: 0; padding: 0; }
-  .fillink-form { padding: 0; border: 0; box-shadow: none; }
+  .forms-as-code-main { max-width: none; margin: 0; padding: 0; }
+  .forms-as-code-form { padding: 0; border: 0; box-shadow: none; }
   input, textarea, select { print-color-adjust: exact; }
 }

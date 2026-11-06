@@ -4,7 +4,7 @@
   "id": "b5a8c3e1-2f41-4d62-9a7e-8c0f1b6d3e24",
   "createdAt": "2026-10-13T00:00:00Z",
   "template": {
-    "uri": "https://forms.example.org/fillink/da-form-5304",
+    "uri": "https://forms.example.org/forms-as-code/da-form-5304",
     "version": "2020-07.1"
   },
   "locked": false,

@@ -4,7 +4,7 @@
   "id": "9a2f13f5-0cc0-4d96-bf4c-0d04c4a5e712",
   "createdAt": "2026-10-13T00:00:00Z",
   "template": {
-    "uri": "https://forms.example.org/fillink/dd-form-1750",
+    "uri": "https://forms.example.org/forms-as-code/dd-form-1750",
     "version": "1970-09.1"
   },
   "locked": false,

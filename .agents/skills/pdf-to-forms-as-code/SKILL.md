@@ -1,13 +1,17 @@
 ---
 name: pdf-to-forms-as-code
-description: Convert a supplied fillable PDF into one self-contained forms-as-code HTML template plus a synthetic JSON submission, using the shared forms-as-code app for rendering, validation, saving, bulk CSV, and print workflows. Use when the user provides a PDF form and asks to add a form to forms-as-code.
+description: Convert a supplied fillable PDF or extracted XFA XML into one self-contained forms-as-code HTML template plus a synthetic JSON submission, using the shared forms-as-code app for rendering, validation, saving, bulk CSV, and print workflows. Use when the user provides a PDF or XFA XML form and asks to add a form to forms-as-code.
 ---
 
-# PDF to forms-as-code
+# PDF or XFA XML to forms-as-code
 
-Convert the supplied PDF into one versioned, self-contained HTML template and a synthetic JSON submission. Use the existing forms-as-code app for common behavior; keep templates simple and free of JavaScript. Work in the existing forms-as-code repository. Treat the PDF as the authoritative source for labels, wording, layout, and existing fields unless the user explicitly requests a semantic change.
+Convert the supplied PDF or extracted XFA XML into one versioned, self-contained HTML template and a synthetic JSON submission. Use the existing forms-as-code app for common behavior; keep templates simple and free of JavaScript. Store trusted HTML templates in the sibling `forms` repository and submissions and app registration in `forms-as-code`. Treat the supplied source as authoritative for labels, wording, layout, and existing fields unless the user explicitly requests a semantic change.
 
-## 1. Locate and inspect the source PDF
+## 1. Locate and inspect the source
+
+For extracted XFA XML, parse the template namespace and inventory page geometry, subforms, draws, fields, UI types, accessibility text, bindings, scripts, metadata, and embedded XHTML. Preserve element coordinates as layout evidence. XFA radio choices may appear as separate check buttons sharing one data binding; map those to one HTML radio group. Treat signature fields and their scripts as digital-signature requirements. If no PDF or rendered page is available, explicitly record that visual and print parity could only be checked against XFA coordinates.
+
+For a PDF:
 
 1. Use the exact file or URL the user provided. In WSL, a Windows path such as `C:\Users\name\Downloads` is usually under `/mnt/c/Users/name/Downloads`. Search that directory for the requested filename; do not scan unrelated personal files or open similarly named signed/completed forms when a blank source is available.
 2. If a URL is unreachable, look for the user's stated local copy. If neither is available, ask the user to upload/copy the PDF. Do not invent the form from memory or imply a guessed conversion is faithful.
@@ -32,9 +36,9 @@ If a field's meaning, valid values, or conditional requirements cannot be establ
 
 ## 3. Create one HTML template and one JSON example
 
-- Add `templates/<form-slug>.html`: one self-contained HTML file containing accessible form markup, embedded form-specific presentation CSS, template ID/version metadata, and controls bound through `data-forms-as-code="nested.path"`.
+- Add the versioned template under `../forms/<form-family>/<form-number>/<edition>.html`: one self-contained HTML file containing accessible form markup, embedded form-specific presentation CSS, template ID/version metadata, and controls bound through the app's current binding attribute.
 - Add `examples/<form-slug>.json`: one synthetic submission using the current envelope. Never use personal data copied from a completed form.
-- Add `docs/forms/<form-slug>.md`: source PDF provenance, field mapping and adaptations, privacy warning, limitations, and verification status.
+- Add form provenance, field mapping and adaptations, privacy warning, limitations, and verification status to the template directory's `README.md`.
 - Register the trusted template ID/version and local HTML path in `app/app.js`. The app fetches only this HTML file when rendering a submission. It must not trust a URI or execute code from the submission.
 - Do not add a per-form manifest, JSON Schema, stylesheet, runtime script, or bulk helper. Common styling and workflows belong to forms-as-code. Templates must not load scripts, external stylesheets, or other assets. Keep calculations and conditional rules in native HTML constraints and declarative data attributes supported by the app; if a needed behavior is unsupported, extend the shared app rather than adding template-specific JavaScript.
 - Document that the HTML conversion is unofficial unless formally approved. Keep the form notice and app-level limitations clear.

@@ -1,25 +1,40 @@
-/* Fillink's shared application: trusted HTML resolution, rendering, data, and bulk workflows. */
+/* forms-as-code's shared application: trusted HTML resolution, rendering, data, and bulk workflows. */
 (() => {
   const FORMAT_VERSION = '0.1.0';
   const EXAMPLE_ROW_MARKER = 'EXAMPLE - REPLACE OR DELETE';
   const templates = new Map([
-    ['https://forms.example.org/fillink/da-form-5304@2020-07.1', {
-      uri: 'https://forms.example.org/fillink/da-form-5304', version: '2020-07.1', title: 'DA Form 5304', code: 'DA5304', path: '../../forms/da/5304/JUL2020.html'
+    ['https://forms.example.org/forms-as-code/da-form-5304@2020-07.1', {
+      uri: 'https://forms.example.org/forms-as-code/da-form-5304', version: '2020-07.1', title: 'DA Form 5304', code: 'DA5304', path: '../../forms/da/5304/JUL2020.html'
     }],
-    ['https://forms.example.org/fillink/da-form-1594@2019-12.1', {
-      uri: 'https://forms.example.org/fillink/da-form-1594', version: '2019-12.1', title: 'DA Form 1594', code: 'DA1594', path: '../../forms/da/1594/DEC2019.html'
+    ['https://forms.example.org/forms-as-code/da-form-1594@2019-12.1', {
+      uri: 'https://forms.example.org/forms-as-code/da-form-1594', version: '2019-12.1', title: 'DA Form 1594', code: 'DA1594', path: '../../forms/da/1594/DEC2019.html'
     }],
-    ['https://forms.example.org/fillink/dd-form-1750@1970-09.1', {
-      uri: 'https://forms.example.org/fillink/dd-form-1750', version: '1970-09.1', title: 'DD Form 1750', code: 'DD1750', path: '../../forms/dd/1750/SEP70-EG.html'
+    ['https://forms.example.org/forms-as-code/dd-form-1750@1970-09.1', {
+      uri: 'https://forms.example.org/forms-as-code/dd-form-1750', version: '1970-09.1', title: 'DD Form 1750', code: 'DD1750', path: '../../forms/dd/1750/SEP70-EG.html'
     }],
-    ['https://forms.example.org/fillink/da-form-31@2023-10.1', {
-      uri: 'https://forms.example.org/fillink/da-form-31', version: '2023-10.1', title: 'DA Form 31', code: 'DA31', path: '../../forms/da/31/OCT2023.html'
+    ['https://forms.example.org/forms-as-code/da-form-31@2023-10.1', {
+      uri: 'https://forms.example.org/forms-as-code/da-form-31', version: '2023-10.1', title: 'DA Form 31', code: 'DA31', path: '../../forms/da/31/OCT2023.html'
     }],
-    ['https://forms.example.org/fillink/da-form-5960@2022-01.1', {
-      uri: 'https://forms.example.org/fillink/da-form-5960', version: '2022-01.1', title: 'DA Form 5960', code: 'DA5960', path: '../../forms/da/5960/OCT2026.html'
+    ['https://forms.example.org/forms-as-code/da-form-5960@2022-01.1', {
+      uri: 'https://forms.example.org/forms-as-code/da-form-5960', version: '2022-01.1', title: 'DA Form 5960', code: 'DA5960', path: '../../forms/da/5960/OCT2026.html'
     }],
-    ['https://forms.example.org/fillink/da-form-705-aft@2026-04.1', {
-      uri: 'https://forms.example.org/fillink/da-form-705-aft', version: '2026-04.1', title: 'DA Form 705-AFT', code: 'DA705AFT', path: '../../forms/da/705-aft/APR2026.html'
+    ['https://forms.example.org/forms-as-code/da-form-705-aft@2026-04.1', {
+      uri: 'https://forms.example.org/forms-as-code/da-form-705-aft', version: '2026-04.1', title: 'DA Form 705-AFT', code: 'DA705AFT', path: '../../forms/da/705-aft/APR2026.html'
+    }],
+    ['https://forms.example.org/forms-as-code/da-form-2062@2023-12.3', {
+      uri: 'https://forms.example.org/forms-as-code/da-form-2062', version: '2023-12.3', title: 'DA Form 2062', code: 'DA2062', path: '../../forms/da/2062/DEC2023.html'
+    }],
+    ['https://forms.example.org/forms-as-code/da-form-5121@2026-10.1', {
+      uri: 'https://forms.example.org/forms-as-code/da-form-5121', version: '2026-10.1', title: 'DA Form 5121', code: 'DA5121', path: '../../forms/da/5121/OCT2026.html'
+    }],
+    ['https://forms.example.org/forms-as-code/da-form-260@2018-06.1', {
+      uri: 'https://forms.example.org/forms-as-code/da-form-260', version: '2018-06.1', title: 'DA Form 260', code: 'DA260', path: '../../forms/da/260/JUN2018.html'
+    }],
+    ['https://forms.example.org/forms-as-code/da-form-2404@2026-08.1', {
+      uri: 'https://forms.example.org/forms-as-code/da-form-2404', version: '2026-08.1', title: 'DA Form 2404', code: 'DA2404', path: '../../forms/da/2404/AUG2026.html'
+    }],
+    ['https://forms.example.org/forms-as-code/da-form-5500@2026-07.1', {
+      uri: 'https://forms.example.org/forms-as-code/da-form-5500', version: '2026-07.1', title: 'DA Form 5500', code: 'DA5500', path: '../../forms/da/5500/JUL2026.html'
     }]
   ]);
   const launcher = document.querySelector('#launcher');
@@ -45,12 +60,12 @@
   function templateKey(reference) { return `${reference?.uri}@${reference?.version}`; }
   function resolveSubmission(submission) {
     if (!submission || typeof submission !== 'object') throw new Error('Submission must be a JSON object.');
-    if (submission.formatVersion !== FORMAT_VERSION) throw new Error('Unsupported Fillink submission version.');
+    if (submission.formatVersion !== FORMAT_VERSION) throw new Error('Unsupported forms-as-code submission version.');
     if (typeof submission.id !== 'string') throw new Error('Submission is missing its ID.');
     if (typeof submission.locked !== 'boolean') throw new Error('Submission must contain a boolean locked field.');
     if (!submission.data || typeof submission.data !== 'object' || Array.isArray(submission.data)) throw new Error('Submission data must be a JSON object.');
     const template = templates.get(templateKey(submission.template));
-    if (!template) throw new Error('This Fillink app does not have the referenced trusted HTML template.');
+    if (!template) throw new Error('This forms-as-code app does not have the referenced trusted HTML template.');
     return template;
   }
   function pathParts(path) { return path.split('.').map(part => /^\d+$/.test(part) ? Number(part) : part); }
@@ -84,48 +99,142 @@
   }
 
   function initializeForm(template, meta) {
-    const form = templateHost.querySelector('form[data-fillink-form]');
-    const controls = [...form.querySelectorAll('[data-fillink]')];
+    const form = templateHost.querySelector('form[data-forms-as-code-form]');
+    let controls = [];
     const status = document.querySelector('#form-status');
     const lockButton = document.querySelector('#lock-submission');
     const groups = new Map();
-    for (const control of controls) {
-      if (!groups.has(control.dataset.fillink)) groups.set(control.dataset.fillink, []);
-      groups.get(control.dataset.fillink).push(control);
-    }
     let locked = false;
 
+    function rebuildBindings() {
+      controls = [...form.querySelectorAll('[data-forms-as-code]')];
+      groups.clear();
+      for (const control of controls) {
+        if (!groups.has(control.dataset.formsAsCode)) groups.set(control.dataset.formsAsCode, []);
+        groups.get(control.dataset.formsAsCode).push(control);
+      }
+    }
+    function repeatParts(name) {
+      return {
+        host: form.querySelector(`[data-forms-as-code-repeat-pages="${name}"]`),
+        source: form.querySelector(`template[data-forms-as-code-repeat-template="${name}"]`),
+        count: form.querySelector(`[data-forms-as-code-repeat-count="${name}"]`)
+      };
+    }
+    function setRepeatCount(name, requested) {
+      const { host, source, count } = repeatParts(name);
+      if (!host || !source || !count) return;
+      const target = Math.max(0, Math.min(Number(source.dataset.formsAsCodeRepeatMax || 99), Number.parseInt(requested, 10) || 0));
+      while (host.children.length < target) {
+        const index = host.children.length;
+        const fragment = source.content.cloneNode(true);
+        for (const rowSource of fragment.querySelectorAll('template[data-forms-as-code-repeat-rows]')) {
+          const rowCount = Number.parseInt(rowSource.dataset.formsAsCodeRepeatRows, 10);
+          const rows = document.createDocumentFragment();
+          for (let row = 0; row < rowCount; row++) {
+            const rowFragment = rowSource.content.cloneNode(true);
+            for (const element of rowFragment.querySelectorAll('*')) {
+              for (const attribute of [...element.attributes]) element.setAttribute(attribute.name, attribute.value
+                .replaceAll('__ROW__', String(row)).replaceAll('__ROWNUMBER__', String(row + 1)));
+            }
+            rows.append(rowFragment);
+          }
+          rowSource.replaceWith(rows);
+        }
+        const repeatRoots = [...fragment.children];
+        for (const element of repeatRoots.flatMap(root => [root, ...root.querySelectorAll('*')])) {
+          for (const attribute of [...element.attributes]) element.setAttribute(attribute.name, attribute.value
+            .replaceAll('__INDEX__', String(index)).replaceAll('__ROWNUMBER__', String(index + 1)).replaceAll('__PAGE__', String(index + 2)));
+        }
+        for (const root of repeatRoots) {
+          root.dataset.formsAsCodeRepeatItem = name;
+          root.dataset.formsAsCodeRepeatIndex = String(index);
+        }
+        host.append(fragment);
+      }
+      while (host.children.length > target) host.lastElementChild.remove();
+      count.value = String(target);
+      form.querySelectorAll('[data-forms-as-code-page-total]').forEach(element => { element.textContent = String(target + 1); });
+      rebuildBindings();
+      form.querySelectorAll('[data-forms-as-code-repeat-remove]').forEach(button => { button.disabled = locked; });
+    }
+    function syncRepeats(data) {
+      for (const count of form.querySelectorAll('[data-forms-as-code-repeat-count]')) setRepeatCount(count.dataset.formsAsCodeRepeatCount, getAt(data, count.dataset.formsAsCode) || 0);
+    }
+    function reindexRepeatItems(name) {
+      const { host, count } = repeatParts(name);
+      if (!host || !count) return;
+      [...host.children].forEach((root, index) => {
+        const previous = root.dataset.formsAsCodeRepeatIndex;
+        if (previous !== String(index)) {
+          for (const element of [root, ...root.querySelectorAll('*')]) {
+            for (const attribute of [...element.attributes]) {
+              let value = attribute.value.replaceAll(`.${previous}.`, `.${index}.`)
+                .replaceAll(`row ${Number(previous) + 1}`, `row ${index + 1}`);
+              if (element.type === 'radio' && attribute.name === 'value' && value === previous) value = String(index);
+              element.setAttribute(attribute.name, value);
+            }
+          }
+          root.dataset.formsAsCodeRepeatIndex = String(index);
+        }
+      });
+      count.value = String(host.children.length);
+      rebuildBindings();
+    }
+    rebuildBindings();
+    for (const count of form.querySelectorAll('[data-forms-as-code-repeat-count]')) {
+      setRepeatCount(count.dataset.formsAsCodeRepeatCount, count.value || 0);
+    }
+    form.addEventListener('click', event => {
+      const add = event.target.closest('[data-forms-as-code-repeat-add]');
+      const remove = event.target.closest('[data-forms-as-code-repeat-remove]');
+      const removeItem = event.target.closest('[data-forms-as-code-repeat-remove-item]');
+      if (locked || (!add && !remove && !removeItem)) return;
+      if (removeItem) {
+        const name = removeItem.dataset.formsAsCodeRepeatRemoveItem;
+        const item = removeItem.closest(`[data-forms-as-code-repeat-item="${name}"]`);
+        if (item) item.remove();
+        reindexRepeatItems(name);
+        syncConditionalVisibility();
+      } else {
+        const name = add?.dataset.formsAsCodeRepeatAdd || remove.dataset.formsAsCodeRepeatRemove;
+        const { host } = repeatParts(name);
+        setRepeatCount(name, host.children.length + (add ? 1 : -1));
+      }
+      setStatus('Unsaved changes.');
+    });
+
     function valueOf(group) {
-      const visible = group.filter(control => !control.closest('.fillink-hidden'));
+      const visible = group.filter(control => !control.closest('.forms-as-code-hidden'));
       const active = visible.length ? visible : group;
       const first = active[0];
       if (first.type === 'radio') return active.find(control => control.checked)?.value ?? '';
-      if (first.type === 'checkbox' && first.dataset.fillinkMode === 'multiple') return active.filter(control => control.checked).map(control => control.value);
+      if (first.type === 'checkbox' && first.dataset.formsAsCodeMode === 'multiple') return active.filter(control => control.checked).map(control => control.value);
       if (first.type === 'checkbox') return first.checked;
       if (first instanceof HTMLSelectElement && first.multiple) return [...first.selectedOptions].map(option => option.value);
       return first.value;
     }
     function normalizeDerived(data) {
       for (const control of controls) {
-        const dependency = control.dataset.fillinkDerivedFrom;
+        const dependency = control.dataset.formsAsCodeDerivedFrom;
         if (!dependency) continue;
-        const mapping = JSON.parse(control.dataset.fillinkDerivedMap || '{}');
+        const mapping = JSON.parse(control.dataset.formsAsCodeDerivedMap || '{}');
         const source = getAt(data, dependency);
-        if (control.dataset.fillinkDerived === 'date-add-days') {
-          const from = Date.parse(`${getAt(data, control.dataset.fillinkDerivedStart) || ''}T00:00:00Z`);
-          const days = Number.parseInt(getAt(data, control.dataset.fillinkDerivedDays) || '', 10);
-          if (Number.isNaN(from) || !Number.isInteger(days) || days < 1) setAt(data, control.dataset.fillink, '');
-          else setAt(data, control.dataset.fillink, new Date(from + (days - 1) * 86400000).toISOString().slice(0, 10));
+        if (control.dataset.formsAsCodeDerived === 'date-add-days') {
+          const from = Date.parse(`${getAt(data, control.dataset.formsAsCodeDerivedStart) || ''}T00:00:00Z`);
+          const days = Number.parseInt(getAt(data, control.dataset.formsAsCodeDerivedDays) || '', 10);
+          if (Number.isNaN(from) || !Number.isInteger(days) || days < 1) setAt(data, control.dataset.formsAsCode, '');
+          else setAt(data, control.dataset.formsAsCode, new Date(from + (days - 1) * 86400000).toISOString().slice(0, 10));
           continue;
         }
-        if (control.dataset.fillinkDerived === 'date-difference-inclusive') {
-          const from = Date.parse(`${getAt(data, control.dataset.fillinkDerivedStart || `${dependency}.from`) || ''}T00:00:00Z`);
-          const to = Date.parse(`${getAt(data, control.dataset.fillinkDerivedEnd || `${dependency}.to`) || ''}T00:00:00Z`);
+        if (control.dataset.formsAsCodeDerived === 'date-difference-inclusive') {
+          const from = Date.parse(`${getAt(data, control.dataset.formsAsCodeDerivedStart || `${dependency}.from`) || ''}T00:00:00Z`);
+          const to = Date.parse(`${getAt(data, control.dataset.formsAsCodeDerivedEnd || `${dependency}.to`) || ''}T00:00:00Z`);
           const days = Number.isNaN(from) || Number.isNaN(to) ? '' : Math.floor((to - from) / 86400000) + 1;
-          setAt(data, control.dataset.fillink, days > 0 ? String(days) : '');
+          setAt(data, control.dataset.formsAsCode, days > 0 ? String(days) : '');
           continue;
         }
-        setAt(data, control.dataset.fillink, Object.prototype.hasOwnProperty.call(mapping, source) ? mapping[source] : '');
+        setAt(data, control.dataset.formsAsCode, Object.prototype.hasOwnProperty.call(mapping, source) ? mapping[source] : '');
       }
       return data;
     }
@@ -136,7 +245,7 @@
     }
     function syncDerivedControls() {
       const data = collectData();
-      for (const control of controls) if (control.dataset.fillinkDerivedFrom) control.value = getAt(data, control.dataset.fillink) ?? '';
+      for (const control of controls) if (control.dataset.formsAsCodeDerivedFrom) control.value = getAt(data, control.dataset.formsAsCode) ?? '';
     }
     function matchesVisibilityRule(rule, data) {
       return rule.split('||').some(clause => {
@@ -151,10 +260,10 @@
       });
     }
     function syncConditionalVisibility(data = collectData()) {
-      for (const element of form.querySelectorAll('[data-fillink-visible-when]')) {
-        const hidden = !matchesVisibilityRule(element.dataset.fillinkVisibleWhen, data);
-        element.classList.toggle('fillink-hidden', hidden);
-        if (hidden) for (const control of element.querySelectorAll('[data-fillink]')) {
+      for (const element of form.querySelectorAll('[data-forms-as-code-visible-when]')) {
+        const hidden = !matchesVisibilityRule(element.dataset.formsAsCodeVisibleWhen, data);
+        element.classList.toggle('forms-as-code-hidden', hidden);
+        if (hidden) for (const control of element.querySelectorAll('[data-forms-as-code]')) {
           if (control.type === 'checkbox' || control.type === 'radio') control.checked = false;
           else control.value = '';
         }
@@ -162,7 +271,7 @@
     }
     let automaticRemarks = '';
     function syncAutomaticRemarks(data = collectData()) {
-      const remarks = form.querySelector('[data-fillink-auto-remarks]');
+      const remarks = form.querySelector('[data-forms-as-code-auto-remarks]');
       if (!remarks) return;
       const types = getAt(data, 'absenceTypes') || [];
       const statements = [];
@@ -174,7 +283,7 @@
     }
     function syncConditionalRequired(data = collectData()) {
       for (const control of controls) {
-        const rule = control.dataset.fillinkRequiredWhen;
+        const rule = control.dataset.formsAsCodeRequiredWhen;
         if (!rule) continue;
         const at = rule.indexOf('=');
         const path = at < 0 ? rule : rule.slice(0, at);
@@ -186,7 +295,7 @@
       const data = {};
       for (const [path, group] of groups) {
         const first = group[0];
-        setAt(data, path, first.type === 'checkbox' ? (first.dataset.fillinkMode === 'multiple' ? [] : false)
+        setAt(data, path, first.type === 'checkbox' ? (first.dataset.formsAsCodeMode === 'multiple' ? [] : false)
           : first instanceof HTMLSelectElement && first.multiple ? [] : '');
       }
       return normalizeDerived(data);
@@ -194,14 +303,14 @@
     function exampleValue(path, group) {
       const first = group[0];
       if (first.type === 'radio') return first.value;
-      if (first.type === 'checkbox') return first.dataset.fillinkMode === 'multiple' ? [] : false;
+      if (first.type === 'checkbox') return first.dataset.formsAsCodeMode === 'multiple' ? [] : false;
       if (first instanceof HTMLSelectElement) {
         if (first.multiple) return [];
         return [...first.options].find(option => option.value !== '')?.value ?? '';
       }
       const label = [...(first.labels || [])].map(item => item.textContent).join(' ');
       const context = `${path} ${first.getAttribute('aria-label') || ''} ${first.placeholder || ''} ${label}`;
-      const dateFormat = (first.dataset.fillinkCsvFormat || context.match(/\b(?:YYYYMMDD|DDMMMYYYY|MMDDYYYY|DD\/MM\/YYYY|MM\/DD\/YYYY)\b/i)?.[0] || '').toUpperCase();
+      const dateFormat = (first.dataset.formsAsCodeCsvFormat || context.match(/\b(?:YYYYMMDD|DDMMMYYYY|MMDDYYYY|DD\/MM\/YYYY|MM\/DD\/YYYY)\b/i)?.[0] || '').toUpperCase();
       if (dateFormat === 'YYYYMMDD' || (!dateFormat && /date|dob|birth/i.test(context))) return '20260131';
       if (dateFormat === 'DDMMMYYYY') return '31JAN2026';
       if (dateFormat === 'MMDDYYYY') return '01312026';
@@ -237,12 +346,13 @@
       return value == null ? '' : String(value);
     }
     function populate(data) {
+      syncRepeats(data);
       normalizeDerived(data);
       for (const [path, group] of groups) {
         const value = getAt(data, path);
         const first = group[0];
         if (first.type === 'radio') for (const control of group) control.checked = control.value === value;
-        else if (first.type === 'checkbox' && first.dataset.fillinkMode === 'multiple') {
+        else if (first.type === 'checkbox' && first.dataset.formsAsCodeMode === 'multiple') {
           const selected = Array.isArray(value) ? value : [];
           for (const control of group) control.checked = selected.includes(control.value);
         } else if (first.type === 'checkbox') first.checked = value === true;
@@ -289,7 +399,7 @@
         if (!allowPartial && group.some(control => control.required) && (value == null || value === '')) throw new Error(`${path} is required.`);
         if (first.type === 'radio') {
           if (value !== '' && !group.some(control => control.value === value)) throw new Error(`Invalid choice for ${path}.`);
-        } else if (first.type === 'checkbox' && first.dataset.fillinkMode === 'multiple') {
+        } else if (first.type === 'checkbox' && first.dataset.formsAsCodeMode === 'multiple') {
           if (!Array.isArray(value) || value.some(item => !group.some(control => control.value === item))) throw new Error(`Invalid checkbox values for ${path}.`);
         } else if (first.type === 'checkbox') {
           if (typeof value !== 'boolean') throw new Error(`${path} must be true or false.`);
@@ -313,6 +423,7 @@
     function setLocked(value) {
       locked = value;
       for (const control of controls) control.disabled = value;
+      for (const button of form.querySelectorAll('[data-forms-as-code-repeat-add], [data-forms-as-code-repeat-remove]')) button.disabled = value;
       form.classList.toggle('is-locked', value);
       lockButton.disabled = false;
       lockButton.textContent = value ? 'Unlock fields' : 'Lock fields';
@@ -321,6 +432,7 @@
     function loadSubmission(submission) {
       if (submission?.formatVersion !== FORMAT_VERSION || submission.template?.uri !== template.uri || submission.template?.version !== template.version) throw new Error('Submission format or template reference does not match.');
       if (typeof submission.locked !== 'boolean' || typeof submission.id !== 'string') throw new Error('Submission envelope is incomplete.');
+      syncRepeats(submission.data);
       prepare(submission.data, { allowPartial: true });
       populate(submission.data); setLocked(submission.locked);
       setStatus(submission.locked ? 'Loaded locked submission. Choose Unlock fields to edit.' : 'Loaded submission.');
@@ -382,7 +494,9 @@
       catch (error) { setStatus(error.message); }
     });
     document.querySelector('#new-submission').addEventListener('click', () => {
-      form.reset(); setLocked(false); syncDerivedControls(); syncConditionalVisibility(); syncConditionalRequired(); setStatus('Started a blank submission.');
+      form.reset();
+      for (const count of form.querySelectorAll('[data-forms-as-code-repeat-count]')) setRepeatCount(count.dataset.formsAsCodeRepeatCount, 0);
+      setLocked(false); syncDerivedControls(); syncConditionalVisibility(); syncConditionalRequired(); setStatus('Started a blank submission.');
     });
     document.querySelector('#print-form').addEventListener('click', () => window.print());
     form.addEventListener('input', () => { syncDerivedControls(); syncConditionalVisibility(); syncAutomaticRemarks(); syncConditionalRequired(); setStatus('Unsaved changes.'); });
@@ -401,7 +515,7 @@
       if (text !== '' && !group.some(control => control.value === text)) throw new Error(`Invalid choice for ${path}: ${text}`);
       return text;
     }
-    if (first.type === 'checkbox' && first.dataset.fillinkMode === 'multiple') {
+    if (first.type === 'checkbox' && first.dataset.formsAsCodeMode === 'multiple') {
       const selected = text === '' ? [] : JSON.parse(text);
       if (!Array.isArray(selected) || selected.some(item => typeof item !== 'string' || !group.some(control => control.value === item))) throw new Error(`Invalid checkbox values for ${path}; use a JSON array.`);
       return selected;
@@ -485,7 +599,7 @@
   async function fetchTemplate(template) {
     setStatus(`Fetching the ${template.title} HTML template…`);
     const url = new URL(template.path, document.baseURI);
-    if (url.origin !== window.location.origin) throw new Error('Template must be served from the Fillink app origin.');
+    if (url.origin !== window.location.origin) throw new Error('Template must be served from the forms-as-code app origin.');
     const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
     if (!response.ok) throw new Error(`Could not fetch the HTML template (${response.status}).`);
     const parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
@@ -493,7 +607,7 @@
     return parsed;
   }
   function validateTemplateDocument(parsed, expected) {
-    if (parsed.querySelector('meta[name="fillink:template-id"]')?.content !== expected.uri || parsed.querySelector('meta[name="fillink:template-version"]')?.content !== expected.version) throw new Error('Template metadata does not match the trusted registry.');
+    if (parsed.querySelector('meta[name="forms-as-code:template-id"]')?.content !== expected.uri || parsed.querySelector('meta[name="forms-as-code:template-version"]')?.content !== expected.version) throw new Error('Template metadata does not match the trusted registry.');
     if (parsed.querySelector('script, iframe, object, embed, link[rel~="stylesheet"], img[src], audio[src], video[src]') || parsed.body.querySelector('[src]')) throw new Error('Template HTML cannot load executable code or external assets.');
     for (const element of parsed.querySelectorAll('*')) {
       for (const attribute of element.attributes) {
@@ -502,31 +616,31 @@
       }
     }
     for (const style of parsed.querySelectorAll('style')) if (/@import\b|url\s*\(/i.test(style.textContent)) throw new Error('Template styles cannot load external assets.');
-    if (!parsed.body.querySelector('form[data-fillink-form]')) throw new Error('Template HTML must contain a form marked data-fillink-form.');
+    if (!parsed.body.querySelector('form[data-forms-as-code-form]')) throw new Error('Template HTML must contain a form marked data-forms-as-code-form.');
   }
   async function renderTemplate(template) {
     const parsed = await fetchTemplate(template);
-    document.head.querySelectorAll('style[data-fillink-template]').forEach(style => style.remove());
+    document.head.querySelectorAll('style[data-forms-as-code-template]').forEach(style => style.remove());
     for (const sourceStyle of parsed.querySelectorAll('head style')) {
-      const style = document.createElement('style'); style.dataset.fillinkTemplate = 'true'; style.textContent = sourceStyle.textContent; document.head.append(style);
+      const style = document.createElement('style'); style.dataset.formsAsCodeTemplate = 'true'; style.textContent = sourceStyle.textContent; document.head.append(style);
     }
     templateHost.replaceChildren();
-    const code = parsed.querySelector('meta[name="fillink:form-code"]')?.content || template.code;
-    const namePath = parsed.querySelector('meta[name="fillink:name-path"]')?.content || 'name';
-    const legacyPaths = (parsed.querySelector('meta[name="fillink:legacy-paths"]')?.content || '').split(';').filter(Boolean);
-    const wrapper = document.createElement('div'); wrapper.className = `fillink-template fillink-template-${code.toLowerCase()}`;
+    const code = parsed.querySelector('meta[name="forms-as-code:form-code"]')?.content || template.code;
+    const namePath = parsed.querySelector('meta[name="forms-as-code:name-path"]')?.content || 'name';
+    const legacyPaths = (parsed.querySelector('meta[name="forms-as-code:legacy-paths"]')?.content || '').split(';').filter(Boolean);
+    const wrapper = document.createElement('div'); wrapper.className = `forms-as-code-template forms-as-code-template-${code.toLowerCase()}`;
     for (const node of parsed.body.childNodes) {
       if (node.nodeType === Node.ELEMENT_NODE && node.matches('.demo-banner, .toolbar')) continue;
       wrapper.append(document.importNode(node, true));
     }
     templateHost.append(wrapper);
-    document.title = `${template.title} — Fillink`;
-    notice.textContent = parsed.querySelector('meta[name="fillink:notice"]')?.content || '';
+    document.title = `${template.title} — forms-as-code`;
+    notice.textContent = parsed.querySelector('meta[name="forms-as-code:notice"]')?.content || '';
     templateToolbar();
-    const boundPaths = new Set([...wrapper.querySelectorAll('[data-fillink]')].map(control => control.dataset.fillink));
-    if (!boundPaths.size) throw new Error('Template contains no data-fillink fields.');
-    const form = wrapper.querySelector('form[data-fillink-form]');
-    const controls = [...form.querySelectorAll('[data-fillink]')];
+    const boundPaths = new Set([...wrapper.querySelectorAll('[data-forms-as-code]')].map(control => control.dataset.formsAsCode));
+    if (!boundPaths.size) throw new Error('Template contains no data-forms-as-code fields.');
+    const form = wrapper.querySelector('form[data-forms-as-code-form]');
+    const controls = [...form.querySelectorAll('[data-forms-as-code]')];
     activeTemplate = { ...template, code, namePath };
     activeForm = initializeForm(activeTemplate, { code, namePath, legacyPaths });
     document.querySelector('#load-submission').addEventListener('change', onWorkspaceFile);
@@ -551,14 +665,14 @@
   }
   async function loadJsonFile(file) {
     const tab = window.open('about:blank', '_blank');
-    if (tab) { tab.document.write('<!doctype html><title>Fillink</title><p>Opening the submission in Fillink…</p>'); tab.document.close(); }
+    if (tab) { tab.document.write('<!doctype html><title>forms-as-code</title><p>Opening the submission in forms-as-code…</p>'); tab.document.close(); }
     try {
       const submission = JSON.parse(await file.text());
       const template = resolveSubmission(submission);
       if (!tab) { await renderSubmission(submission); setStatus('Popup was blocked; opened the form in this tab.'); return; }
       pendingWindow = tab; pendingSubmission = submission;
       const url = new URL('./index.html', document.baseURI); url.searchParams.set('handoff', String(Date.now()));
-      tab.location.replace(url.href); setStatus(`Opening ${template.title} in a new Fillink tab…`);
+      tab.location.replace(url.href); setStatus(`Opening ${template.title} in a new forms-as-code tab…`);
     } catch (error) { if (tab && !tab.closed) tab.close(); setStatus(`Could not open submission: ${error.message}`); }
   }
   async function onWorkspaceFile(event) {
@@ -585,7 +699,7 @@
     try { await renderTemplate(template); setStatus(`Started a blank ${template.title} submission.`); }
     catch (error) { setStatus(`Could not start form: ${error.message}`); }
   });
-  document.querySelector('#change-template').addEventListener('click', () => { workspace.hidden = true; launcher.hidden = false; document.title = 'Fillink'; });
+  document.querySelector('#change-template').addEventListener('click', () => { workspace.hidden = true; launcher.hidden = false; document.title = 'forms-as-code'; });
   submissionFile.addEventListener('change', async event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) await loadJsonFile(file); });
   dropZone.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); submissionFile.click(); } });
   for (const name of ['dragenter', 'dragover']) dropZone.addEventListener(name, event => { event.preventDefault(); dropZone.classList.add('drag-over'); });
@@ -594,23 +708,23 @@
 
   window.addEventListener('message', async event => {
     if (event.origin !== window.location.origin) return;
-    if (pendingWindow && event.source === pendingWindow && event.data?.type === 'fillink:app-ready') {
-      pendingWindow.postMessage({ type: 'fillink:load-submission', submission: pendingSubmission }, window.location.origin); return;
+    if (pendingWindow && event.source === pendingWindow && event.data?.type === 'forms-as-code:app-ready') {
+      pendingWindow.postMessage({ type: 'forms-as-code:load-submission', submission: pendingSubmission }, window.location.origin); return;
     }
-    if (pendingWindow && event.source === pendingWindow && event.data?.type === 'fillink:submission-loaded') {
-      setStatus(event.data.ok ? 'Opened submission in a new Fillink tab. Data was not uploaded.' : `Could not render submission: ${event.data.error}`);
+    if (pendingWindow && event.source === pendingWindow && event.data?.type === 'forms-as-code:submission-loaded') {
+      setStatus(event.data.ok ? 'Opened submission in a new forms-as-code tab. Data was not uploaded.' : `Could not render submission: ${event.data.error}`);
       pendingWindow = null; pendingSubmission = null; return;
     }
-    if (window.opener && event.source === window.opener && event.data?.type === 'fillink:load-submission') {
+    if (window.opener && event.source === window.opener && event.data?.type === 'forms-as-code:load-submission') {
       let submissionId = null;
       try {
         const submission = event.data.submission; submissionId = submission?.id ?? null;
         await renderSubmission(submission);
-        event.source.postMessage({ type: 'fillink:submission-loaded', ok: true, submissionId }, event.origin);
-      } catch (error) { event.source.postMessage({ type: 'fillink:submission-loaded', ok: false, error: error.message, submissionId }, event.origin); }
+        event.source.postMessage({ type: 'forms-as-code:submission-loaded', ok: true, submissionId }, event.origin);
+      } catch (error) { event.source.postMessage({ type: 'forms-as-code:submission-loaded', ok: false, error: error.message, submissionId }, event.origin); }
     }
   });
   const linked = new URLSearchParams(window.location.search).get('submission');
   if (linked) loadLinkedJson(linked).catch(error => setStatus(`Could not open linked submission: ${error.message}`));
-  else if (window.opener && new URLSearchParams(window.location.search).has('handoff')) window.opener.postMessage({ type: 'fillink:app-ready' }, window.location.origin);
+  else if (window.opener && new URLSearchParams(window.location.search).has('handoff')) window.opener.postMessage({ type: 'forms-as-code:app-ready' }, window.location.origin);
 })();

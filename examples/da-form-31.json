@@ -3,7 +3,7 @@
   "formatVersion": "0.1.0",
   "id": "b2b9b7d7-4b9b-4db9-8e25-1d3a9d0b4b31",
   "createdAt": "2026-10-14T00:00:00Z",
-  "template": {"uri": "https://forms.example.org/fillink/da-form-31", "version": "2023-10.1"},
+  "template": {"uri": "https://forms.example.org/forms-as-code/da-form-31", "version": "2023-10.1"},
   "locked": false,
   "data": {
     "controlNumber": "EX-31-001", "requestor": {"name": "Example Soldier", "dodId": "0000000000", "rank": "E5", "date": "2026-10-14"},
