@@ -19,15 +19,20 @@ body { margin: 0; }
 #app-status { display: block; min-height: 1.5em; margin-top: .8rem; color: #33485b; }
 .app-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .65rem; border-bottom: 1px solid #c8d0d9; background: white; }
 .app-toolbar output { margin-left: auto; color: #345; }
-#load-submission { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+#load-submission, #print-csv-file { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
 .button-label { display: inline-block; padding: .45rem .8rem; border: 1px solid #617386; border-radius: .25rem; color: #18344b; background: white; font: inherit; cursor: pointer; }
 #template-host { background: white; }
 #template-host > .forms-as-code-template { min-height: 4rem; }
 .template-notice { margin: .5rem 0; padding: .5rem .75rem; border-left: 3px solid #9a6724; color: #59421f; background: #fff8e8; font-size: .85rem; }
 .app-footer { max-width: 1100px; margin: 1rem auto; padding: 0 1rem; color: #52616e; font-size: .85rem; }
+.bulk-print-root { display: none; }
 @media print {
   .app-header, #launcher, .app-toolbar, .template-notice, .app-footer { display: none !important; }
   .app-main { max-width: none; margin: 0; padding: 0; }
+  body.is-bulk-printing .app-main { display: none !important; }
+  body.is-bulk-printing .bulk-print-root { display: block; }
+  .bulk-print-record { break-after: page; page-break-after: always; }
+  .bulk-print-record:last-child { break-after: auto; page-break-after: auto; }
 }
 @media (max-width: 700px) {
   .app-header { display: block; }

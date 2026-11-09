@@ -34,7 +34,12 @@ A future renderer should:
 
 No signature structure or signing algorithm is defined. Signing design must specify canonicalization, the exact signed bytes and claims, certificate-chain and revocation validation, timestamps, and long-term evidence. It must also be checked against CAC/PIV policies and receiving systems. Do not treat the current JSON envelope as signed or tamper-evident.
 
-The app generates CSV headers as dot-separated paths to nested JSON values and adds a reference row with example values inferred from the template's controls and field hints. The reference row is marked in the name field and ignored on import until that marker is replaced. The app validates all populated rows before creating a ZIP. Repeated groups and a fully normative CSV dialect remain open.
+The app generates CSV headers as dot-separated paths to nested JSON values and adds a reference row with example values inferred from the template's controls and field hints.
+The reference row is marked in the name field and ignored on import until that marker is replaced.
+The app validates all populated rows before creating a ZIP or combined print document.
+A combined print renders up to 1,000 records locally, separates records with page breaks, and uses the browser print dialog to save one PDF.
+The app does not upload CSV contents, but browser memory and print performance depend on the template and batch size.
+Repeated groups and a fully normative CSV dialect remain open.
 
 ## Open decisions
 

@@ -320,6 +320,7 @@
       if (dateFormat === 'DD/MM/YYYY') return '31/01/2026';
       if (dateFormat === 'MM/DD/YYYY') return '01/31/2026';
       if (path === meta.namePath) return EXAMPLE_ROW_MARKER;
+      if (first.dataset.formsAsCodeRepeatCount) return '0';
       if (/initials/i.test(path)) return 'EX';
       if (/age/i.test(path)) return '30';
       if (/time/i.test(path)) return '12:34';
@@ -448,7 +449,7 @@
       saveBlob(new Blob([`${JSON.stringify(submission, null, 2)}\n`], { type: 'application/json' }), filenameFor(data));
       setStatus(locked ? 'Saved locked submission.' : 'Saved submission.');
     }
-    async function importCsv(file) {
+    async function readCsvData(file) {
       const records = parseCsv(await file.text());
       if (records.length < 2) throw new Error('CSV must include a header row and at least one filled row.');
       const headers = records[0];
@@ -463,21 +464,84 @@
       const submissionRows = rows.filter(({ row }) => row[referenceColumn]?.trim() !== EXAMPLE_ROW_MARKER);
       if (!submissionRows.length) throw new Error(referenceRows.length ? `CSV contains only the reference row marked “${EXAMPLE_ROW_MARKER}”. Replace its name or delete it, then add submission rows.` : 'CSV has no populated submission rows.');
       if (submissionRows.length > 1000) throw new Error('A bulk load may contain at most 1,000 populated rows.');
-      const files = []; const counts = new Map();
-      for (const { row, number } of submissionRows) {
+      return submissionRows.map(({ row, number }) => {
         try {
           if (row.length !== headers.length) throw new Error(`Expected ${headers.length} columns but found ${row.length}.`);
           const data = blankData();
           headers.forEach((path, column) => setAt(data, path, csvCell(row[column], groups.get(path), path)));
-          prepare(data, { allowPartial: false });
-          const name = safeName(getAt(data, meta.namePath));
-          const count = (counts.get(name) || 0) + 1; counts.set(name, count);
-          const submission = makeSubmission(data, false);
-          files.push({ name: filenameFor(data, count), content: `${JSON.stringify(submission, null, 2)}\n` });
+          return prepare(data, { allowPartial: false });
         } catch (error) { throw new Error(`CSV record ${number}: ${error.message}`); }
+      });
+    }
+    async function importCsv(file) {
+      const rows = await readCsvData(file);
+      const files = []; const counts = new Map();
+      for (const data of rows) {
+        const name = safeName(getAt(data, meta.namePath));
+        const count = (counts.get(name) || 0) + 1; counts.set(name, count);
+        const submission = makeSubmission(data, false);
+        files.push({ name: filenameFor(data, count), content: `${JSON.stringify(submission, null, 2)}\n` });
       }
       saveBlob(createZip(files), `${meta.code}-submissions.zip`);
       setStatus(`Validated ${files.length} rows and saved ${meta.code}-submissions.zip.`);
+    }
+    function printableClone() {
+      const source = templateHost.querySelector('.forms-as-code-template');
+      const clone = source.cloneNode(true);
+      const sourceControls = source.querySelectorAll('input, textarea, select');
+      const cloneControls = clone.querySelectorAll('input, textarea, select');
+      sourceControls.forEach((control, index) => {
+        const copy = cloneControls[index];
+        if (control instanceof HTMLInputElement) {
+          copy.value = control.value;
+          copy.setAttribute('value', control.value);
+          copy.checked = control.checked;
+          copy.toggleAttribute('checked', control.checked);
+        } else if (control instanceof HTMLTextAreaElement) {
+          copy.value = control.value;
+          copy.textContent = control.value;
+        } else {
+          [...copy.options].forEach((option, optionIndex) => {
+            option.selected = control.options[optionIndex].selected;
+            option.toggleAttribute('selected', option.selected);
+          });
+        }
+      });
+      return clone;
+    }
+    async function printCsv(file) {
+      const rows = await readCsvData(file);
+      const originalData = collectData();
+      const originalLocked = locked;
+      const batch = document.createElement('div');
+      batch.id = 'bulk-print-root';
+      batch.className = 'bulk-print-root';
+      batch.setAttribute('aria-hidden', 'true');
+      try {
+        for (let index = 0; index < rows.length; index++) {
+          populate(rows[index]);
+          const record = document.createElement('section');
+          record.className = 'bulk-print-record';
+          record.dataset.record = String(index + 1);
+          record.append(printableClone());
+          batch.append(record);
+          if ((index + 1) % 10 === 0) {
+            setStatus(`Preparing ${index + 1} of ${rows.length} forms for printing…`);
+            await new Promise(resolve => requestAnimationFrame(resolve));
+          }
+        }
+      } finally {
+        populate(originalData);
+        setLocked(originalLocked);
+      }
+      document.querySelector('#bulk-print-root')?.remove();
+      document.body.append(batch);
+      document.body.classList.add('is-bulk-printing');
+      setStatus(`Prepared ${rows.length} forms. Choose Save as PDF in the print dialog.`);
+      const cleanup = () => { batch.remove(); document.body.classList.remove('is-bulk-printing'); };
+      window.addEventListener('afterprint', cleanup, { once: true });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      window.print();
     }
     document.querySelector('#save-submission').addEventListener('click', () => {
       try { save(); } catch (error) { setStatus(`Could not save: ${error.message}`); }
@@ -500,6 +564,12 @@
       form.reset();
       for (const count of form.querySelectorAll('[data-forms-as-code-repeat-count]')) setRepeatCount(count.dataset.formsAsCodeRepeatCount, 0);
       setLocked(false); syncDerivedControls(); syncConditionalVisibility(); syncConditionalRequired(); setStatus('Started a blank submission.');
+    });
+    document.querySelector('#print-csv').addEventListener('click', () => document.querySelector('#print-csv-file').click());
+    document.querySelector('#print-csv-file').addEventListener('change', async event => {
+      const file = event.target.files?.[0]; event.target.value = '';
+      if (!file) return;
+      try { await printCsv(file); } catch (error) { setStatus(`Could not print CSV: ${error.message}`); }
     });
     document.querySelector('#print-form').addEventListener('click', () => window.print());
     form.addEventListener('input', () => { syncDerivedControls(); syncConditionalVisibility(); syncAutomaticRemarks(); syncConditionalRequired(); setStatus('Unsaved changes.'); });
@@ -656,6 +726,8 @@
       <button type="button" id="save-submission">Save</button>
       <button type="button" id="lock-submission">Lock fields</button>
       <button type="button" id="bulk-csv">Bulk CSV</button>
+      <button type="button" id="print-csv">Print CSV</button>
+      <input id="print-csv-file" type="file" accept="text/csv,.csv">
       <label class="button-label" for="load-submission">Load</label>
       <input id="load-submission" type="file" accept="application/json,.json,text/csv,.csv">
       <button type="button" id="print-form">Print</button><output id="form-status" aria-live="polite">Ready.</output>`;

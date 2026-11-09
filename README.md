@@ -12,7 +12,7 @@ Early scaffold. The submission format is a draft; the local forms-as-code app su
 
 - [`.agents/skills/pdf-to-forms-as-code/SKILL.md`](.agents/skills/pdf-to-forms-as-code/SKILL.md) — repeatable workflow for adding one HTML template and one JSON example from a supplied PDF.
 - [`assets/forms-as-code-base.css`](assets/forms-as-code-base.css) — common presentation styles loaded by the app.
-- [`app/`](app/) — the single forms-as-code application: trusted HTML resolution, shared styling, data binding, validation, Save/Load/Lock, CSV, and ZIP workflows.
+- [`app/`](app/) - the single forms-as-code application: trusted HTML resolution, shared styling, data binding, validation, Save/Load/Lock, CSV, ZIP, and combined print workflows.
 - The trusted Army form templates are maintained in the sibling [`../forms/`](../forms/) repository and loaded by URI/path through the app allowlist; forms-as-code does not store form templates.
 - [`examples/da-form-5960.json`](examples/da-form-5960.json) and [`examples/da-form-705-aft.json`](examples/da-form-705-aft.json) — synthetic forms-as-code submission examples.
 - [`spec/submission.schema.json`](spec/submission.schema.json) — draft JSON Schema for a forms-as-code submission envelope.
@@ -63,7 +63,20 @@ Alternatively, run the included helper from the forms-as-code directory:
 ./serve.sh
 ```
 
-Open <http://localhost:8000/app/>. Start a blank template, open a JSON submission, or use a same-origin direct link such as <http://localhost:8000/app/?submission=../examples/da-form-705-aft.json>. The app uses a trusted allowlist and fetches only the referenced HTML template. This prototype has no build system or third-party runtime dependencies.
+Open <http://localhost:8000/app/>.
+Start a blank template, open a JSON submission, or use a same-origin direct link such as <http://localhost:8000/app/?submission=../examples/da-form-705-aft.json>.
+The app uses a trusted allowlist and fetches only the referenced HTML template.
+This prototype has no build system or third-party runtime dependencies.
+
+### Print a CSV as one PDF
+
+Choose the form template, select **Bulk CSV** to download its form-specific CSV, and add one record per row.
+Select **Print CSV** and choose the completed CSV.
+The app validates every row, renders the records locally, and opens the browser print dialog.
+Choose **Save as PDF** to create one PDF containing all records, with a page break between records.
+Blank rows and the untouched example row are ignored.
+A batch may contain up to 1,000 records, although large or complex batches can require substantial browser memory.
+CSV contents remain in the browser and are not uploaded by this workflow.
 
 ## License
 
