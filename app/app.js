@@ -895,8 +895,15 @@
   loadCatalog(initialCatalogUrl);
   catalogSource.addEventListener('change', () => {
     customCatalogFields.hidden = catalogSource.value !== 'custom';
-    if (catalogSource.value === 'hosted') catalogUrlInput.value = DEFAULT_CATALOG_URL;
-    else { catalogUrlInput.value = readCatalogUrl() === DEFAULT_CATALOG_URL ? '' : readCatalogUrl(); catalogUrlInput.focus(); }
+    if (catalogSource.value === 'hosted') {
+      catalogUrlInput.value = DEFAULT_CATALOG_URL;
+      saveCatalogUrl(DEFAULT_CATALOG_URL);
+      loadCatalog(DEFAULT_CATALOG_URL);
+    } else {
+      catalogStatus.textContent = 'Enter a custom catalog URL.';
+      catalogUrlInput.value = readCatalogUrl() === DEFAULT_CATALOG_URL ? '' : readCatalogUrl();
+      catalogUrlInput.focus();
+    }
   });
   loadCatalogButton.addEventListener('click', () => {
     const url = catalogSource.value === 'hosted' ? DEFAULT_CATALOG_URL : catalogUrlInput.value.trim();

@@ -24,14 +24,16 @@
         <div class="catalog-settings-fields">
           <label for="catalog-source">Catalog
             <select id="catalog-source">
-              <option value="hosted">Forms-as-code hosted catalog</option>
-              <option value="custom">Custom catalog URL</option>
+              <option value="hosted">Army form templates (hosted)</option>
+              <option value="custom">Custom catalog</option>
             </select>
           </label>
-          <label id="custom-catalog-fields" for="catalog-url" hidden>Template catalog URL
-            <input id="catalog-url" type="url" spellcheck="false">
-          </label>
-          <button id="load-catalog" type="button">Load catalog</button>
+          <div id="custom-catalog-fields" class="custom-catalog-fields" hidden>
+            <label for="catalog-url">Template catalog URL
+              <input id="catalog-url" type="url" spellcheck="false" placeholder="https://example.org/catalog.json">
+            </label>
+            <button id="load-catalog" type="button">Load custom catalog</button>
+          </div>
           <output id="catalog-status" role="status" aria-live="polite"></output>
         </div>
       </details>
