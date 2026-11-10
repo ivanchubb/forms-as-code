@@ -13,9 +13,10 @@
     <a class="brand" href="./">forms-as-code</a>
     <p>Portable form data, rendered with its versioned HTML template.</p>
     <div class="header-actions">
-      <button id="template-source-button" class="source-button" type="button" aria-haspopup="dialog">
+      <button id="template-source-button" class="source-button" type="button" aria-haspopup="dialog" aria-controls="template-source-dialog">
         <span class="source-indicator" aria-hidden="true"></span>
-        <span id="template-source-label">Hosted catalog</span>
+        <span>Template source: <strong id="template-source-label">Hosted catalog</strong></span>
+        <span aria-hidden="true">▾</span>
       </button>
       <button id="change-template" type="button" hidden>Choose another form</button>
     </div>

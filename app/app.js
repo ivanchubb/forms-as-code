@@ -112,7 +112,7 @@
     for (const template of entries) templates.set(templateKey(template), template);
     const query = templateSearch.value.trim().toLocaleLowerCase();
     templateOptions.replaceChildren(...entries.filter(template => `${templateDisplayName(template)} ${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(query)).map(template => {
-      const option = document.createElement('option'); option.value = templateDisplayName(template); option.dataset.templateKey = templateKey(template); return option;
+      const option = document.createElement('option'); option.value = templateDisplayName(template); option.label = template.title; return option;
     }));
   }
   async function loadLocalTemplates(files) {
@@ -887,13 +887,23 @@
   setCatalogTemplates([...templates.values()]);
   function selectedTemplate() {
     const value = templateSearch.value.trim();
-    return catalogTemplates.find(template => templateDisplayName(template) === value) || null;
+    const exact = catalogTemplates.find(template => templateDisplayName(template).toLocaleLowerCase() === value.toLocaleLowerCase());
+    if (exact) return exact;
+    const matches = matchingTemplates(value);
+    return matches.length === 1 ? matches[0] : null;
+  }
+  function matchingTemplates(query) {
+    const normalized = query.trim().toLocaleLowerCase();
+    return catalogTemplates.filter(template => `${templateDisplayName(template)} ${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(normalized));
   }
   templateSearch.addEventListener('input', () => {
-    const query = templateSearch.value.trim().toLocaleLowerCase();
-    templateOptions.replaceChildren(...catalogTemplates.filter(template => `${templateDisplayName(template)} ${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(query)).map(template => {
-      const option = document.createElement('option'); option.value = templateDisplayName(template); option.dataset.templateKey = templateKey(template); return option;
+    templateOptions.replaceChildren(...matchingTemplates(templateSearch.value).map(template => {
+      const option = document.createElement('option'); option.value = templateDisplayName(template); option.label = template.title; return option;
     }));
+  });
+  templateSearch.addEventListener('change', () => {
+    const template = selectedTemplate();
+    if (template) templateSearch.value = templateDisplayName(template);
   });
   document.querySelector('#create-form').addEventListener('click', async () => {
     const template = selectedTemplate();

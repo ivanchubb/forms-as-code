@@ -5,7 +5,8 @@ body { margin: 0; }
 .app-header p { margin: .25rem 0; }
 .brand { color: white; font-size: 1.35rem; font-weight: 700; text-decoration: none; }
 .header-actions { display: flex; align-items: center; gap: .5rem; margin-left: auto; }
-.source-button { display: flex; align-items: center; gap: .45rem; padding: .4rem .65rem; border: 1px solid #ffffff66; border-radius: 999px; color: white; background: #ffffff12; cursor: pointer; }
+.source-button { display: flex; align-items: center; gap: .45rem; padding: .5rem .75rem; border: 1px solid #ffffff99; border-radius: .35rem; color: white; background: #ffffff1f; font: inherit; cursor: pointer; }
+.source-button:hover, .source-button:focus-visible { background: #ffffff33; outline: 2px solid white; outline-offset: 2px; }
 .source-indicator { width: .65rem; height: .65rem; border-radius: 50%; background: #62d68b; box-shadow: 0 0 0 2px #ffffff33; }
 .source-button.is-local .source-indicator { background: #79bfff; }
 .app-main { max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; }
