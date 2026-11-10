@@ -823,8 +823,7 @@
   setCatalogTemplates([...templates.values()]);
   function selectedTemplate() {
     const value = templateSearch.value.trim();
-    const option = [...templateOptions.options].find(candidate => candidate.value === value);
-    return option ? templates.get(option.dataset.templateKey) : null;
+    return catalogTemplates.find(template => `${template.title} (${template.code}, ${template.version})` === value) || null;
   }
   templateSearch.addEventListener('input', () => {
     const query = templateSearch.value.trim().toLocaleLowerCase();
