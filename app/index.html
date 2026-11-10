@@ -22,10 +22,17 @@
       <details class="catalog-settings">
         <summary>Template source</summary>
         <div class="catalog-settings-fields">
-          <label for="catalog-url">Template catalog URL
+          <label for="catalog-source">Catalog
+            <select id="catalog-source">
+              <option value="hosted">Forms-as-code hosted catalog</option>
+              <option value="custom">Custom catalog URL</option>
+            </select>
+          </label>
+          <label id="custom-catalog-fields" for="catalog-url" hidden>Template catalog URL
             <input id="catalog-url" type="url" spellcheck="false">
           </label>
           <button id="load-catalog" type="button">Load catalog</button>
+          <output id="catalog-status" role="status" aria-live="polite"></output>
         </div>
       </details>
       <div class="launch-actions">

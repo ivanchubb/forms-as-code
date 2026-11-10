@@ -45,8 +45,11 @@
   ]);
   const launcher = document.querySelector('#launcher');
   const workspace = document.querySelector('#workspace');
+  const catalogSource = document.querySelector('#catalog-source');
+  const customCatalogFields = document.querySelector('#custom-catalog-fields');
   const catalogUrlInput = document.querySelector('#catalog-url');
   const loadCatalogButton = document.querySelector('#load-catalog');
+  const catalogStatus = document.querySelector('#catalog-status');
   const templateSearch = document.querySelector('#template-search');
   const templateOptions = document.querySelector('#template-options');
   const templateHost = document.querySelector('#template-host');
@@ -101,11 +104,13 @@
       const option = document.createElement('option'); option.value = templateDisplayName(template); option.dataset.templateKey = templateKey(template); return option;
     }));
   }
-  async function loadCatalog(url = catalogUrl()) {
+  async function loadCatalog(url = readCatalogUrl()) {
     let parsedUrl;
     try { parsedUrl = new URL(url); if (!['http:', 'https:'].includes(parsedUrl.protocol) || parsedUrl.username || parsedUrl.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); }
-    catch (error) { setStatus(`Could not load the template catalog: ${error.message}`); return; }
+    catch (error) { const message = `Could not load catalog: ${error.message}`; catalogStatus.textContent = message; setStatus(message); return; }
     catalogUrlInput.value = parsedUrl.href;
+    loadCatalogButton.disabled = true;
+    catalogStatus.textContent = 'Loading catalog…';
     setStatus(`Loading template catalog from ${parsedUrl.href}…`);
     let cached = null;
     try { cached = localStorage.getItem(catalogCacheKey(parsedUrl.href)); } catch { /* Continue without a browser cache. */ }
@@ -118,9 +123,15 @@
       const catalog = await response.json();
       setCatalogTemplates(validateCatalog(catalog, parsedUrl.href));
       try { localStorage.setItem(catalogCacheKey(parsedUrl.href), JSON.stringify(catalog)); } catch { /* Continue without a browser cache. */ }
-      setStatus(`Loaded ${catalogTemplates.length} templates.`);
+      const message = `Loaded ${catalogTemplates.length} forms.`;
+      catalogStatus.textContent = message;
+      setStatus(message);
     } catch (error) {
-      setStatus(`Could not load the template catalog: ${error.message}. Existing templates were preserved.`);
+      const message = `Could not load catalog: ${error.message}. Existing forms were preserved.`;
+      catalogStatus.textContent = message;
+      setStatus(message);
+    } finally {
+      loadCatalogButton.disabled = false;
     }
   }
   function resolveSubmission(submission) {
@@ -877,12 +888,20 @@
       } catch (error) { event.source.postMessage({ type: 'forms-as-code:submission-loaded', ok: false, error: error.message, submissionId }, event.origin); }
     }
   });
-  catalogUrlInput.value = readCatalogUrl();
-  loadCatalog(catalogUrlInput.value);
+  const initialCatalogUrl = readCatalogUrl();
+  catalogUrlInput.value = initialCatalogUrl;
+  catalogSource.value = initialCatalogUrl === DEFAULT_CATALOG_URL ? 'hosted' : 'custom';
+  customCatalogFields.hidden = catalogSource.value !== 'custom';
+  loadCatalog(initialCatalogUrl);
+  catalogSource.addEventListener('change', () => {
+    customCatalogFields.hidden = catalogSource.value !== 'custom';
+    if (catalogSource.value === 'hosted') catalogUrlInput.value = DEFAULT_CATALOG_URL;
+    else { catalogUrlInput.value = readCatalogUrl() === DEFAULT_CATALOG_URL ? '' : readCatalogUrl(); catalogUrlInput.focus(); }
+  });
   loadCatalogButton.addEventListener('click', () => {
-    const url = catalogUrlInput.value.trim();
-    try { const parsed = new URL(url); if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); saveCatalogUrl(parsed.href); loadCatalog(parsed.href); }
-    catch (error) { setStatus(`Could not load the template catalog: ${error.message}`); }
+    const url = catalogSource.value === 'hosted' ? DEFAULT_CATALOG_URL : catalogUrlInput.value.trim();
+    try { const parsed = new URL(url); if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); saveCatalogUrl(parsed.href); catalogUrlInput.value = parsed.href; loadCatalog(parsed.href); }
+    catch (error) { const message = `Could not load catalog: ${error.message}`; catalogStatus.textContent = message; setStatus(message); }
   });
   const linked = new URLSearchParams(window.location.search).get('submission');
   if (linked) loadLinkedJson(linked).catch(error => setStatus(`Could not open linked submission: ${error.message}`));
