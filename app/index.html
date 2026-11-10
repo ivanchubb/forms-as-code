@@ -12,35 +12,19 @@
   <header class="app-header">
     <a class="brand" href="./">forms-as-code</a>
     <p>Portable form data, rendered with its versioned HTML template.</p>
-    <button id="change-template" type="button" hidden>Choose another form</button>
+    <div class="header-actions">
+      <button id="template-source-button" class="source-button" type="button" aria-haspopup="dialog">
+        <span class="source-indicator" aria-hidden="true"></span>
+        <span id="template-source-label">Hosted catalog</span>
+      </button>
+      <button id="change-template" type="button" hidden>Choose another form</button>
+    </div>
   </header>
 
   <main class="app-main">
     <section id="launcher" class="app-panel" aria-labelledby="welcome-heading">
       <h1 id="welcome-heading">Open or start a form</h1>
       <p>Choose a template to start a blank submission, or open a forms-as-code JSON file. Data stays in this browser and is not uploaded. <a href="?submission=../examples/da-form-705-aft.json">Try the DA Form 705-AFT example data</a>.</p>
-      <details class="catalog-settings">
-        <summary>Template source</summary>
-        <div class="catalog-settings-fields">
-          <label for="catalog-source">Catalog
-            <select id="catalog-source">
-              <option value="hosted">Army form templates (hosted)</option>
-              <option value="local-file">Local template file</option>
-              <option value="local-directory">Local template directory</option>
-              <option value="custom">Custom catalog</option>
-            </select>
-          </label>
-          <div id="custom-catalog-fields" class="custom-catalog-fields" hidden>
-            <label for="catalog-url">Template catalog URL
-              <input id="catalog-url" type="url" spellcheck="false" placeholder="https://example.org/catalog.json">
-            </label>
-            <button id="load-catalog" type="button">Load custom catalog</button>
-          </div>
-          <output id="catalog-status" role="status" aria-live="polite"></output>
-          <input id="local-template-file" type="file" accept="text/html,.html" hidden>
-          <input id="local-template-directory" type="file" accept="text/html,.html" webkitdirectory multiple hidden>
-        </div>
-      </details>
       <div class="launch-actions">
         <label for="template-search">Search forms
           <input id="template-search" list="template-options" type="search" autocomplete="off" placeholder="Search by form name or number">
@@ -56,6 +40,41 @@
       <input id="submission-file" type="file" accept="application/json,.json">
       <output id="app-status" role="status" aria-live="polite">Ready.</output>
     </section>
+
+    <dialog id="template-source-dialog" aria-labelledby="template-source-heading">
+      <form method="dialog" class="source-dialog-header">
+        <div>
+          <h2 id="template-source-heading">Template source</h2>
+          <p>Choose where forms-as-code finds templates. Local files never leave this browser.</p>
+        </div>
+        <button value="cancel" aria-label="Close template source settings">Close</button>
+      </form>
+      <div class="source-options">
+        <section>
+          <h3>Hosted catalog</h3>
+          <p>Use the built-in Army form template catalog.</p>
+          <button id="use-hosted-catalog" type="button">Use hosted catalog</button>
+        </section>
+        <section>
+          <h3>Local templates</h3>
+          <p>Choose one HTML template or a directory containing templates.</p>
+          <div class="source-actions">
+            <button id="choose-template-file" type="button">Choose HTML file…</button>
+            <button id="choose-template-directory" type="button">Choose directory…</button>
+          </div>
+        </section>
+        <section>
+          <h3>Custom catalog</h3>
+          <label for="catalog-url">Template catalog URL
+            <input id="catalog-url" type="url" spellcheck="false" placeholder="https://example.org/catalog.json">
+          </label>
+          <button id="load-catalog" type="button">Load custom catalog</button>
+        </section>
+      </div>
+      <output id="catalog-status" role="status" aria-live="polite"></output>
+      <input id="local-template-file" type="file" accept="text/html,.html" hidden>
+      <input id="local-template-directory" type="file" accept="text/html,.html" webkitdirectory multiple hidden>
+    </dialog>
 
     <section id="workspace" hidden aria-label="forms-as-code form workspace">
       <nav id="app-toolbar" class="toolbar app-toolbar" aria-label="Submission tools"></nav>

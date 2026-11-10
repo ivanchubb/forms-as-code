@@ -45,8 +45,12 @@
   ]);
   const launcher = document.querySelector('#launcher');
   const workspace = document.querySelector('#workspace');
-  const catalogSource = document.querySelector('#catalog-source');
-  const customCatalogFields = document.querySelector('#custom-catalog-fields');
+  const templateSourceButton = document.querySelector('#template-source-button');
+  const templateSourceLabel = document.querySelector('#template-source-label');
+  const templateSourceDialog = document.querySelector('#template-source-dialog');
+  const useHostedCatalogButton = document.querySelector('#use-hosted-catalog');
+  const chooseTemplateFileButton = document.querySelector('#choose-template-file');
+  const chooseTemplateDirectoryButton = document.querySelector('#choose-template-directory');
   const catalogUrlInput = document.querySelector('#catalog-url');
   const loadCatalogButton = document.querySelector('#load-catalog');
   const catalogStatus = document.querySelector('#catalog-status');
@@ -71,6 +75,10 @@
     appStatus.textContent = message;
     const formStatus = document.querySelector('#form-status');
     if (formStatus) formStatus.textContent = message;
+  }
+  function setTemplateSourceLabel(label, local = false) {
+    templateSourceLabel.textContent = label;
+    templateSourceButton.classList.toggle('is-local', local);
   }
   function templateKey(reference) { return `${reference?.uri}@${reference?.version}`; }
   function templateDisplayName(template) {
@@ -127,6 +135,7 @@
     }
     if (entries.length) setCatalogTemplates(entries);
     const message = `Loaded ${entries.length} local form${entries.length === 1 ? '' : 's'}${failures.length ? `; rejected ${failures.length}` : ''}.`;
+    if (entries.length) setTemplateSourceLabel(`Local templates (${entries.length})`, true);
     catalogStatus.textContent = message;
     setStatus(failures.length ? `${message} ${failures[0]}` : message);
   }
@@ -150,6 +159,7 @@
       setCatalogTemplates(validateCatalog(catalog, parsedUrl.href));
       try { localStorage.setItem(catalogCacheKey(parsedUrl.href), JSON.stringify(catalog)); } catch { /* Continue without a browser cache. */ }
       const message = `Loaded ${catalogTemplates.length} forms.`;
+      setTemplateSourceLabel(parsedUrl.href === DEFAULT_CATALOG_URL ? 'Hosted catalog' : 'Custom catalog');
       catalogStatus.textContent = message;
       setStatus(message);
     } catch (error) {
@@ -917,28 +927,16 @@
     }
   });
   const initialCatalogUrl = readCatalogUrl();
-  catalogUrlInput.value = initialCatalogUrl;
-  catalogSource.value = initialCatalogUrl === DEFAULT_CATALOG_URL ? 'hosted' : 'custom';
-  customCatalogFields.hidden = catalogSource.value !== 'custom';
+  catalogUrlInput.value = initialCatalogUrl === DEFAULT_CATALOG_URL ? '' : initialCatalogUrl;
   loadCatalog(initialCatalogUrl);
-  catalogSource.addEventListener('change', () => {
-    customCatalogFields.hidden = catalogSource.value !== 'custom';
-    if (catalogSource.value === 'local-file') {
-      catalogSource.value = initialCatalogUrl === DEFAULT_CATALOG_URL ? 'hosted' : 'custom';
-      localTemplateFile.click();
-    } else if (catalogSource.value === 'local-directory') {
-      catalogSource.value = initialCatalogUrl === DEFAULT_CATALOG_URL ? 'hosted' : 'custom';
-      localTemplateDirectory.click();
-    } else if (catalogSource.value === 'hosted') {
-      catalogUrlInput.value = DEFAULT_CATALOG_URL;
-      saveCatalogUrl(DEFAULT_CATALOG_URL);
-      loadCatalog(DEFAULT_CATALOG_URL);
-    } else {
-      catalogStatus.textContent = 'Enter a custom catalog URL.';
-      catalogUrlInput.value = readCatalogUrl() === DEFAULT_CATALOG_URL ? '' : readCatalogUrl();
-      catalogUrlInput.focus();
-    }
+  templateSourceButton.addEventListener('click', () => templateSourceDialog.showModal());
+  useHostedCatalogButton.addEventListener('click', () => {
+    catalogUrlInput.value = '';
+    saveCatalogUrl(DEFAULT_CATALOG_URL);
+    loadCatalog(DEFAULT_CATALOG_URL);
   });
+  chooseTemplateFileButton.addEventListener('click', () => localTemplateFile.click());
+  chooseTemplateDirectoryButton.addEventListener('click', () => localTemplateDirectory.click());
   localTemplateFile.addEventListener('change', async () => {
     const files = [...localTemplateFile.files]; localTemplateFile.value = '';
     if (files.length) await loadLocalTemplates(files);
@@ -948,7 +946,7 @@
     if (files.length) await loadLocalTemplates(files);
   });
   loadCatalogButton.addEventListener('click', () => {
-    const url = catalogSource.value === 'hosted' ? DEFAULT_CATALOG_URL : catalogUrlInput.value.trim();
+    const url = catalogUrlInput.value.trim();
     try { const parsed = new URL(url); if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); saveCatalogUrl(parsed.href); catalogUrlInput.value = parsed.href; loadCatalog(parsed.href); }
     catch (error) { const message = `Could not load catalog: ${error.message}`; catalogStatus.textContent = message; setStatus(message); }
   });

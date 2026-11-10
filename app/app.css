@@ -1,21 +1,29 @@
 * { box-sizing: border-box; }
 :root { font-family: system-ui, Arial, sans-serif; color: #17202a; background: #eef2f5; }
 body { margin: 0; }
-.app-header { display: flex; align-items: baseline; gap: 1rem; padding: 1rem max(1.25rem, calc((100% - 1100px) / 2)); background: #15334b; color: white; }
+.app-header { display: flex; align-items: center; gap: 1rem; padding: 1rem max(1.25rem, calc((100% - 1100px) / 2)); background: #15334b; color: white; }
 .app-header p { margin: .25rem 0; }
 .brand { color: white; font-size: 1.35rem; font-weight: 700; text-decoration: none; }
+.header-actions { display: flex; align-items: center; gap: .5rem; margin-left: auto; }
+.source-button { display: flex; align-items: center; gap: .45rem; padding: .4rem .65rem; border: 1px solid #ffffff66; border-radius: 999px; color: white; background: #ffffff12; cursor: pointer; }
+.source-indicator { width: .65rem; height: .65rem; border-radius: 50%; background: #62d68b; box-shadow: 0 0 0 2px #ffffff33; }
+.source-button.is-local .source-indicator { background: #79bfff; }
 .app-main { max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; }
 .app-panel { padding: 1.5rem; border: 1px solid #c2ccd5; border-radius: .6rem; background: white; box-shadow: 0 3px 14px #16233012; }
 .app-panel h1 { margin: 0 0 .5rem; }
 .launch-actions { display: flex; align-items: end; gap: .75rem; margin: 1rem 0; }
-.catalog-settings { margin: .75rem 0; color: #52616e; font-size: .9rem; }
-.catalog-settings summary { cursor: pointer; }
-.catalog-settings-fields, .custom-catalog-fields { display: flex; align-items: end; gap: .75rem; margin-top: .6rem; }
-.custom-catalog-fields[hidden] { display: none; }
-.catalog-settings-fields label, .launch-actions label { display: flex; flex-direction: column; gap: .25rem; }
-.catalog-settings input { min-width: min(42rem, 70vw); padding: .45rem; font: inherit; }
-.catalog-settings select { min-width: 16rem; padding: .45rem; font: inherit; }
-#catalog-status { align-self: center; min-width: 10rem; color: #33485b; }
+.launch-actions label, .source-options label { display: flex; flex-direction: column; gap: .25rem; }
+#template-source-dialog { width: min(44rem, calc(100% - 2rem)); padding: 0; border: 0; border-radius: .65rem; box-shadow: 0 16px 60px #0006; }
+#template-source-dialog::backdrop { background: #0c1d2c99; }
+.source-dialog-header { display: flex; justify-content: space-between; align-items: start; gap: 1rem; padding: 1.25rem; border-bottom: 1px solid #d6dde3; }
+.source-dialog-header h2, .source-dialog-header p, .source-options h3, .source-options p { margin: 0; }
+.source-dialog-header p, .source-options p { margin-top: .3rem; color: #52616e; }
+.source-options { display: grid; gap: 1rem; padding: 1.25rem; }
+.source-options section { padding: 1rem; border: 1px solid #d6dde3; border-radius: .5rem; }
+.source-options button { margin-top: .75rem; }
+.source-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.source-options input { width: 100%; margin-top: .25rem; padding: .45rem; font: inherit; }
+#catalog-status { display: block; min-height: 1.5em; padding: 0 1.25rem 1.25rem; color: #33485b; }
 .launch-actions input { min-width: 22rem; padding: .45rem; font: inherit; }
 .app-panel button, .app-toolbar button, .choose-file { padding: .5rem .9rem; border: 1px solid #617386; border-radius: .25rem; color: #18344b; background: white; font: inherit; cursor: pointer; }
 .app-panel button:hover, .app-toolbar button:hover { background: #edf4fa; }
@@ -43,10 +51,11 @@ body { margin: 0; }
   .bulk-print-record:last-child { break-after: auto; page-break-after: auto; }
 }
 @media (max-width: 700px) {
-  .app-header { display: block; }
+  .app-header { align-items: start; flex-wrap: wrap; }
+  .header-actions { width: 100%; margin-left: 0; }
   .app-main { margin: .75rem auto; padding: 0 .5rem; }
   .app-panel { padding: 1rem; }
-  .catalog-settings-fields, .custom-catalog-fields, .launch-actions { align-items: stretch; flex-direction: column; }
-  .catalog-settings input, .launch-actions input { min-width: 0; width: 100%; }
+  .launch-actions { align-items: stretch; flex-direction: column; }
+  .launch-actions input { min-width: 0; width: 100%; }
   .app-toolbar output { margin-left: 0; width: 100%; }
 }
