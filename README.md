@@ -2,6 +2,8 @@
 
 **Forms as code. Submissions as data.**
 
+## [Open the forms-as-code web app](https://ivanchubb.github.io/forms-as-code/)
+
 forms-as-code is an open-source experiment in data-first forms. A form's presentation is an HTML template; a completed submission is structured JSON that identifies the template and version needed to render it. The goal is to make forms easier to automate, validate, share in bulk, and sign.
 
 ## Repository status
