@@ -106,6 +106,7 @@
     try { parsedUrl = new URL(url); if (!['http:', 'https:'].includes(parsedUrl.protocol) || parsedUrl.username || parsedUrl.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); }
     catch (error) { setStatus(`Could not load the template catalog: ${error.message}`); return; }
     catalogUrlInput.value = parsedUrl.href;
+    setStatus(`Loading template catalog from ${parsedUrl.href}…`);
     let cached = null;
     try { cached = localStorage.getItem(catalogCacheKey(parsedUrl.href)); } catch { /* Continue without a browser cache. */ }
     if (cached) {
@@ -119,7 +120,7 @@
       try { localStorage.setItem(catalogCacheKey(parsedUrl.href), JSON.stringify(catalog)); } catch { /* Continue without a browser cache. */ }
       setStatus(`Loaded ${catalogTemplates.length} templates.`);
     } catch (error) {
-      if (!catalogTemplates.length) setStatus(`Could not load the template catalog: ${error.message}`);
+      setStatus(`Could not load the template catalog: ${error.message}. Existing templates were preserved.`);
     }
   }
   function resolveSubmission(submission) {
