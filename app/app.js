@@ -1,6 +1,9 @@
 /* forms-as-code's shared application: trusted HTML resolution, rendering, data, and bulk workflows. */
 (() => {
   const FORMAT_VERSION = '0.1.0';
+  const DEFAULT_CATALOG_URL = 'https://army-form-templates.s3.us-east-1.amazonaws.com/catalog.json';
+  const CATALOG_URL_KEY = 'forms-as-code:catalog-url';
+  const CATALOG_CACHE_PREFIX = 'forms-as-code:template-catalog:v1:';
   const EXAMPLE_ROW_MARKER = 'EXAMPLE - REPLACE OR DELETE';
   const templates = new Map([
     ['https://forms.example.org/forms-as-code/da-form-5304@2020-07.1', {
@@ -24,6 +27,9 @@
     ['https://forms.example.org/forms-as-code/da-form-2062@2023-12.3', {
       uri: 'https://forms.example.org/forms-as-code/da-form-2062', version: '2023-12.3', title: 'DA Form 2062', code: 'DA2062', path: '../../forms/da/2062/DEC2023.html'
     }],
+    ['https://forms.example.org/forms-as-code/da-form-4856@2023-03.1', {
+      uri: 'https://forms.example.org/forms-as-code/da-form-4856', version: '2023-03.1', title: 'DA Form 4856', code: 'DA4856', path: '../../forms/da/4856/MAR2023.html'
+    }],
     ['https://forms.example.org/forms-as-code/da-form-5121@2026-10.1', {
       uri: 'https://forms.example.org/forms-as-code/da-form-5121', version: '2026-10.1', title: 'DA Form 5121', code: 'DA5121', path: '../../forms/da/5121/OCT2026.html'
     }],
@@ -39,7 +45,10 @@
   ]);
   const launcher = document.querySelector('#launcher');
   const workspace = document.querySelector('#workspace');
-  const templatePicker = document.querySelector('#template-picker');
+  const catalogUrlInput = document.querySelector('#catalog-url');
+  const loadCatalogButton = document.querySelector('#load-catalog');
+  const templateSearch = document.querySelector('#template-search');
+  const templateOptions = document.querySelector('#template-options');
   const templateHost = document.querySelector('#template-host');
   const toolbar = document.querySelector('#app-toolbar');
   const notice = document.querySelector('#template-notice');
@@ -51,6 +60,7 @@
   let activeForm = null;
   let pendingWindow = null;
   let pendingSubmission = null;
+  let catalogTemplates = [];
 
   function setStatus(message) {
     appStatus.textContent = message;
@@ -58,6 +68,46 @@
     if (formStatus) formStatus.textContent = message;
   }
   function templateKey(reference) { return `${reference?.uri}@${reference?.version}`; }
+  function catalogUrl() { return localStorage.getItem(CATALOG_URL_KEY) || DEFAULT_CATALOG_URL; }
+  function catalogCacheKey(url) { return `${CATALOG_CACHE_PREFIX}${url}`; }
+  function validateCatalog(catalog, url) {
+    if (!catalog || catalog.formatVersion !== '1' || !Array.isArray(catalog.templates)) throw new Error('Invalid template catalog.');
+    return catalog.templates.map(template => {
+      if (!template || typeof template.uri !== 'string' || typeof template.version !== 'string' || typeof template.title !== 'string' || typeof template.code !== 'string' || typeof template.path !== 'string') throw new Error('Template catalog entry is incomplete.');
+      const path = new URL(template.path, url);
+      if (path.origin !== new URL(url).origin || path.username || path.password || !path.pathname.endsWith('.html')) throw new Error('Template catalog contains an unsafe path.');
+      return { ...template, path: path.href };
+    });
+  }
+  function setCatalogTemplates(entries) {
+    catalogTemplates = entries;
+    templates.clear();
+    for (const template of entries) templates.set(templateKey(template), template);
+    const query = templateSearch.value.trim().toLocaleLowerCase();
+    templateOptions.replaceChildren(...entries.filter(template => `${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(query)).map(template => {
+      const option = document.createElement('option'); option.value = `${template.title} (${template.code}, ${template.version})`; option.dataset.templateKey = templateKey(template); return option;
+    }));
+  }
+  async function loadCatalog(url = catalogUrl()) {
+    let parsedUrl;
+    try { parsedUrl = new URL(url); if (!['http:', 'https:'].includes(parsedUrl.protocol) || parsedUrl.username || parsedUrl.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); }
+    catch (error) { setStatus(`Could not load the template catalog: ${error.message}`); return; }
+    catalogUrlInput.value = parsedUrl.href;
+    const cached = localStorage.getItem(catalogCacheKey(parsedUrl.href));
+    if (cached) {
+      try { setCatalogTemplates(validateCatalog(JSON.parse(cached), parsedUrl.href)); setStatus(`Using ${catalogTemplates.length} cached templates.`); } catch { localStorage.removeItem(catalogCacheKey(parsedUrl.href)); }
+    }
+    try {
+      const response = await fetch(parsedUrl.href, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Catalog request failed (${response.status}).`);
+      const catalog = await response.json();
+      setCatalogTemplates(validateCatalog(catalog, parsedUrl.href));
+      localStorage.setItem(catalogCacheKey(parsedUrl.href), JSON.stringify(catalog));
+      setStatus(`Loaded ${catalogTemplates.length} templates.`);
+    } catch (error) {
+      if (!catalogTemplates.length) setStatus(`Could not load the template catalog: ${error.message}`);
+    }
+  }
   function resolveSubmission(submission) {
     if (!submission || typeof submission !== 'object') throw new Error('Submission must be a JSON object.');
     if (submission.formatVersion !== FORMAT_VERSION) throw new Error('Unsupported forms-as-code submission version.');
@@ -265,10 +315,14 @@
     function syncConditionalVisibility(data = collectData()) {
       for (const element of form.querySelectorAll('[data-forms-as-code-visible-when]')) {
         const hidden = !matchesVisibilityRule(element.dataset.formsAsCodeVisibleWhen, data);
+        const wasHidden = element.classList.contains('forms-as-code-hidden');
         element.classList.toggle('forms-as-code-hidden', hidden);
         if (hidden) for (const control of element.querySelectorAll('[data-forms-as-code]')) {
           if (control.type === 'checkbox' || control.type === 'radio') control.checked = false;
           else control.value = '';
+        }
+        else if (wasHidden) for (const control of element.querySelectorAll('[data-forms-as-code-default]')) {
+          if (!control.value) control.value = control.dataset.formsAsCodeDefault;
         }
       }
     }
@@ -766,11 +820,21 @@
     setStatus(`Opened ${template.title} from its same-origin JSON link.`);
   }
 
-  templatePicker.replaceChildren(...[...templates.values()].map(template => {
-    const option = document.createElement('option'); option.value = templateKey(template); option.textContent = template.title; return option;
-  }));
+  setCatalogTemplates([...templates.values()]);
+  function selectedTemplate() {
+    const value = templateSearch.value.trim();
+    const option = [...templateOptions.options].find(candidate => candidate.value === value);
+    return option ? templates.get(option.dataset.templateKey) : null;
+  }
+  templateSearch.addEventListener('input', () => {
+    const query = templateSearch.value.trim().toLocaleLowerCase();
+    templateOptions.replaceChildren(...catalogTemplates.filter(template => `${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(query)).map(template => {
+      const option = document.createElement('option'); option.value = `${template.title} (${template.code}, ${template.version})`; option.dataset.templateKey = templateKey(template); return option;
+    }));
+  });
   document.querySelector('#create-form').addEventListener('click', async () => {
-    const template = templates.get(templatePicker.value); if (!template) return;
+    const template = selectedTemplate();
+    if (!template) { setStatus('Choose a form from the search suggestions first.'); return; }
     try { await renderTemplate(template); setStatus(`Started a blank ${template.title} submission.`); }
     catch (error) { setStatus(`Could not start form: ${error.message}`); }
   });
@@ -798,6 +862,13 @@
         event.source.postMessage({ type: 'forms-as-code:submission-loaded', ok: true, submissionId }, event.origin);
       } catch (error) { event.source.postMessage({ type: 'forms-as-code:submission-loaded', ok: false, error: error.message, submissionId }, event.origin); }
     }
+  });
+  catalogUrlInput.value = catalogUrl();
+  loadCatalog();
+  loadCatalogButton.addEventListener('click', () => {
+    const url = catalogUrlInput.value.trim();
+    try { const parsed = new URL(url); if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); localStorage.setItem(CATALOG_URL_KEY, parsed.href); loadCatalog(parsed.href); }
+    catch (error) { setStatus(`Could not load the template catalog: ${error.message}`); }
   });
   const linked = new URLSearchParams(window.location.search).get('submission');
   if (linked) loadLinkedJson(linked).catch(error => setStatus(`Could not open linked submission: ${error.message}`));
