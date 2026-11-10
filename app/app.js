@@ -50,6 +50,8 @@
   const catalogUrlInput = document.querySelector('#catalog-url');
   const loadCatalogButton = document.querySelector('#load-catalog');
   const catalogStatus = document.querySelector('#catalog-status');
+  const localTemplateFile = document.querySelector('#local-template-file');
+  const localTemplateDirectory = document.querySelector('#local-template-directory');
   const templateSearch = document.querySelector('#template-search');
   const templateOptions = document.querySelector('#template-options');
   const templateHost = document.querySelector('#template-host');
@@ -96,6 +98,7 @@
     });
   }
   function setCatalogTemplates(entries) {
+    for (const template of catalogTemplates) if (template.local && !entries.includes(template)) URL.revokeObjectURL(template.path);
     catalogTemplates = entries;
     templates.clear();
     for (const template of entries) templates.set(templateKey(template), template);
@@ -103,6 +106,29 @@
     templateOptions.replaceChildren(...entries.filter(template => `${templateDisplayName(template)} ${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(query)).map(template => {
       const option = document.createElement('option'); option.value = templateDisplayName(template); option.dataset.templateKey = templateKey(template); return option;
     }));
+  }
+  async function loadLocalTemplates(files) {
+    const entries = [];
+    const failures = [];
+    for (const file of files) {
+      if (!file.name.toLocaleLowerCase().endsWith('.html') || file.name.toLocaleLowerCase() === 'latest.html') continue;
+      try {
+        const html = await file.text();
+        const parsed = new DOMParser().parseFromString(html, 'text/html');
+        const uri = parsed.querySelector('meta[name="forms-as-code:template-id"]')?.content;
+        const version = parsed.querySelector('meta[name="forms-as-code:template-version"]')?.content;
+        const code = parsed.querySelector('meta[name="forms-as-code:form-code"]')?.content;
+        const title = parsed.title?.trim();
+        if (!uri || !version || !code || !title) throw new Error('required template metadata is missing');
+        const template = { uri, version, code, title, path: URL.createObjectURL(file), local: true };
+        validateTemplateDocument(parsed, template);
+        entries.push(template);
+      } catch (error) { failures.push(`${file.name}: ${error.message}`); }
+    }
+    if (entries.length) setCatalogTemplates(entries);
+    const message = `Loaded ${entries.length} local form${entries.length === 1 ? '' : 's'}${failures.length ? `; rejected ${failures.length}` : ''}.`;
+    catalogStatus.textContent = message;
+    setStatus(failures.length ? `${message} ${failures[0]}` : message);
   }
   async function loadCatalog(url = readCatalogUrl()) {
     let parsedUrl;
@@ -752,8 +778,10 @@
   async function fetchTemplate(template) {
     setStatus(`Fetching the ${template.title} HTML template…`);
     const url = new URL(template.path, document.baseURI);
-    if (url.origin !== window.location.origin) throw new Error('Template must be served from the forms-as-code app origin.');
-    const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+    let trustedCatalogOrigin = window.location.origin;
+    try { trustedCatalogOrigin = new URL(readCatalogUrl()).origin; } catch { /* Catalog URL validation reports malformed URLs. */ }
+    if (!template.local && url.origin !== window.location.origin && url.origin !== trustedCatalogOrigin) throw new Error('Template must be served from the selected catalog origin.');
+    const response = await fetch(url, { credentials: url.origin === window.location.origin ? 'same-origin' : 'omit', cache: 'no-store' });
     if (!response.ok) throw new Error(`Could not fetch the HTML template (${response.status}).`);
     const parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
     validateTemplateDocument(parsed, template);
@@ -895,7 +923,13 @@
   loadCatalog(initialCatalogUrl);
   catalogSource.addEventListener('change', () => {
     customCatalogFields.hidden = catalogSource.value !== 'custom';
-    if (catalogSource.value === 'hosted') {
+    if (catalogSource.value === 'local-file') {
+      catalogSource.value = initialCatalogUrl === DEFAULT_CATALOG_URL ? 'hosted' : 'custom';
+      localTemplateFile.click();
+    } else if (catalogSource.value === 'local-directory') {
+      catalogSource.value = initialCatalogUrl === DEFAULT_CATALOG_URL ? 'hosted' : 'custom';
+      localTemplateDirectory.click();
+    } else if (catalogSource.value === 'hosted') {
       catalogUrlInput.value = DEFAULT_CATALOG_URL;
       saveCatalogUrl(DEFAULT_CATALOG_URL);
       loadCatalog(DEFAULT_CATALOG_URL);
@@ -904,6 +938,14 @@
       catalogUrlInput.value = readCatalogUrl() === DEFAULT_CATALOG_URL ? '' : readCatalogUrl();
       catalogUrlInput.focus();
     }
+  });
+  localTemplateFile.addEventListener('change', async () => {
+    const files = [...localTemplateFile.files]; localTemplateFile.value = '';
+    if (files.length) await loadLocalTemplates(files);
+  });
+  localTemplateDirectory.addEventListener('change', async () => {
+    const files = [...localTemplateDirectory.files]; localTemplateDirectory.value = '';
+    if (files.length) await loadLocalTemplates(files);
   });
   loadCatalogButton.addEventListener('click', () => {
     const url = catalogSource.value === 'hosted' ? DEFAULT_CATALOG_URL : catalogUrlInput.value.trim();

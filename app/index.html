@@ -25,6 +25,8 @@
           <label for="catalog-source">Catalog
             <select id="catalog-source">
               <option value="hosted">Army form templates (hosted)</option>
+              <option value="local-file">Local template file</option>
+              <option value="local-directory">Local template directory</option>
               <option value="custom">Custom catalog</option>
             </select>
           </label>
@@ -35,6 +37,8 @@
             <button id="load-catalog" type="button">Load custom catalog</button>
           </div>
           <output id="catalog-status" role="status" aria-live="polite"></output>
+          <input id="local-template-file" type="file" accept="text/html,.html" hidden>
+          <input id="local-template-directory" type="file" accept="text/html,.html" webkitdirectory multiple hidden>
         </div>
       </details>
       <div class="launch-actions">
