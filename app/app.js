@@ -68,6 +68,11 @@
     if (formStatus) formStatus.textContent = message;
   }
   function templateKey(reference) { return `${reference?.uri}@${reference?.version}`; }
+  function templateDisplayName(template) {
+    const pathname = new URL(template.path, document.baseURI).pathname;
+    const match = pathname.match(/\/([^/]+)\/([^/]+)\.html$/i);
+    return match ? `${match[1].toUpperCase()} ${match[2].toUpperCase()} (${match[3].toUpperCase()})` : template.title;
+  }
   function catalogUrl() { return localStorage.getItem(CATALOG_URL_KEY) || DEFAULT_CATALOG_URL; }
   function catalogCacheKey(url) { return `${CATALOG_CACHE_PREFIX}${url}`; }
   function validateCatalog(catalog, url) {
@@ -84,8 +89,8 @@
     templates.clear();
     for (const template of entries) templates.set(templateKey(template), template);
     const query = templateSearch.value.trim().toLocaleLowerCase();
-    templateOptions.replaceChildren(...entries.filter(template => `${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(query)).map(template => {
-      const option = document.createElement('option'); option.value = `${template.title} (${template.code}, ${template.version})`; option.dataset.templateKey = templateKey(template); return option;
+    templateOptions.replaceChildren(...entries.filter(template => `${templateDisplayName(template)} ${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(query)).map(template => {
+      const option = document.createElement('option'); option.value = templateDisplayName(template); option.dataset.templateKey = templateKey(template); return option;
     }));
   }
   async function loadCatalog(url = catalogUrl()) {
@@ -823,12 +828,12 @@
   setCatalogTemplates([...templates.values()]);
   function selectedTemplate() {
     const value = templateSearch.value.trim();
-    return catalogTemplates.find(template => `${template.title} (${template.code}, ${template.version})` === value) || null;
+    return catalogTemplates.find(template => templateDisplayName(template) === value) || null;
   }
   templateSearch.addEventListener('input', () => {
     const query = templateSearch.value.trim().toLocaleLowerCase();
-    templateOptions.replaceChildren(...catalogTemplates.filter(template => `${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(query)).map(template => {
-      const option = document.createElement('option'); option.value = `${template.title} (${template.code}, ${template.version})`; option.dataset.templateKey = templateKey(template); return option;
+    templateOptions.replaceChildren(...catalogTemplates.filter(template => `${templateDisplayName(template)} ${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(query)).map(template => {
+      const option = document.createElement('option'); option.value = templateDisplayName(template); option.dataset.templateKey = templateKey(template); return option;
     }));
   });
   document.querySelector('#create-form').addEventListener('click', async () => {
