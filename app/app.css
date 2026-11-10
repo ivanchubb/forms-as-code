@@ -13,6 +13,8 @@ body { margin: 0; }
 .catalog-settings-fields { display: flex; align-items: end; gap: .75rem; margin-top: .6rem; }
 .catalog-settings-fields label, .launch-actions label { display: flex; flex-direction: column; gap: .25rem; }
 .catalog-settings input { min-width: min(42rem, 70vw); padding: .45rem; font: inherit; }
+.catalog-settings select { min-width: 16rem; padding: .45rem; font: inherit; }
+#catalog-status { align-self: center; min-width: 10rem; color: #33485b; }
 .launch-actions input { min-width: 22rem; padding: .45rem; font: inherit; }
 .app-panel button, .app-toolbar button, .choose-file { padding: .5rem .9rem; border: 1px solid #617386; border-radius: .25rem; color: #18344b; background: white; font: inherit; cursor: pointer; }
 .app-panel button:hover, .app-toolbar button:hover { background: #edf4fa; }
