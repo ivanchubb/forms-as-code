@@ -19,12 +19,15 @@
     <section id="launcher" class="app-panel" aria-labelledby="welcome-heading">
       <h1 id="welcome-heading">Open or start a form</h1>
       <p>Choose a template to start a blank submission, or open a forms-as-code JSON file. Data stays in this browser and is not uploaded. <a href="?submission=../examples/da-form-705-aft.json">Try the DA Form 705-AFT example data</a>.</p>
-      <div class="catalog-settings">
-        <label for="catalog-url">Template catalog URL
-          <input id="catalog-url" type="url" spellcheck="false">
-        </label>
-        <button id="load-catalog" type="button">Load catalog</button>
-      </div>
+      <details class="catalog-settings">
+        <summary>Template source</summary>
+        <div class="catalog-settings-fields">
+          <label for="catalog-url">Template catalog URL
+            <input id="catalog-url" type="url" spellcheck="false">
+          </label>
+          <button id="load-catalog" type="button">Load catalog</button>
+        </div>
+      </details>
       <div class="launch-actions">
         <label for="template-search">Search forms
           <input id="template-search" list="template-options" type="search" autocomplete="off" placeholder="Search by form name or number">
