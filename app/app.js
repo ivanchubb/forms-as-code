@@ -1,6 +1,9 @@
 /* forms-as-code's shared application: trusted HTML resolution, rendering, data, and bulk workflows. */
 (() => {
   const FORMAT_VERSION = '0.1.0';
+  const DEFAULT_CATALOG_URL = 'https://army-form-templates.s3.us-east-1.amazonaws.com/catalog.json';
+  const CATALOG_URL_KEY = 'forms-as-code:catalog-url';
+  const CATALOG_CACHE_PREFIX = 'forms-as-code:template-catalog:v1:';
   const EXAMPLE_ROW_MARKER = 'EXAMPLE - REPLACE OR DELETE';
   const templates = new Map([
     ['https://forms.example.org/forms-as-code/da-form-5304@2020-07.1', {
@@ -24,6 +27,9 @@
     ['https://forms.example.org/forms-as-code/da-form-2062@2023-12.3', {
       uri: 'https://forms.example.org/forms-as-code/da-form-2062', version: '2023-12.3', title: 'DA Form 2062', code: 'DA2062', path: '../../forms/da/2062/DEC2023.html'
     }],
+    ['https://forms.example.org/forms-as-code/da-form-4856@2023-03.1', {
+      uri: 'https://forms.example.org/forms-as-code/da-form-4856', version: '2023-03.1', title: 'DA Form 4856', code: 'DA4856', path: '../../forms/da/4856/MAR2023.html'
+    }],
     ['https://forms.example.org/forms-as-code/da-form-5121@2026-10.1', {
       uri: 'https://forms.example.org/forms-as-code/da-form-5121', version: '2026-10.1', title: 'DA Form 5121', code: 'DA5121', path: '../../forms/da/5121/OCT2026.html'
     }],
@@ -39,7 +45,10 @@
   ]);
   const launcher = document.querySelector('#launcher');
   const workspace = document.querySelector('#workspace');
-  const templatePicker = document.querySelector('#template-picker');
+  const catalogUrlInput = document.querySelector('#catalog-url');
+  const loadCatalogButton = document.querySelector('#load-catalog');
+  const templateSearch = document.querySelector('#template-search');
+  const templateOptions = document.querySelector('#template-options');
   const templateHost = document.querySelector('#template-host');
   const toolbar = document.querySelector('#app-toolbar');
   const notice = document.querySelector('#template-notice');
@@ -51,6 +60,7 @@
   let activeForm = null;
   let pendingWindow = null;
   let pendingSubmission = null;
+  let catalogTemplates = [];
 
   function setStatus(message) {
     appStatus.textContent = message;
@@ -58,6 +68,46 @@
     if (formStatus) formStatus.textContent = message;
   }
   function templateKey(reference) { return `${reference?.uri}@${reference?.version}`; }
+  function catalogUrl() { return localStorage.getItem(CATALOG_URL_KEY) || DEFAULT_CATALOG_URL; }
+  function catalogCacheKey(url) { return `${CATALOG_CACHE_PREFIX}${url}`; }
+  function validateCatalog(catalog, url) {
+    if (!catalog || catalog.formatVersion !== '1' || !Array.isArray(catalog.templates)) throw new Error('Invalid template catalog.');
+    return catalog.templates.map(template => {
+      if (!template || typeof template.uri !== 'string' || typeof template.version !== 'string' || typeof template.title !== 'string' || typeof template.code !== 'string' || typeof template.path !== 'string') throw new Error('Template catalog entry is incomplete.');
+      const path = new URL(template.path, url);
+      if (path.origin !== new URL(url).origin || path.username || path.password || !path.pathname.endsWith('.html')) throw new Error('Template catalog contains an unsafe path.');
+      return { ...template, path: path.href };
+    });
+  }
+  function setCatalogTemplates(entries) {
+    catalogTemplates = entries;
+    templates.clear();
+    for (const template of entries) templates.set(templateKey(template), template);
+    const query = templateSearch.value.trim().toLocaleLowerCase();
+    templateOptions.replaceChildren(...entries.filter(template => `${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(query)).map(template => {
+      const option = document.createElement('option'); option.value = `${template.title} (${template.code}, ${template.version})`; option.dataset.templateKey = templateKey(template); return option;
+    }));
+  }
+  async function loadCatalog(url = catalogUrl()) {
+    let parsedUrl;
+    try { parsedUrl = new URL(url); if (!['http:', 'https:'].includes(parsedUrl.protocol) || parsedUrl.username || parsedUrl.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); }
+    catch (error) { setStatus(`Could not load the template catalog: ${error.message}`); return; }
+    catalogUrlInput.value = parsedUrl.href;
+    const cached = localStorage.getItem(catalogCacheKey(parsedUrl.href));
+    if (cached) {
+      try { setCatalogTemplates(validateCatalog(JSON.parse(cached), parsedUrl.href)); setStatus(`Using ${catalogTemplates.length} cached templates.`); } catch { localStorage.removeItem(catalogCacheKey(parsedUrl.href)); }
+    }
+    try {
+      const response = await fetch(parsedUrl.href, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Catalog request failed (${response.status}).`);
+      const catalog = await response.json();
+      setCatalogTemplates(validateCatalog(catalog, parsedUrl.href));
+      localStorage.setItem(catalogCacheKey(parsedUrl.href), JSON.stringify(catalog));
+      setStatus(`Loaded ${catalogTemplates.length} templates.`);
+    } catch (error) {
+      if (!catalogTemplates.length) setStatus(`Could not load the template catalog: ${error.message}`);
+    }
+  }
   function resolveSubmission(submission) {
     if (!submission || typeof submission !== 'object') throw new Error('Submission must be a JSON object.');
     if (submission.formatVersion !== FORMAT_VERSION) throw new Error('Unsupported forms-as-code submission version.');
@@ -265,10 +315,14 @@
     function syncConditionalVisibility(data = collectData()) {
       for (const element of form.querySelectorAll('[data-forms-as-code-visible-when]')) {
         const hidden = !matchesVisibilityRule(element.dataset.formsAsCodeVisibleWhen, data);
+        const wasHidden = element.classList.contains('forms-as-code-hidden');
         element.classList.toggle('forms-as-code-hidden', hidden);
         if (hidden) for (const control of element.querySelectorAll('[data-forms-as-code]')) {
           if (control.type === 'checkbox' || control.type === 'radio') control.checked = false;
           else control.value = '';
+        }
+        else if (wasHidden) for (const control of element.querySelectorAll('[data-forms-as-code-default]')) {
+          if (!control.value) control.value = control.dataset.formsAsCodeDefault;
         }
       }
     }
@@ -320,6 +374,7 @@
       if (dateFormat === 'DD/MM/YYYY') return '31/01/2026';
       if (dateFormat === 'MM/DD/YYYY') return '01/31/2026';
       if (path === meta.namePath) return EXAMPLE_ROW_MARKER;
+      if (first.dataset.formsAsCodeRepeatCount) return '0';
       if (/initials/i.test(path)) return 'EX';
       if (/age/i.test(path)) return '30';
       if (/time/i.test(path)) return '12:34';
@@ -448,7 +503,7 @@
       saveBlob(new Blob([`${JSON.stringify(submission, null, 2)}\n`], { type: 'application/json' }), filenameFor(data));
       setStatus(locked ? 'Saved locked submission.' : 'Saved submission.');
     }
-    async function importCsv(file) {
+    async function readCsvData(file) {
       const records = parseCsv(await file.text());
       if (records.length < 2) throw new Error('CSV must include a header row and at least one filled row.');
       const headers = records[0];
@@ -463,21 +518,84 @@
       const submissionRows = rows.filter(({ row }) => row[referenceColumn]?.trim() !== EXAMPLE_ROW_MARKER);
       if (!submissionRows.length) throw new Error(referenceRows.length ? `CSV contains only the reference row marked “${EXAMPLE_ROW_MARKER}”. Replace its name or delete it, then add submission rows.` : 'CSV has no populated submission rows.');
       if (submissionRows.length > 1000) throw new Error('A bulk load may contain at most 1,000 populated rows.');
-      const files = []; const counts = new Map();
-      for (const { row, number } of submissionRows) {
+      return submissionRows.map(({ row, number }) => {
         try {
           if (row.length !== headers.length) throw new Error(`Expected ${headers.length} columns but found ${row.length}.`);
           const data = blankData();
           headers.forEach((path, column) => setAt(data, path, csvCell(row[column], groups.get(path), path)));
-          prepare(data, { allowPartial: false });
-          const name = safeName(getAt(data, meta.namePath));
-          const count = (counts.get(name) || 0) + 1; counts.set(name, count);
-          const submission = makeSubmission(data, false);
-          files.push({ name: filenameFor(data, count), content: `${JSON.stringify(submission, null, 2)}\n` });
+          return prepare(data, { allowPartial: false });
         } catch (error) { throw new Error(`CSV record ${number}: ${error.message}`); }
+      });
+    }
+    async function importCsv(file) {
+      const rows = await readCsvData(file);
+      const files = []; const counts = new Map();
+      for (const data of rows) {
+        const name = safeName(getAt(data, meta.namePath));
+        const count = (counts.get(name) || 0) + 1; counts.set(name, count);
+        const submission = makeSubmission(data, false);
+        files.push({ name: filenameFor(data, count), content: `${JSON.stringify(submission, null, 2)}\n` });
       }
       saveBlob(createZip(files), `${meta.code}-submissions.zip`);
       setStatus(`Validated ${files.length} rows and saved ${meta.code}-submissions.zip.`);
+    }
+    function printableClone() {
+      const source = templateHost.querySelector('.forms-as-code-template');
+      const clone = source.cloneNode(true);
+      const sourceControls = source.querySelectorAll('input, textarea, select');
+      const cloneControls = clone.querySelectorAll('input, textarea, select');
+      sourceControls.forEach((control, index) => {
+        const copy = cloneControls[index];
+        if (control instanceof HTMLInputElement) {
+          copy.value = control.value;
+          copy.setAttribute('value', control.value);
+          copy.checked = control.checked;
+          copy.toggleAttribute('checked', control.checked);
+        } else if (control instanceof HTMLTextAreaElement) {
+          copy.value = control.value;
+          copy.textContent = control.value;
+        } else {
+          [...copy.options].forEach((option, optionIndex) => {
+            option.selected = control.options[optionIndex].selected;
+            option.toggleAttribute('selected', option.selected);
+          });
+        }
+      });
+      return clone;
+    }
+    async function printCsv(file) {
+      const rows = await readCsvData(file);
+      const originalData = collectData();
+      const originalLocked = locked;
+      const batch = document.createElement('div');
+      batch.id = 'bulk-print-root';
+      batch.className = 'bulk-print-root';
+      batch.setAttribute('aria-hidden', 'true');
+      try {
+        for (let index = 0; index < rows.length; index++) {
+          populate(rows[index]);
+          const record = document.createElement('section');
+          record.className = 'bulk-print-record';
+          record.dataset.record = String(index + 1);
+          record.append(printableClone());
+          batch.append(record);
+          if ((index + 1) % 10 === 0) {
+            setStatus(`Preparing ${index + 1} of ${rows.length} forms for printing…`);
+            await new Promise(resolve => requestAnimationFrame(resolve));
+          }
+        }
+      } finally {
+        populate(originalData);
+        setLocked(originalLocked);
+      }
+      document.querySelector('#bulk-print-root')?.remove();
+      document.body.append(batch);
+      document.body.classList.add('is-bulk-printing');
+      setStatus(`Prepared ${rows.length} forms. Choose Save as PDF in the print dialog.`);
+      const cleanup = () => { batch.remove(); document.body.classList.remove('is-bulk-printing'); };
+      window.addEventListener('afterprint', cleanup, { once: true });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      window.print();
     }
     document.querySelector('#save-submission').addEventListener('click', () => {
       try { save(); } catch (error) { setStatus(`Could not save: ${error.message}`); }
@@ -500,6 +618,12 @@
       form.reset();
       for (const count of form.querySelectorAll('[data-forms-as-code-repeat-count]')) setRepeatCount(count.dataset.formsAsCodeRepeatCount, 0);
       setLocked(false); syncDerivedControls(); syncConditionalVisibility(); syncConditionalRequired(); setStatus('Started a blank submission.');
+    });
+    document.querySelector('#print-csv').addEventListener('click', () => document.querySelector('#print-csv-file').click());
+    document.querySelector('#print-csv-file').addEventListener('change', async event => {
+      const file = event.target.files?.[0]; event.target.value = '';
+      if (!file) return;
+      try { await printCsv(file); } catch (error) { setStatus(`Could not print CSV: ${error.message}`); }
     });
     document.querySelector('#print-form').addEventListener('click', () => window.print());
     form.addEventListener('input', () => { syncDerivedControls(); syncConditionalVisibility(); syncAutomaticRemarks(); syncConditionalRequired(); setStatus('Unsaved changes.'); });
@@ -656,6 +780,8 @@
       <button type="button" id="save-submission">Save</button>
       <button type="button" id="lock-submission">Lock fields</button>
       <button type="button" id="bulk-csv">Bulk CSV</button>
+      <button type="button" id="print-csv">Print CSV</button>
+      <input id="print-csv-file" type="file" accept="text/csv,.csv">
       <label class="button-label" for="load-submission">Load</label>
       <input id="load-submission" type="file" accept="application/json,.json,text/csv,.csv">
       <button type="button" id="print-form">Print</button><output id="form-status" aria-live="polite">Ready.</output>`;
@@ -694,11 +820,21 @@
     setStatus(`Opened ${template.title} from its same-origin JSON link.`);
   }
 
-  templatePicker.replaceChildren(...[...templates.values()].map(template => {
-    const option = document.createElement('option'); option.value = templateKey(template); option.textContent = template.title; return option;
-  }));
+  setCatalogTemplates([...templates.values()]);
+  function selectedTemplate() {
+    const value = templateSearch.value.trim();
+    const option = [...templateOptions.options].find(candidate => candidate.value === value);
+    return option ? templates.get(option.dataset.templateKey) : null;
+  }
+  templateSearch.addEventListener('input', () => {
+    const query = templateSearch.value.trim().toLocaleLowerCase();
+    templateOptions.replaceChildren(...catalogTemplates.filter(template => `${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(query)).map(template => {
+      const option = document.createElement('option'); option.value = `${template.title} (${template.code}, ${template.version})`; option.dataset.templateKey = templateKey(template); return option;
+    }));
+  });
   document.querySelector('#create-form').addEventListener('click', async () => {
-    const template = templates.get(templatePicker.value); if (!template) return;
+    const template = selectedTemplate();
+    if (!template) { setStatus('Choose a form from the search suggestions first.'); return; }
     try { await renderTemplate(template); setStatus(`Started a blank ${template.title} submission.`); }
     catch (error) { setStatus(`Could not start form: ${error.message}`); }
   });
@@ -726,6 +862,13 @@
         event.source.postMessage({ type: 'forms-as-code:submission-loaded', ok: true, submissionId }, event.origin);
       } catch (error) { event.source.postMessage({ type: 'forms-as-code:submission-loaded', ok: false, error: error.message, submissionId }, event.origin); }
     }
+  });
+  catalogUrlInput.value = catalogUrl();
+  loadCatalog();
+  loadCatalogButton.addEventListener('click', () => {
+    const url = catalogUrlInput.value.trim();
+    try { const parsed = new URL(url); if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); localStorage.setItem(CATALOG_URL_KEY, parsed.href); loadCatalog(parsed.href); }
+    catch (error) { setStatus(`Could not load the template catalog: ${error.message}`); }
   });
   const linked = new URLSearchParams(window.location.search).get('submission');
   if (linked) loadLinkedJson(linked).catch(error => setStatus(`Could not open linked submission: ${error.message}`));
