@@ -73,7 +73,15 @@
     const match = pathname.match(/\/([^/]+)\/([^/]+)\.html$/i);
     return match ? `${match[1].toUpperCase()} ${match[2].toUpperCase()} (${match[3].toUpperCase()})` : template.title;
   }
-  function catalogUrl() { return localStorage.getItem(CATALOG_URL_KEY) || DEFAULT_CATALOG_URL; }
+  function readCatalogUrl() {
+    const queryUrl = new URLSearchParams(window.location.search).get('catalog');
+    if (queryUrl) return queryUrl;
+    try { return localStorage.getItem(CATALOG_URL_KEY) || DEFAULT_CATALOG_URL; }
+    catch { return DEFAULT_CATALOG_URL; }
+  }
+  function saveCatalogUrl(url) {
+    try { localStorage.setItem(CATALOG_URL_KEY, url); } catch { /* Storage may be unavailable in private browsing. */ }
+  }
   function catalogCacheKey(url) { return `${CATALOG_CACHE_PREFIX}${url}`; }
   function validateCatalog(catalog, url) {
     if (!catalog || catalog.formatVersion !== '1' || !Array.isArray(catalog.templates)) throw new Error('Invalid template catalog.');
@@ -98,16 +106,17 @@
     try { parsedUrl = new URL(url); if (!['http:', 'https:'].includes(parsedUrl.protocol) || parsedUrl.username || parsedUrl.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); }
     catch (error) { setStatus(`Could not load the template catalog: ${error.message}`); return; }
     catalogUrlInput.value = parsedUrl.href;
-    const cached = localStorage.getItem(catalogCacheKey(parsedUrl.href));
+    let cached = null;
+    try { cached = localStorage.getItem(catalogCacheKey(parsedUrl.href)); } catch { /* Continue without a browser cache. */ }
     if (cached) {
-      try { setCatalogTemplates(validateCatalog(JSON.parse(cached), parsedUrl.href)); setStatus(`Using ${catalogTemplates.length} cached templates.`); } catch { localStorage.removeItem(catalogCacheKey(parsedUrl.href)); }
+      try { setCatalogTemplates(validateCatalog(JSON.parse(cached), parsedUrl.href)); setStatus(`Using ${catalogTemplates.length} cached templates.`); } catch { try { localStorage.removeItem(catalogCacheKey(parsedUrl.href)); } catch { /* Ignore unavailable storage. */ } }
     }
     try {
       const response = await fetch(parsedUrl.href, { cache: 'no-store' });
       if (!response.ok) throw new Error(`Catalog request failed (${response.status}).`);
       const catalog = await response.json();
       setCatalogTemplates(validateCatalog(catalog, parsedUrl.href));
-      localStorage.setItem(catalogCacheKey(parsedUrl.href), JSON.stringify(catalog));
+      try { localStorage.setItem(catalogCacheKey(parsedUrl.href), JSON.stringify(catalog)); } catch { /* Continue without a browser cache. */ }
       setStatus(`Loaded ${catalogTemplates.length} templates.`);
     } catch (error) {
       if (!catalogTemplates.length) setStatus(`Could not load the template catalog: ${error.message}`);
@@ -867,11 +876,11 @@
       } catch (error) { event.source.postMessage({ type: 'forms-as-code:submission-loaded', ok: false, error: error.message, submissionId }, event.origin); }
     }
   });
-  catalogUrlInput.value = catalogUrl();
-  loadCatalog();
+  catalogUrlInput.value = readCatalogUrl();
+  loadCatalog(catalogUrlInput.value);
   loadCatalogButton.addEventListener('click', () => {
     const url = catalogUrlInput.value.trim();
-    try { const parsed = new URL(url); if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); localStorage.setItem(CATALOG_URL_KEY, parsed.href); loadCatalog(parsed.href); }
+    try { const parsed = new URL(url); if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); saveCatalogUrl(parsed.href); loadCatalog(parsed.href); }
     catch (error) { setStatus(`Could not load the template catalog: ${error.message}`); }
   });
   const linked = new URLSearchParams(window.location.search).get('submission');
