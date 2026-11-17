@@ -140,12 +140,21 @@
   function catalogCacheKey(url) { return `${CATALOG_CACHE_PREFIX}${url}`; }
   function validateCatalog(catalog, url) {
     if (!catalog || catalog.formatVersion !== '1' || !Array.isArray(catalog.templates)) throw new Error('Invalid template catalog.');
-    return catalog.templates.map(template => {
-      if (!template || typeof template.uri !== 'string' || typeof template.version !== 'string' || typeof template.title !== 'string' || typeof template.edition !== 'string' || typeof template.code !== 'string' || typeof template.path !== 'string') throw new Error('Template catalog entry is incomplete.');
-      const path = new URL(template.path, url);
-      if (path.origin !== new URL(url).origin || path.username || path.password || !path.pathname.endsWith('.html')) throw new Error('Template catalog contains an unsafe path.');
-      return { ...template, path: path.href, catalogOrigin: new URL(url).origin };
+    const templates = [];
+    const warnings = [];
+    catalog.templates.forEach((template, index) => {
+      try {
+        if (!template || typeof template.uri !== 'string' || typeof template.version !== 'string' || typeof template.code !== 'string' || typeof template.path !== 'string') throw new Error('required identity metadata is missing');
+        const path = new URL(template.path, url);
+        if (path.origin !== new URL(url).origin || path.username || path.password || !path.pathname.toLocaleLowerCase().endsWith('.html')) throw new Error('template path is unsafe');
+        const titlePresent = typeof template.title === 'string' && template.title.trim();
+        const editionPresent = typeof template.edition === 'string' && template.edition.trim();
+        if (!titlePresent) warnings.push(`Entry ${index + 1} (${template.code}): title is missing`);
+        if (!editionPresent) warnings.push(`Entry ${index + 1} (${template.code}): edition is missing`);
+        templates.push({ ...template, title: titlePresent ? template.title.trim() : formDesignation(template.code), edition: editionPresent ? template.edition.trim() : '', path: path.href, catalogOrigin: new URL(url).origin, titleDeclared: Boolean(titlePresent), editionDeclared: Boolean(editionPresent) });
+      } catch (error) { warnings.push(`Entry ${index + 1}: ${error.message}`); }
     });
+    return { templates, warnings };
   }
   function setCatalogTemplates(entries) {
     catalogTemplates = entries;
@@ -163,12 +172,14 @@
   }
   function updateSourceSummary() {
     const failures = sources.filter(source => source.status === 'error');
+    const warnings = sources.filter(source => source.status === 'warning');
     const loading = sources.filter(source => source.status === 'loading');
     const remotes = sources.filter(source => source.type === 'remote');
     setTemplateSourceLabel(`${sources.length} source${sources.length === 1 ? '' : 's'}, ${catalogTemplates.length} forms`);
     if (loading.length) setSourceHealth('loading', `Loading and validating ${loading.length} template source${loading.length === 1 ? '' : 's'}.`);
     else if (failures.length && failures.length < sources.length) setSourceHealth('warning', `${sources.length - failures.length} source${sources.length - failures.length === 1 ? '' : 's'} loaded and ${failures.length} failed. ${failures.map(source => `${source.label}: ${source.message}`).join(' ')}`);
     else if (failures.length) setSourceHealth('error', `All ${failures.length} source${failures.length === 1 ? '' : 's'} failed. ${failures.map(source => `${source.label}: ${source.message}`).join(' ')}`);
+    else if (warnings.length) setSourceHealth('warning', `${warnings.length} source${warnings.length === 1 ? '' : 's'} loaded with warnings. ${warnings.map(source => `${source.label}: ${source.message}`).join(' ')}`);
     else if (remotes.length) setSourceHealth('healthy', `Connected to and validated ${remotes.length} remote catalog${remotes.length === 1 ? '' : 's'}. ${catalogTemplates.length} forms are available.`);
     else setSourceHealth('local', `${catalogTemplates.length} validated local forms are available. No network connection is required.`);
   }
@@ -226,10 +237,11 @@
     const uri = parsed.querySelector('meta[name="forms-as-code:template-id"]')?.content;
     const version = parsed.querySelector('meta[name="forms-as-code:template-version"]')?.content;
     const code = parsed.querySelector('meta[name="forms-as-code:form-code"]')?.content;
-    const title = parsed.querySelector('meta[name="forms-as-code:form-title"]')?.content;
-    const edition = parsed.querySelector('meta[name="forms-as-code:form-edition"]')?.content;
-    if (!uri || !version || !code || !title || !edition) throw new Error('required template metadata is missing');
-    const template = { uri, version, code, title, edition, path: URL.createObjectURL(new Blob([html], { type: 'text/html' })), local: true };
+    const declaredTitle = parsed.querySelector('meta[name="forms-as-code:form-title"]')?.content?.trim();
+    const declaredEdition = parsed.querySelector('meta[name="forms-as-code:form-edition"]')?.content?.trim();
+    if (!uri || !version || !code) throw new Error('required identity metadata is missing');
+    const documentTitle = parsed.title.trim().replace(/^.+?\s+Form\s+[^-]+\s+-\s+/i, '');
+    const template = { uri, version, code, title: declaredTitle || documentTitle || formDesignation(code), edition: declaredEdition || '', titleDeclared: Boolean(declaredTitle), editionDeclared: Boolean(declaredEdition), path: URL.createObjectURL(new Blob([html], { type: 'text/html' })), local: true };
     try { validateTemplateDocument(parsed, template); return template; }
     catch (error) { URL.revokeObjectURL(template.path); throw error; }
   }
@@ -245,7 +257,12 @@
       } catch (error) { failures.push(`${file.name}: ${error.message}`); }
     }
     const directory = files[0]?.webkitRelativePath?.split('/')[0] || 'Local directory';
-    const source = { id: sourceId(), type: 'local', label: directory, status: entries.length ? 'healthy' : 'error', message: failures[0] || 'No valid HTML templates found.', templates: entries };
+    const metadataWarnings = entries.filter(template => !template.titleDeclared || !template.editionDeclared).length;
+    const hasWarnings = failures.length || metadataWarnings;
+    const warningParts = [`${entries.length} forms`];
+    if (failures.length) warningParts.push(`${failures.length} invalid file${failures.length === 1 ? '' : 's'} skipped`);
+    if (metadataWarnings) warningParts.push(`${metadataWarnings} missing optional display metadata`);
+    const source = { id: sourceId(), type: 'local', label: directory, status: entries.length ? hasWarnings ? 'warning' : 'healthy' : 'error', message: entries.length ? warningParts.join('; ') : failures[0] || 'No valid HTML templates found.', templates: entries };
     sources.unshift(source); saveSources(); mergeSources();
     try { await localSourceRecord('put', { id: source.id, label: source.label, templates: storedTemplates }); }
     catch (error) { source.status = 'error'; source.message = `Loaded for this session, but could not save: ${error.message}`; mergeSources(); }
@@ -256,8 +273,15 @@
     try {
       const record = await localSourceRecord('get', source.id);
       if (!record?.templates?.length) throw new Error('Stored templates were not found. Choose the directory again.');
-      source.templates = record.templates.map(template => parseLocalTemplate(template.html));
-      source.status = 'healthy'; source.message = `${source.templates.length} forms`;
+      const failures = [];
+      source.templates = record.templates.flatMap(template => {
+        try { return [parseLocalTemplate(template.html)]; }
+        catch (error) { failures.push(`${template.name}: ${error.message}`); return []; }
+      });
+      const metadataWarnings = source.templates.filter(template => !template.titleDeclared || !template.editionDeclared).length;
+      if (!source.templates.length) throw new Error(failures[0] || 'No valid templates were restored.');
+      source.status = failures.length || metadataWarnings ? 'warning' : 'healthy';
+      source.message = `${source.templates.length} forms${failures.length ? `; ${failures.length} invalid skipped` : ''}${metadataWarnings ? `; ${metadataWarnings} missing optional display metadata` : ''}`;
     } catch (error) { source.status = 'error'; source.message = error.message; source.templates = []; }
     mergeSources();
   }
@@ -270,14 +294,17 @@
       const response = await fetch(source.url, { cache: 'no-store' });
       if (!response.ok) throw new Error(`Request failed (${response.status}).`);
       const catalog = await response.json();
-      source.templates = validateCatalog(catalog, source.url);
-      source.status = 'healthy'; source.message = `${source.templates.length} forms`;
+      const result = validateCatalog(catalog, source.url);
+      if (!result.templates.length) throw new Error(result.warnings[0] || 'Catalog contains no valid templates.');
+      source.templates = result.templates;
+      source.status = result.warnings.length ? 'warning' : 'healthy';
+      source.message = result.warnings.length ? `${source.templates.length} forms; ${result.warnings.length} warning${result.warnings.length === 1 ? '' : 's'}: ${result.warnings[0]}` : `${source.templates.length} forms`;
       try { localStorage.setItem(catalogCacheKey(source.url), JSON.stringify(catalog)); } catch { /* Continue without a browser cache. */ }
     } catch (error) {
       source.status = 'error'; source.message = error.message; source.templates = [];
       try {
         const cached = localStorage.getItem(catalogCacheKey(source.url));
-        if (cached) source.templates = validateCatalog(JSON.parse(cached), source.url);
+        if (cached) source.templates = validateCatalog(JSON.parse(cached), source.url).templates;
       } catch { /* Invalid or unavailable cache. */ }
     }
     mergeSources();
@@ -286,7 +313,8 @@
     renderSources(); updateSourceSummary();
     await Promise.all(sources.map(source => source.type === 'remote' ? loadRemoteSource(source) : restoreLocalSource(source)));
     const failures = sources.filter(source => source.status === 'error');
-    const message = failures.length ? `${failures.length} template source${failures.length === 1 ? '' : 's'} failed. Open settings for details.` : `Loaded ${catalogTemplates.length} forms from ${sources.length} source${sources.length === 1 ? '' : 's'}.`;
+    const warnings = sources.filter(source => source.status === 'warning');
+    const message = failures.length || warnings.length ? `Loaded ${catalogTemplates.length} forms with ${warnings.length} source warning${warnings.length === 1 ? '' : 's'} and ${failures.length} source failure${failures.length === 1 ? '' : 's'}. Open settings for details.` : `Loaded ${catalogTemplates.length} forms from ${sources.length} source${sources.length === 1 ? '' : 's'}.`;
     catalogStatus.textContent = message; setStatus(message);
   }
   function resolveSubmission(submission) {
@@ -918,10 +946,12 @@
   function validateTemplateDocument(parsed, expected) {
     const metadataMatches = parsed.querySelector('meta[name="forms-as-code:template-id"]')?.content === expected.uri
       && parsed.querySelector('meta[name="forms-as-code:template-version"]')?.content === expected.version
-      && parsed.querySelector('meta[name="forms-as-code:form-code"]')?.content === expected.code
-      && parsed.querySelector('meta[name="forms-as-code:form-title"]')?.content === expected.title
-      && parsed.querySelector('meta[name="forms-as-code:form-edition"]')?.content === expected.edition;
-    if (!metadataMatches) throw new Error('Template metadata does not match the trusted registry.');
+      && parsed.querySelector('meta[name="forms-as-code:form-code"]')?.content === expected.code;
+    if (!metadataMatches) throw new Error('Template identity metadata does not match the trusted registry.');
+    const declaredTitle = parsed.querySelector('meta[name="forms-as-code:form-title"]')?.content?.trim();
+    const declaredEdition = parsed.querySelector('meta[name="forms-as-code:form-edition"]')?.content?.trim();
+    if (expected.titleDeclared !== false && declaredTitle !== expected.title) throw new Error('Template title does not match the trusted registry.');
+    if (expected.editionDeclared !== false && declaredEdition !== expected.edition) throw new Error('Template edition does not match the trusted registry.');
     if (parsed.querySelector('script, iframe, object, embed, link[rel~="stylesheet"], img[src], audio[src], video[src]') || parsed.body.querySelector('[src]')) throw new Error('Template HTML cannot load executable code or external assets.');
     for (const element of parsed.querySelectorAll('*')) {
       for (const attribute of element.attributes) {

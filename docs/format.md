@@ -4,8 +4,12 @@ This is an exploratory contract, not a stable interoperability specification. Ex
 
 ## One app, one HTML template, one submission
 
-A form has one self-contained HTML file in the trusted forms repository, outside forms-as-code. It contains the form markup, template ID and version, form code, descriptive title, edition metadata, and `data-forms-as-code` bindings.
-The required metadata names are `forms-as-code:template-id`, `forms-as-code:template-version`, `forms-as-code:form-code`, `forms-as-code:form-title`, and `forms-as-code:form-edition`. Common styles are maintained canonically in forms-as-code and embedded into each portable template; data binding, CSV/ZIP workflows, and save/load behavior belong to the forms-as-code app. Templates contain no JavaScript and may not load external stylesheets or assets.
+A form has one self-contained HTML file in the trusted forms repository, outside forms-as-code.
+It contains the form markup, template identity metadata, optional descriptive display metadata, and `data-forms-as-code` bindings.
+The required identity metadata names are `forms-as-code:template-id`, `forms-as-code:template-version`, and `forms-as-code:form-code`.
+The recommended display metadata names are `forms-as-code:form-title` and `forms-as-code:form-edition`; missing values produce a warning and use a display fallback rather than preventing the form from loading.
+Common styles are maintained canonically in forms-as-code and embedded into each portable template; data binding, CSV/ZIP workflows, and save/load behavior belong to the forms-as-code app.
+Templates contain no JavaScript and may not load external stylesheets or assets.
 
 A submission is a JSON file containing a format version, unique ID, reference to the template ID and immutable version, a boolean `locked` state, and structured `data`. The app resolves that exact reference through its trusted allowlist and fetches only the corresponding HTML file. It never blindly fetches a URI supplied by untrusted JSON. The current allowlist is local and hard-coded.
 
