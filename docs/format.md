@@ -4,7 +4,8 @@ This is an exploratory contract, not a stable interoperability specification. Ex
 
 ## One app, one HTML template, one submission
 
-A form has one self-contained HTML file in the trusted forms repository, outside forms-as-code. It contains the form markup, its version and ID metadata, and `data-forms-as-code` bindings. Common styles are maintained canonically in forms-as-code and embedded into each portable template; data binding, CSV/ZIP workflows, and save/load behavior belong to the forms-as-code app. Templates contain no JavaScript and may not load external stylesheets or assets.
+A form has one self-contained HTML file in the trusted forms repository, outside forms-as-code. It contains the form markup, template ID and version, form code, descriptive title, edition metadata, and `data-forms-as-code` bindings.
+The required metadata names are `forms-as-code:template-id`, `forms-as-code:template-version`, `forms-as-code:form-code`, `forms-as-code:form-title`, and `forms-as-code:form-edition`. Common styles are maintained canonically in forms-as-code and embedded into each portable template; data binding, CSV/ZIP workflows, and save/load behavior belong to the forms-as-code app. Templates contain no JavaScript and may not load external stylesheets or assets.
 
 A submission is a JSON file containing a format version, unique ID, reference to the template ID and immutable version, a boolean `locked` state, and structured `data`. The app resolves that exact reference through its trusted allowlist and fetches only the corresponding HTML file. It never blindly fetches a URI supplied by untrusted JSON. The current allowlist is local and hard-coded.
 
@@ -38,7 +39,7 @@ The app generates CSV headers as dot-separated paths to nested JSON values and a
 The reference row is marked in the name field and ignored on import until that marker is replaced.
 The app validates all populated rows before creating a ZIP or combined print document.
 A combined print renders up to 1,000 records locally, separates records with page breaks, and uses the browser print dialog to save one PDF.
-The app does not upload CSV contents, but browser memory and print performance depend on the template and batch size.
+The app processes CSV contents in the browser and does not send them to a server, but browser memory and print performance depend on the template and batch size.
 Repeated groups and a fully normative CSV dialect remain open.
 
 ## Open decisions

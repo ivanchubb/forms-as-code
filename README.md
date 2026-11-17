@@ -78,7 +78,7 @@ The app validates every row, renders the records locally, and opens the browser 
 Choose **Save as PDF** to create one PDF containing all records, with a page break between records.
 Blank rows and the untouched example row are ignored.
 A batch may contain up to 1,000 records, although large or complex batches can require substantial browser memory.
-CSV contents remain in the browser and are not uploaded by this workflow.
+CSV contents are processed in the browser and are not sent to a server by this workflow.
 
 ## License
 

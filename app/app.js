@@ -3,58 +3,65 @@
   const FORMAT_VERSION = '0.1.0';
   const DEFAULT_CATALOG_URL = 'https://army-form-templates.s3.us-east-1.amazonaws.com/catalog.json';
   const CATALOG_URL_KEY = 'forms-as-code:catalog-url';
+  const SOURCES_KEY = 'forms-as-code:template-sources:v1';
+  const THEME_KEY = 'forms-as-code:theme';
+  const LOCAL_SOURCE_DB = 'forms-as-code-local-sources';
+  const LOCAL_SOURCE_STORE = 'sources';
   const CATALOG_CACHE_PREFIX = 'forms-as-code:template-catalog:v1:';
   const EXAMPLE_ROW_MARKER = 'EXAMPLE - REPLACE OR DELETE';
   const templates = new Map([
     ['https://forms.example.org/forms-as-code/da-form-5304@2020-07.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-5304', version: '2020-07.1', title: 'DA Form 5304', code: 'DA5304', path: '../../forms/da/5304/JUL2020.html'
+      uri: 'https://forms.example.org/forms-as-code/da-form-5304', version: '2020-07.1', title: 'Family Care Plan Counseling Checklist', edition: 'JUL 2020', code: 'DA5304', path: '../../forms/da/5304/JUL2020.html'
     }],
     ['https://forms.example.org/forms-as-code/da-form-1594@2019-12.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-1594', version: '2019-12.1', title: 'DA Form 1594', code: 'DA1594', path: '../../forms/da/1594/DEC2019.html'
+      uri: 'https://forms.example.org/forms-as-code/da-form-1594', version: '2019-12.1', title: "Daily Staff Journal or Duty Officer's Log", edition: 'DEC 2019', code: 'DA1594', path: '../../forms/da/1594/DEC2019.html'
     }],
     ['https://forms.example.org/forms-as-code/dd-form-1750@1970-09.1', {
-      uri: 'https://forms.example.org/forms-as-code/dd-form-1750', version: '1970-09.1', title: 'DD Form 1750', code: 'DD1750', path: '../../forms/dd/1750/SEP70-EG.html'
+      uri: 'https://forms.example.org/forms-as-code/dd-form-1750', version: '1970-09.1', title: 'Packing List', edition: 'SEP 70 (EG)', code: 'DD1750', path: '../../forms/dd/1750/SEP70-EG.html'
     }],
     ['https://forms.example.org/forms-as-code/da-form-31@2023-10.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-31', version: '2023-10.1', title: 'DA Form 31', code: 'DA31', path: '../../forms/da/31/OCT2023.html'
+      uri: 'https://forms.example.org/forms-as-code/da-form-31', version: '2023-10.1', title: 'Request and Authority for Leave', edition: 'OCT 2023', code: 'DA31', path: '../../forms/da/31/OCT2023.html'
     }],
     ['https://forms.example.org/forms-as-code/da-form-5960@2022-01.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-5960', version: '2022-01.1', title: 'DA Form 5960', code: 'DA5960', path: '../../forms/da/5960/OCT2026.html'
+      uri: 'https://forms.example.org/forms-as-code/da-form-5960', version: '2022-01.1', title: 'BAH Authorization and Dependency Declaration', edition: 'OCT 2026', code: 'DA5960', path: '../../forms/da/5960/OCT2026.html'
     }],
     ['https://forms.example.org/forms-as-code/da-form-705-aft@2026-04.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-705-aft', version: '2026-04.1', title: 'DA Form 705-AFT', code: 'DA705AFT', path: '../../forms/da/705-aft/APR2026.html'
+      uri: 'https://forms.example.org/forms-as-code/da-form-705-aft', version: '2026-04.1', title: 'Army Fitness Test Scorecard', edition: 'APR 2026', code: 'DA705AFT', path: '../../forms/da/705-aft/APR2026.html'
     }],
     ['https://forms.example.org/forms-as-code/da-form-2062@2023-12.3', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-2062', version: '2023-12.3', title: 'DA Form 2062', code: 'DA2062', path: '../../forms/da/2062/DEC2023.html'
+      uri: 'https://forms.example.org/forms-as-code/da-form-2062', version: '2023-12.3', title: 'Hand Receipt/Shortage Listing', edition: 'DEC 2023', code: 'DA2062', path: '../../forms/da/2062/DEC2023.html'
     }],
     ['https://forms.example.org/forms-as-code/da-form-4856@2023-03.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-4856', version: '2023-03.1', title: 'DA Form 4856', code: 'DA4856', path: '../../forms/da/4856/MAR2023.html'
+      uri: 'https://forms.example.org/forms-as-code/da-form-4856', version: '2023-03.1', title: 'Developmental Counseling Form', edition: 'MAR 2023', code: 'DA4856', path: '../../forms/da/4856/MAR2023.html'
     }],
     ['https://forms.example.org/forms-as-code/da-form-5121@2026-10.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-5121', version: '2026-10.1', title: 'DA Form 5121', code: 'DA5121', path: '../../forms/da/5121/OCT2026.html'
+      uri: 'https://forms.example.org/forms-as-code/da-form-5121', version: '2026-10.1', title: 'Overseas Tour Election Statement', edition: 'OCT 2026', code: 'DA5121', path: '../../forms/da/5121/OCT2026.html'
     }],
     ['https://forms.example.org/forms-as-code/da-form-260@2018-06.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-260', version: '2018-06.1', title: 'DA Form 260', code: 'DA260', path: '../../forms/da/260/JUN2018.html'
+      uri: 'https://forms.example.org/forms-as-code/da-form-260', version: '2018-06.1', title: 'Request for Publishing - DA Administrative Publications', edition: 'JUN 2018', code: 'DA260', path: '../../forms/da/260/JUN2018.html'
     }],
     ['https://forms.example.org/forms-as-code/da-form-2404@2026-08.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-2404', version: '2026-08.1', title: 'DA Form 2404', code: 'DA2404', path: '../../forms/da/2404/AUG2026.html'
+      uri: 'https://forms.example.org/forms-as-code/da-form-2404', version: '2026-08.1', title: 'Equipment Inspection and Maintenance Worksheet', edition: 'AUG 2026', code: 'DA2404', path: '../../forms/da/2404/AUG2026.html'
     }],
     ['https://forms.example.org/forms-as-code/da-form-5500@2026-07.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-5500', version: '2026-07.1', title: 'DA Form 5500', code: 'DA5500', path: '../../forms/da/5500/JUL2026.html'
+      uri: 'https://forms.example.org/forms-as-code/da-form-5500', version: '2026-07.1', title: 'Army Body Composition Screening and Assessment Worksheet', edition: 'JUL 2026', code: 'DA5500', path: '../../forms/da/5500/JUL2026.html'
     }]
   ]);
   const launcher = document.querySelector('#launcher');
   const workspace = document.querySelector('#workspace');
-  const templateSourceButton = document.querySelector('#template-source-button');
   const templateSourceLabel = document.querySelector('#template-source-label');
-  const templateSourceDialog = document.querySelector('#template-source-dialog');
-  const useHostedCatalogButton = document.querySelector('#use-hosted-catalog');
-  const chooseTemplateFileButton = document.querySelector('#choose-template-file');
-  const chooseTemplateDirectoryButton = document.querySelector('#choose-template-directory');
-  const catalogUrlInput = document.querySelector('#catalog-url');
-  const loadCatalogButton = document.querySelector('#load-catalog');
+  const sourceIndicator = document.querySelector('#source-indicator');
+  const settingsButton = document.querySelector('#settings-button');
+  const settingsPanel = document.querySelector('#settings-panel');
+  const closeSettingsButton = document.querySelector('#close-settings');
+  const sourceList = document.querySelector('#source-list');
+  const addRemoteSourceButton = document.querySelector('#add-remote-source');
+  const addLocalDirectoryButton = document.querySelector('#add-local-directory');
+  const remoteSourceForm = document.querySelector('#remote-source-form');
+  const newSourceUrl = document.querySelector('#new-source-url');
+  const cancelRemoteSourceButton = document.querySelector('#cancel-remote-source');
+  const themeToggle = document.querySelector('#theme-toggle');
   const catalogStatus = document.querySelector('#catalog-status');
-  const localTemplateFile = document.querySelector('#local-template-file');
   const localTemplateDirectory = document.querySelector('#local-template-directory');
   const templateSearch = document.querySelector('#template-search');
   const templateOptions = document.querySelector('#template-options');
@@ -70,105 +77,217 @@
   let pendingWindow = null;
   let pendingSubmission = null;
   let catalogTemplates = [];
+  let selectedTemplateKey = null;
+  let sources = [];
+  let draggedSourceId = null;
 
   function setStatus(message) {
     appStatus.textContent = message;
     const formStatus = document.querySelector('#form-status');
     if (formStatus) formStatus.textContent = message;
   }
-  function setTemplateSourceLabel(label, local = false) {
+  function setTemplateSourceLabel(label) {
     templateSourceLabel.textContent = label;
-    templateSourceButton.classList.toggle('is-local', local);
+  }
+  function setSourceHealth(state, message) {
+    sourceIndicator.className = `source-indicator is-${state}`;
+    sourceIndicator.title = message;
+    sourceIndicator.setAttribute('aria-label', message);
   }
   function templateKey(reference) { return `${reference?.uri}@${reference?.version}`; }
+  function formDesignation(code) {
+    const match = code.match(/^(DA|DD)(.+)$/i);
+    return match ? `${match[1].toUpperCase()} Form ${match[2].replace(/AFT$/i, '-AFT')}` : code;
+  }
   function templateDisplayName(template) {
-    const pathname = new URL(template.path, document.baseURI).pathname;
-    const match = pathname.match(/\/([^/]+)\/([^/]+)\.html$/i);
-    return match ? `${match[1].toUpperCase()} ${match[2].toUpperCase()} (${match[3].toUpperCase()})` : template.title;
+    return `${formDesignation(template.code)} - ${template.title}${template.edition ? ` (${template.edition})` : ''}`;
   }
-  function readCatalogUrl() {
+  function sourceId() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`; }
+  function readSources() {
     const queryUrl = new URLSearchParams(window.location.search).get('catalog');
-    if (queryUrl) return queryUrl;
-    try { return localStorage.getItem(CATALOG_URL_KEY) || DEFAULT_CATALOG_URL; }
-    catch { return DEFAULT_CATALOG_URL; }
+    if (queryUrl) return [{ id: sourceId(), type: 'remote', label: 'URL catalog', url: queryUrl, status: 'loading', templates: [] }];
+    try {
+      const saved = JSON.parse(localStorage.getItem(SOURCES_KEY));
+      if (Array.isArray(saved) && saved.length) return saved.filter(source => source && ['remote', 'local'].includes(source.type) && typeof source.id === 'string').map(source => ({ ...source, status: 'loading', templates: [] }));
+      const legacy = localStorage.getItem(CATALOG_URL_KEY);
+      if (legacy) return [{ id: sourceId(), type: 'remote', label: legacy === DEFAULT_CATALOG_URL ? 'Hosted catalog' : 'Remote catalog', url: legacy, status: 'loading', templates: [] }];
+    } catch { /* Use the default source when storage is unavailable or invalid. */ }
+    return [{ id: sourceId(), type: 'remote', label: 'Hosted catalog', url: DEFAULT_CATALOG_URL, status: 'loading', templates: [] }];
   }
-  function saveCatalogUrl(url) {
-    try { localStorage.setItem(CATALOG_URL_KEY, url); } catch { /* Storage may be unavailable in private browsing. */ }
+  function saveSources() {
+    const persistent = sources.map(({ id, type, label, url }) => ({ id, type, label, ...(type === 'remote' ? { url } : {}) }));
+    try { localStorage.setItem(SOURCES_KEY, JSON.stringify(persistent)); } catch { /* Storage may be unavailable in private browsing. */ }
+  }
+  function openLocalSourceDatabase() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(LOCAL_SOURCE_DB, 1);
+      request.onupgradeneeded = () => request.result.createObjectStore(LOCAL_SOURCE_STORE, { keyPath: 'id' });
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('Local template storage is unavailable.'));
+    });
+  }
+  async function localSourceRecord(method, value) {
+    const database = await openLocalSourceDatabase();
+    return new Promise((resolve, reject) => {
+      const transaction = database.transaction(LOCAL_SOURCE_STORE, method === 'get' ? 'readonly' : 'readwrite');
+      const store = transaction.objectStore(LOCAL_SOURCE_STORE);
+      const request = method === 'put' ? store.put(value) : method === 'delete' ? store.delete(value) : store.get(value);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('Could not access local template storage.'));
+      transaction.oncomplete = () => database.close();
+    });
   }
   function catalogCacheKey(url) { return `${CATALOG_CACHE_PREFIX}${url}`; }
   function validateCatalog(catalog, url) {
     if (!catalog || catalog.formatVersion !== '1' || !Array.isArray(catalog.templates)) throw new Error('Invalid template catalog.');
     return catalog.templates.map(template => {
-      if (!template || typeof template.uri !== 'string' || typeof template.version !== 'string' || typeof template.title !== 'string' || typeof template.code !== 'string' || typeof template.path !== 'string') throw new Error('Template catalog entry is incomplete.');
+      if (!template || typeof template.uri !== 'string' || typeof template.version !== 'string' || typeof template.title !== 'string' || typeof template.edition !== 'string' || typeof template.code !== 'string' || typeof template.path !== 'string') throw new Error('Template catalog entry is incomplete.');
       const path = new URL(template.path, url);
       if (path.origin !== new URL(url).origin || path.username || path.password || !path.pathname.endsWith('.html')) throw new Error('Template catalog contains an unsafe path.');
-      return { ...template, path: path.href };
+      return { ...template, path: path.href, catalogOrigin: new URL(url).origin };
     });
   }
   function setCatalogTemplates(entries) {
-    for (const template of catalogTemplates) if (template.local && !entries.includes(template)) URL.revokeObjectURL(template.path);
     catalogTemplates = entries;
     templates.clear();
     for (const template of entries) templates.set(templateKey(template), template);
-    const query = templateSearch.value.trim().toLocaleLowerCase();
-    templateOptions.replaceChildren(...entries.filter(template => `${templateDisplayName(template)} ${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(query)).map(template => {
-      const option = document.createElement('option'); option.value = templateDisplayName(template); option.label = template.title; return option;
+    selectedTemplateKey = null;
+    updateTemplateOptions();
+  }
+  function mergeSources() {
+    const merged = new Map();
+    for (const source of [...sources].reverse()) for (const template of source.templates || []) merged.set(templateKey(template), template);
+    setCatalogTemplates([...merged.values()]);
+    updateSourceSummary();
+    renderSources();
+  }
+  function updateSourceSummary() {
+    const failures = sources.filter(source => source.status === 'error');
+    const loading = sources.filter(source => source.status === 'loading');
+    const remotes = sources.filter(source => source.type === 'remote');
+    setTemplateSourceLabel(`${sources.length} source${sources.length === 1 ? '' : 's'}, ${catalogTemplates.length} forms`);
+    if (loading.length) setSourceHealth('loading', `Loading and validating ${loading.length} template source${loading.length === 1 ? '' : 's'}.`);
+    else if (failures.length && failures.length < sources.length) setSourceHealth('warning', `${sources.length - failures.length} source${sources.length - failures.length === 1 ? '' : 's'} loaded and ${failures.length} failed. ${failures.map(source => `${source.label}: ${source.message}`).join(' ')}`);
+    else if (failures.length) setSourceHealth('error', `All ${failures.length} source${failures.length === 1 ? '' : 's'} failed. ${failures.map(source => `${source.label}: ${source.message}`).join(' ')}`);
+    else if (remotes.length) setSourceHealth('healthy', `Connected to and validated ${remotes.length} remote catalog${remotes.length === 1 ? '' : 's'}. ${catalogTemplates.length} forms are available.`);
+    else setSourceHealth('local', `${catalogTemplates.length} validated local forms are available. No network connection is required.`);
+  }
+  function renderSources() {
+    sourceList.replaceChildren(...sources.map((source, index) => {
+      const row = document.createElement('div');
+      row.className = `source-row is-${source.status}`; row.draggable = true; row.dataset.sourceId = source.id;
+      const handle = document.createElement('span'); handle.className = 'drag-handle'; handle.textContent = '⋮⋮'; handle.title = 'Drag to change precedence';
+      const details = document.createElement('div'); details.className = 'source-details';
+      const name = document.createElement('strong'); name.textContent = `${index + 1}. ${source.label}`;
+      let address;
+      if (source.type === 'remote') {
+        address = document.createElement('input'); address.type = 'url'; address.value = source.url; address.setAttribute('aria-label', `${source.label} catalog URL`);
+        address.addEventListener('change', () => {
+          try {
+            const url = new URL(address.value.trim());
+            if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('URL must be public HTTP(S).');
+            source.url = url.href; source.label = url.href === DEFAULT_CATALOG_URL ? 'Hosted catalog' : url.hostname; saveSources(); loadRemoteSource(source);
+          } catch (error) { source.status = 'error'; source.message = error.message; mergeSources(); }
+        });
+      } else {
+        address = document.createElement('span'); address.textContent = `${source.label} - stored in this browser`;
+      }
+      const status = document.createElement('span'); status.className = 'source-status'; status.textContent = source.status === 'healthy' ? `${source.templates.length} forms` : source.message || source.status;
+      details.append(name, address, status);
+      const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Remove'; remove.addEventListener('click', () => removeSource(source.id));
+      row.append(handle, details, remove);
+      row.addEventListener('dragstart', () => { draggedSourceId = source.id; row.classList.add('is-dragging'); });
+      row.addEventListener('dragend', () => { draggedSourceId = null; row.classList.remove('is-dragging'); });
+      row.addEventListener('dragover', event => event.preventDefault());
+      row.addEventListener('drop', event => { event.preventDefault(); reorderSource(draggedSourceId, source.id); });
+      return row;
     }));
   }
-  async function loadLocalTemplates(files) {
+  function reorderSource(sourceIdToMove, beforeId) {
+    if (!sourceIdToMove || sourceIdToMove === beforeId) return;
+    const from = sources.findIndex(source => source.id === sourceIdToMove);
+    const to = sources.findIndex(source => source.id === beforeId);
+    if (from < 0 || to < 0) return;
+    const [source] = sources.splice(from, 1);
+    sources.splice(to, 0, source);
+    saveSources(); mergeSources();
+  }
+  async function removeSource(id) {
+    const source = sources.find(item => item.id === id);
+    if (source?.type === 'local') {
+      for (const template of source.templates) URL.revokeObjectURL(template.path);
+      try { await localSourceRecord('delete', id); } catch (error) { setStatus(`Removed the source, but could not clear its browser copy: ${error.message}`); }
+    }
+    sources = sources.filter(item => item.id !== id);
+    saveSources(); mergeSources();
+  }
+  function parseLocalTemplate(html) {
+    const parsed = new DOMParser().parseFromString(html, 'text/html');
+    const uri = parsed.querySelector('meta[name="forms-as-code:template-id"]')?.content;
+    const version = parsed.querySelector('meta[name="forms-as-code:template-version"]')?.content;
+    const code = parsed.querySelector('meta[name="forms-as-code:form-code"]')?.content;
+    const title = parsed.querySelector('meta[name="forms-as-code:form-title"]')?.content;
+    const edition = parsed.querySelector('meta[name="forms-as-code:form-edition"]')?.content;
+    if (!uri || !version || !code || !title || !edition) throw new Error('required template metadata is missing');
+    const template = { uri, version, code, title, edition, path: URL.createObjectURL(new Blob([html], { type: 'text/html' })), local: true };
+    try { validateTemplateDocument(parsed, template); return template; }
+    catch (error) { URL.revokeObjectURL(template.path); throw error; }
+  }
+  async function addLocalSource(files) {
     const entries = [];
+    const storedTemplates = [];
     const failures = [];
     for (const file of files) {
       if (!file.name.toLocaleLowerCase().endsWith('.html') || file.name.toLocaleLowerCase() === 'latest.html') continue;
       try {
         const html = await file.text();
-        const parsed = new DOMParser().parseFromString(html, 'text/html');
-        const uri = parsed.querySelector('meta[name="forms-as-code:template-id"]')?.content;
-        const version = parsed.querySelector('meta[name="forms-as-code:template-version"]')?.content;
-        const code = parsed.querySelector('meta[name="forms-as-code:form-code"]')?.content;
-        const title = parsed.title?.trim();
-        if (!uri || !version || !code || !title) throw new Error('required template metadata is missing');
-        const template = { uri, version, code, title, path: URL.createObjectURL(file), local: true };
-        validateTemplateDocument(parsed, template);
-        entries.push(template);
+        entries.push(parseLocalTemplate(html)); storedTemplates.push({ name: file.webkitRelativePath || file.name, html });
       } catch (error) { failures.push(`${file.name}: ${error.message}`); }
     }
-    if (entries.length) setCatalogTemplates(entries);
+    const directory = files[0]?.webkitRelativePath?.split('/')[0] || 'Local directory';
+    const source = { id: sourceId(), type: 'local', label: directory, status: entries.length ? 'healthy' : 'error', message: failures[0] || 'No valid HTML templates found.', templates: entries };
+    sources.unshift(source); saveSources(); mergeSources();
+    try { await localSourceRecord('put', { id: source.id, label: source.label, templates: storedTemplates }); }
+    catch (error) { source.status = 'error'; source.message = `Loaded for this session, but could not save: ${error.message}`; mergeSources(); }
     const message = `Loaded ${entries.length} local form${entries.length === 1 ? '' : 's'}${failures.length ? `; rejected ${failures.length}` : ''}.`;
-    if (entries.length) setTemplateSourceLabel(`Local templates (${entries.length})`, true);
-    catalogStatus.textContent = message;
-    setStatus(failures.length ? `${message} ${failures[0]}` : message);
+    catalogStatus.textContent = message; setStatus(message);
   }
-  async function loadCatalog(url = readCatalogUrl()) {
-    let parsedUrl;
-    try { parsedUrl = new URL(url); if (!['http:', 'https:'].includes(parsedUrl.protocol) || parsedUrl.username || parsedUrl.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); }
-    catch (error) { const message = `Could not load catalog: ${error.message}`; catalogStatus.textContent = message; setStatus(message); return; }
-    catalogUrlInput.value = parsedUrl.href;
-    loadCatalogButton.disabled = true;
-    catalogStatus.textContent = 'Loading catalog…';
-    setStatus(`Loading template catalog from ${parsedUrl.href}…`);
-    let cached = null;
-    try { cached = localStorage.getItem(catalogCacheKey(parsedUrl.href)); } catch { /* Continue without a browser cache. */ }
-    if (cached) {
-      try { setCatalogTemplates(validateCatalog(JSON.parse(cached), parsedUrl.href)); setStatus(`Using ${catalogTemplates.length} cached templates.`); } catch { try { localStorage.removeItem(catalogCacheKey(parsedUrl.href)); } catch { /* Ignore unavailable storage. */ } }
-    }
+  async function restoreLocalSource(source) {
     try {
-      const response = await fetch(parsedUrl.href, { cache: 'no-store' });
-      if (!response.ok) throw new Error(`Catalog request failed (${response.status}).`);
+      const record = await localSourceRecord('get', source.id);
+      if (!record?.templates?.length) throw new Error('Stored templates were not found. Choose the directory again.');
+      source.templates = record.templates.map(template => parseLocalTemplate(template.html));
+      source.status = 'healthy'; source.message = `${source.templates.length} forms`;
+    } catch (error) { source.status = 'error'; source.message = error.message; source.templates = []; }
+    mergeSources();
+  }
+  async function loadRemoteSource(source) {
+    source.status = 'loading'; source.message = 'Connecting and validating'; renderSources(); updateSourceSummary();
+    try {
+      const parsedUrl = new URL(source.url);
+      if (!['http:', 'https:'].includes(parsedUrl.protocol) || parsedUrl.username || parsedUrl.password) throw new Error('URL must be public HTTP(S).');
+      source.url = parsedUrl.href;
+      const response = await fetch(source.url, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Request failed (${response.status}).`);
       const catalog = await response.json();
-      setCatalogTemplates(validateCatalog(catalog, parsedUrl.href));
-      try { localStorage.setItem(catalogCacheKey(parsedUrl.href), JSON.stringify(catalog)); } catch { /* Continue without a browser cache. */ }
-      const message = `Loaded ${catalogTemplates.length} forms.`;
-      setTemplateSourceLabel(parsedUrl.href === DEFAULT_CATALOG_URL ? 'Hosted catalog' : 'Custom catalog');
-      catalogStatus.textContent = message;
-      setStatus(message);
+      source.templates = validateCatalog(catalog, source.url);
+      source.status = 'healthy'; source.message = `${source.templates.length} forms`;
+      try { localStorage.setItem(catalogCacheKey(source.url), JSON.stringify(catalog)); } catch { /* Continue without a browser cache. */ }
     } catch (error) {
-      const message = `Could not load catalog: ${error.message}. Existing forms were preserved.`;
-      catalogStatus.textContent = message;
-      setStatus(message);
-    } finally {
-      loadCatalogButton.disabled = false;
+      source.status = 'error'; source.message = error.message; source.templates = [];
+      try {
+        const cached = localStorage.getItem(catalogCacheKey(source.url));
+        if (cached) source.templates = validateCatalog(JSON.parse(cached), source.url);
+      } catch { /* Invalid or unavailable cache. */ }
     }
+    mergeSources();
+  }
+  async function loadSources() {
+    renderSources(); updateSourceSummary();
+    await Promise.all(sources.map(source => source.type === 'remote' ? loadRemoteSource(source) : restoreLocalSource(source)));
+    const failures = sources.filter(source => source.status === 'error');
+    const message = failures.length ? `${failures.length} template source${failures.length === 1 ? '' : 's'} failed. Open settings for details.` : `Loaded ${catalogTemplates.length} forms from ${sources.length} source${sources.length === 1 ? '' : 's'}.`;
+    catalogStatus.textContent = message; setStatus(message);
   }
   function resolveSubmission(submission) {
     if (!submission || typeof submission !== 'object') throw new Error('Submission must be a JSON object.');
@@ -786,11 +905,10 @@
   }
 
   async function fetchTemplate(template) {
-    setStatus(`Fetching the ${template.title} HTML template…`);
+    setStatus(`Fetching ${templateDisplayName(template)}…`);
     const url = new URL(template.path, document.baseURI);
-    let trustedCatalogOrigin = window.location.origin;
-    try { trustedCatalogOrigin = new URL(readCatalogUrl()).origin; } catch { /* Catalog URL validation reports malformed URLs. */ }
-    if (!template.local && url.origin !== window.location.origin && url.origin !== trustedCatalogOrigin) throw new Error('Template must be served from the selected catalog origin.');
+    const trustedCatalogOrigin = template.catalogOrigin || window.location.origin;
+    if (!template.local && url.origin !== window.location.origin && url.origin !== trustedCatalogOrigin) throw new Error('Template must be served from its catalog origin.');
     const response = await fetch(url, { credentials: url.origin === window.location.origin ? 'same-origin' : 'omit', cache: 'no-store' });
     if (!response.ok) throw new Error(`Could not fetch the HTML template (${response.status}).`);
     const parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
@@ -798,7 +916,12 @@
     return parsed;
   }
   function validateTemplateDocument(parsed, expected) {
-    if (parsed.querySelector('meta[name="forms-as-code:template-id"]')?.content !== expected.uri || parsed.querySelector('meta[name="forms-as-code:template-version"]')?.content !== expected.version) throw new Error('Template metadata does not match the trusted registry.');
+    const metadataMatches = parsed.querySelector('meta[name="forms-as-code:template-id"]')?.content === expected.uri
+      && parsed.querySelector('meta[name="forms-as-code:template-version"]')?.content === expected.version
+      && parsed.querySelector('meta[name="forms-as-code:form-code"]')?.content === expected.code
+      && parsed.querySelector('meta[name="forms-as-code:form-title"]')?.content === expected.title
+      && parsed.querySelector('meta[name="forms-as-code:form-edition"]')?.content === expected.edition;
+    if (!metadataMatches) throw new Error('Template metadata does not match the trusted registry.');
     if (parsed.querySelector('script, iframe, object, embed, link[rel~="stylesheet"], img[src], audio[src], video[src]') || parsed.body.querySelector('[src]')) throw new Error('Template HTML cannot load executable code or external assets.');
     for (const element of parsed.querySelectorAll('*')) {
       for (const attribute of element.attributes) {
@@ -825,7 +948,7 @@
       wrapper.append(document.importNode(node, true));
     }
     templateHost.append(wrapper);
-    document.title = `${template.title} — forms-as-code`;
+    document.title = `${templateDisplayName(template)} - forms-as-code`;
     notice.textContent = parsed.querySelector('meta[name="forms-as-code:notice"]')?.content || '';
     templateToolbar();
     const boundPaths = new Set([...wrapper.querySelectorAll('[data-forms-as-code]')].map(control => control.dataset.formsAsCode));
@@ -836,7 +959,6 @@
     activeForm = initializeForm(activeTemplate, { code, namePath, legacyPaths });
     document.querySelector('#load-submission').addEventListener('change', onWorkspaceFile);
     launcher.hidden = true; workspace.hidden = false;
-    document.querySelector('#change-template').hidden = false;
     return activeForm;
   }
   function templateToolbar() {
@@ -886,24 +1008,35 @@
 
   setCatalogTemplates([...templates.values()]);
   function selectedTemplate() {
-    const value = templateSearch.value.trim();
-    const exact = catalogTemplates.find(template => templateDisplayName(template).toLocaleLowerCase() === value.toLocaleLowerCase());
-    if (exact) return exact;
-    const matches = matchingTemplates(value);
+    if (selectedTemplateKey) return templates.get(selectedTemplateKey) || null;
+    const matches = matchingTemplates(templateSearch.value);
     return matches.length === 1 ? matches[0] : null;
   }
   function matchingTemplates(query) {
     const normalized = query.trim().toLocaleLowerCase();
     return catalogTemplates.filter(template => `${templateDisplayName(template)} ${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(normalized));
   }
-  templateSearch.addEventListener('input', () => {
-    templateOptions.replaceChildren(...matchingTemplates(templateSearch.value).map(template => {
-      const option = document.createElement('option'); option.value = templateDisplayName(template); option.label = template.title; return option;
+  function updateTemplateOptions() {
+    const matches = matchingTemplates(templateSearch.value);
+    templateOptions.replaceChildren(...matches.map(template => {
+      const option = document.createElement('button');
+      option.type = 'button'; option.role = 'option'; option.dataset.templateKey = templateKey(template);
+      option.textContent = templateDisplayName(template);
+      option.addEventListener('click', () => {
+        selectedTemplateKey = option.dataset.templateKey;
+        templateSearch.value = option.textContent;
+        templateOptions.hidden = true;
+        templateSearch.setAttribute('aria-expanded', 'false');
+      });
+      return option;
     }));
-  });
-  templateSearch.addEventListener('change', () => {
-    const template = selectedTemplate();
-    if (template) templateSearch.value = templateDisplayName(template);
+    templateOptions.hidden = !matches.length;
+    templateSearch.setAttribute('aria-expanded', String(matches.length > 0));
+  }
+  templateSearch.addEventListener('input', () => { selectedTemplateKey = null; updateTemplateOptions(); });
+  templateSearch.addEventListener('focus', updateTemplateOptions);
+  document.addEventListener('click', event => {
+    if (!event.target.closest('.form-search')) { templateOptions.hidden = true; templateSearch.setAttribute('aria-expanded', 'false'); }
   });
   document.querySelector('#create-form').addEventListener('click', async () => {
     const template = selectedTemplate();
@@ -911,7 +1044,6 @@
     try { await renderTemplate(template); setStatus(`Started a blank ${template.title} submission.`); }
     catch (error) { setStatus(`Could not start form: ${error.message}`); }
   });
-  document.querySelector('#change-template').addEventListener('click', () => { workspace.hidden = true; launcher.hidden = false; document.title = 'forms-as-code'; });
   submissionFile.addEventListener('change', async event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) await loadJsonFile(file); });
   dropZone.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); submissionFile.click(); } });
   for (const name of ['dragenter', 'dragover']) dropZone.addEventListener(name, event => { event.preventDefault(); dropZone.classList.add('drag-over'); });
@@ -924,7 +1056,7 @@
       pendingWindow.postMessage({ type: 'forms-as-code:load-submission', submission: pendingSubmission }, window.location.origin); return;
     }
     if (pendingWindow && event.source === pendingWindow && event.data?.type === 'forms-as-code:submission-loaded') {
-      setStatus(event.data.ok ? 'Opened submission in a new forms-as-code tab. Data was not uploaded.' : `Could not render submission: ${event.data.error}`);
+      setStatus(event.data.ok ? 'Loaded the submission in a new forms-as-code tab. The local file was not sent to a server.' : `Could not render submission: ${event.data.error}`);
       pendingWindow = null; pendingSubmission = null; return;
     }
     if (window.opener && event.source === window.opener && event.data?.type === 'forms-as-code:load-submission') {
@@ -936,29 +1068,47 @@
       } catch (error) { event.source.postMessage({ type: 'forms-as-code:submission-loaded', ok: false, error: error.message, submissionId }, event.origin); }
     }
   });
-  const initialCatalogUrl = readCatalogUrl();
-  catalogUrlInput.value = initialCatalogUrl === DEFAULT_CATALOG_URL ? '' : initialCatalogUrl;
-  loadCatalog(initialCatalogUrl);
-  templateSourceButton.addEventListener('click', () => templateSourceDialog.showModal());
-  useHostedCatalogButton.addEventListener('click', () => {
-    catalogUrlInput.value = '';
-    saveCatalogUrl(DEFAULT_CATALOG_URL);
-    loadCatalog(DEFAULT_CATALOG_URL);
+  function setTheme(theme) {
+    const selected = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = selected;
+    themeToggle.checked = selected === 'dark';
+    try { localStorage.setItem(THEME_KEY, selected); } catch { /* Storage may be unavailable. */ }
+  }
+  try { setTheme(localStorage.getItem(THEME_KEY) || 'light'); } catch { setTheme('light'); }
+  themeToggle.addEventListener('change', () => setTheme(themeToggle.checked ? 'dark' : 'light'));
+  sources = readSources();
+  loadSources();
+  function openSettings() {
+    settingsPanel.hidden = false;
+    document.body.classList.add('has-modal');
+    settingsButton.setAttribute('aria-expanded', 'true');
+    closeSettingsButton.focus();
+  }
+  function closeSettings() {
+    settingsPanel.hidden = true;
+    document.body.classList.remove('has-modal');
+    settingsButton.setAttribute('aria-expanded', 'false');
+    settingsButton.focus();
+  }
+  settingsButton.addEventListener('click', openSettings);
+  closeSettingsButton.addEventListener('click', closeSettings);
+  settingsPanel.addEventListener('click', event => { if (event.target === settingsPanel) closeSettings(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && !settingsPanel.hidden) closeSettings(); });
+  addRemoteSourceButton.addEventListener('click', () => { remoteSourceForm.hidden = false; newSourceUrl.focus(); });
+  cancelRemoteSourceButton.addEventListener('click', () => { remoteSourceForm.hidden = true; newSourceUrl.value = ''; });
+  remoteSourceForm.addEventListener('submit', event => {
+    event.preventDefault();
+    try {
+      const url = new URL(newSourceUrl.value.trim());
+      if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('URL must be public HTTP(S).');
+      const source = { id: sourceId(), type: 'remote', label: url.hostname, url: url.href, status: 'loading', templates: [] };
+      sources.unshift(source); saveSources(); remoteSourceForm.hidden = true; newSourceUrl.value = ''; loadRemoteSource(source);
+    } catch (error) { const message = `Could not add source: ${error.message}`; catalogStatus.textContent = message; setStatus(message); }
   });
-  chooseTemplateFileButton.addEventListener('click', () => localTemplateFile.click());
-  chooseTemplateDirectoryButton.addEventListener('click', () => localTemplateDirectory.click());
-  localTemplateFile.addEventListener('change', async () => {
-    const files = [...localTemplateFile.files]; localTemplateFile.value = '';
-    if (files.length) await loadLocalTemplates(files);
-  });
+  addLocalDirectoryButton.addEventListener('click', () => localTemplateDirectory.click());
   localTemplateDirectory.addEventListener('change', async () => {
     const files = [...localTemplateDirectory.files]; localTemplateDirectory.value = '';
-    if (files.length) await loadLocalTemplates(files);
-  });
-  loadCatalogButton.addEventListener('click', () => {
-    const url = catalogUrlInput.value.trim();
-    try { const parsed = new URL(url); if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('Catalog URL must be a public HTTP(S) URL.'); saveCatalogUrl(parsed.href); catalogUrlInput.value = parsed.href; loadCatalog(parsed.href); }
-    catch (error) { const message = `Could not load catalog: ${error.message}`; catalogStatus.textContent = message; setStatus(message); }
+    if (files.length) await addLocalSource(files);
   });
   const linked = new URLSearchParams(window.location.search).get('submission');
   if (linked) loadLinkedJson(linked).catch(error => setStatus(`Could not open linked submission: ${error.message}`));
