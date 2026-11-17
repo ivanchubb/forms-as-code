@@ -38,12 +38,26 @@ If a field's meaning, valid values, or conditional requirements cannot be establ
 
 ## 3. Create one HTML template and one JSON example
 
-- Add the versioned template under `../forms/<form-family>/<form-number>/<edition>.html`: one self-contained HTML file containing accessible form markup, embedded form-specific presentation CSS, template ID/version metadata, and controls bound through the app's current binding attribute.
-- Add `examples/<form-slug>.json`: one synthetic submission using the current envelope. Never use personal data copied from a completed form.
+- Add the versioned template under `../forms/<form-family>/<form-number>/<edition>.html` as one immutable, self-contained HTML file with accessible markup, embedded form-specific CSS, metadata, and bound controls.
+- Include non-empty `forms-as-code:template-id`, `forms-as-code:template-version`, `forms-as-code:form-code`, `forms-as-code:form-title`, and `forms-as-code:form-edition` meta elements plus a `<title>` formatted as `<form designation> - <form title>`.
+- Keep `template-id` stable across editions of the same logical form and treat it as an identifier rather than a retrieval URL.
+- Change `template-version` whenever the published template artifact changes.
+- Use a compact `form-code` such as `DA2404` or `DD1750`, a descriptive title without the designator or edition, and an edition such as `AUG 2026`.
+- Include one `<form data-forms-as-code-form>` container and bind submitted controls with stable `data-forms-as-code="path.to.value"` paths.
+- Add `examples/<form-slug>.json` only when an example is useful, and always use conspicuously synthetic data rather than personal data copied from a completed form.
 - Add form provenance, field mapping and adaptations, privacy warning, limitations, and verification status to the template directory's `README.md`.
-- Register the trusted template ID/version and local HTML path in `app/app.js`. The app fetches only this HTML file when rendering a submission. It must not trust a URI or execute code from the submission.
-- Do not add a per-form manifest, JSON Schema, stylesheet, runtime script, or bulk helper. Common styling and workflows belong to forms-as-code. Templates must not load scripts, external stylesheets, or other assets. Keep calculations and conditional rules in native HTML constraints and declarative data attributes supported by the app; if a needed behavior is unsupported, extend the shared app rather than adding template-specific JavaScript.
-- Document that the HTML conversion is unofficial unless formally approved. Keep the form notice and app-level limitations clear.
+- Rely on the generated catalog for remote discovery instead of adding a form-specific hard-coded registry entry unless a built-in offline fallback is explicitly required.
+- The app fetches only validated catalog paths from their catalog origin and must not trust a retrieval URI supplied by submission JSON.
+- Do not add a per-form manifest, JSON Schema, stylesheet, runtime script, or bulk helper.
+- Common styling and workflows belong to forms-as-code.
+- Templates must not load scripts, external stylesheets, external images/media, CSS imports, CSS `url(...)` resources, or other external assets.
+- Keep calculations and conditional rules in native HTML constraints and declarative data attributes supported by the app; if a needed behavior is unsupported, extend the shared app rather than adding template-specific JavaScript.
+- Document that the HTML conversion is unofficial unless formally approved.
+- Keep the form notice and app-level limitations clear.
+
+The browser isolates invalid files so one malformed template does not block valid siblings.
+It can warn and fall back when third-party templates omit `form-title` or `form-edition`, but the canonical `forms` catalog generator intentionally requires both fields and `<title>` before publication.
+Missing identity metadata, mismatched identity values, unsafe markup, or a missing marked form makes that individual template unusable.
 
 Use current envelope fields: `formatVersion`, unique `id`, `createdAt`, `template.uri`, `template.version`, required boolean `locked`, and `data`. New submissions start with `locked: false`. If `locked` is true, compatible forms-as-code clients must make bound fields read-only. This is only an application instruction until cryptographic integrity/signing is implemented.
 
@@ -85,7 +99,10 @@ Run checks appropriate to the repo and report their limits:
 
 - parse every JSON file and validate example submissions against the envelope format and the selected template's bindings;
 - `node --check` all JavaScript;
-- parse HTML and verify app asset references resolve, while templates contain no scripts or external asset references;
+- run `python3 scripts/build_catalog.py` from the `forms` repository and inspect the generated entry for the intended URI, version, title, edition, code, and path;
+- parse HTML and verify all five canonical metadata values and `<title>` are non-empty and consistent;
+- verify the marked form and bindings exist while templates contain no scripts, event handlers, unsafe links, CSS-loaded resources, or external asset references;
+- test fault isolation with one malformed sibling template and confirm valid templates remain available with a source warning;
 - test CSV quoting, multiline cells, BOM, header validation, row errors, and blank rows;
 - test ZIP integrity with `unzip -t` and inspect entry names/content;
 - verify radio/checkbox/select load and save round trips, sparse/partially filled JSON draft restoration, locked submissions read-only behavior, and the new-tab handshake;

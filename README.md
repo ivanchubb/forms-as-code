@@ -8,17 +8,20 @@ forms-as-code is an open-source experiment in data-first forms. A form's present
 
 ## Repository status
 
-Early scaffold. The submission format is a draft; the local forms-as-code app supports only the DA Form 5960 and DA Form 705-AFT templates. There is not yet a production-grade renderer, signing implementation, or compatibility guarantee. See [`docs/format.md`](docs/format.md) for the current model and open design questions.
+The submission format remains a draft without a compatibility guarantee.
+The static browser app discovers templates through ordered remote catalogs and browser-local sources, and supports editing, validation, save/load, bulk CSV/ZIP, and printing.
+There is not yet a signing implementation or production interoperability guarantee.
+See [`docs/format.md`](docs/format.md) for the current contract and open design questions.
 
 ## What's here
 
-- [`.agents/skills/pdf-to-forms-as-code/SKILL.md`](.agents/skills/pdf-to-forms-as-code/SKILL.md) — repeatable workflow for adding one HTML template and one JSON example from a supplied PDF.
-- [`assets/forms-as-code-base.css`](assets/forms-as-code-base.css) — common presentation styles loaded by the app.
+- [`.agents/skills/pdf-to-forms-as-code/SKILL.md`](.agents/skills/pdf-to-forms-as-code/SKILL.md) - repeatable workflow for adding one HTML template and one JSON example from a supplied PDF.
+- [`assets/forms-as-code-base.css`](assets/forms-as-code-base.css) - common presentation styles loaded by the app.
 - [`app/`](app/) - the single forms-as-code application: trusted HTML resolution, shared styling, data binding, validation, Save/Load/Lock, CSV, ZIP, and combined print workflows.
-- The trusted Army form templates are maintained in the sibling [`../forms/`](../forms/) repository and loaded by URI/path through the app allowlist; forms-as-code does not store form templates.
-- [`examples/da-form-5960.json`](examples/da-form-5960.json) and [`examples/da-form-705-aft.json`](examples/da-form-705-aft.json) — synthetic forms-as-code submission examples.
-- [`spec/submission.schema.json`](spec/submission.schema.json) — draft JSON Schema for a forms-as-code submission envelope.
-- [`docs/forms/`](docs/forms/) — source notes, conversion adaptations, and limitations for the two Army form examples.
+- The trusted Army form templates are maintained in the sibling [`../forms/`](../forms/) repository and discovered through its published catalog; forms-as-code does not store canonical form templates.
+- [`examples/da-form-5960.json`](examples/da-form-5960.json) and [`examples/da-form-705-aft.json`](examples/da-form-705-aft.json) - synthetic forms-as-code submission examples.
+- [`spec/submission.schema.json`](spec/submission.schema.json) - draft JSON Schema for a forms-as-code submission envelope.
+- [`docs/forms/`](docs/forms/) - source notes, conversion adaptations, and limitations for the two Army form examples.
 
 ## Core idea
 
@@ -47,7 +50,19 @@ flowchart LR
   Submission -->|JSON only| Receive
 ```
 
-Each form is one versioned HTML file with its presentation markup, metadata, and `data-forms-as-code` bindings in the sibling `forms` repository. forms-as-code stores only the trusted URI/path registry and application logic. When opening a submission, the app resolves the template ID/version through a trusted allowlist and fetches only that HTML file; the template cannot load arbitrary scripts, stylesheets, or assets. The JSON submission carries its template reference and answers, not a duplicate of the presentation.
+Each form is one versioned HTML file with presentation markup, metadata, and `data-forms-as-code` bindings in the sibling `forms` repository.
+When opening a submission, the app resolves the template ID and version through its validated sources and fetches only the catalog-approved HTML path from the catalog's origin.
+The template cannot load arbitrary scripts, stylesheets, or assets.
+The JSON submission carries its template reference and answers, not a duplicate of the presentation.
+
+## Creating a form template
+
+Read the complete [template authoring contract](docs/format.md#template-authoring-contract) before adding a form.
+At minimum, a loadable template needs non-empty `template-id`, `template-version`, and `form-code` metadata, a `<form data-forms-as-code-form>` container, and bound controls.
+Authors should also provide `form-title`, `form-edition`, and a consistent document title.
+Missing display metadata produces a warning and fallback display, while missing identity metadata makes only that template unusable.
+Templates must be self-contained and cannot contain scripts or load external assets.
+The canonical `forms` repository applies stricter publication checks and requires all five metadata fields plus `<title>`.
 
 ## Development
 
