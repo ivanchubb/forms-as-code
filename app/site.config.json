@@ -1,0 +1,12 @@
+{
+  "siteName": "forms-as-code",
+  "tagline": "Portable form data, rendered with its versioned HTML template.",
+  "footer": "Local prototype. Template HTML is resolved from configured trusted catalogs; arbitrary template URIs are never fetched.",
+  "favicon": "./branding/favicon.svg",
+  "catalogs": [
+    {
+      "label": "army-form-templates",
+      "url": "https://army-form-templates.s3.us-east-1.amazonaws.com/catalog.json"
+    }
+  ]
+}

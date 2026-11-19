@@ -1,4 +1,10 @@
 #!/bin/sh
 set -eu
-cd "$(dirname "$0")/.."
-exec python3 -m http.server "${PORT:-8000}" --bind 127.0.0.1
+
+if [ "$#" -gt 1 ]; then
+  echo "Usage: $0 [config.json]" >&2
+  exit 2
+fi
+
+config=${1:-"$(dirname "$0")/app/site.config.json"}
+exec python3 "$(dirname "$0")/scripts/serve.py" "$config" --port "${PORT:-8000}"

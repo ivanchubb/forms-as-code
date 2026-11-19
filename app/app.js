@@ -1,7 +1,13 @@
 /* forms-as-code's shared application: trusted HTML resolution, rendering, data, and bulk workflows. */
 (() => {
   const FORMAT_VERSION = '0.1.0';
-  const DEFAULT_CATALOG_URL = 'https://army-form-templates.s3.us-east-1.amazonaws.com/catalog.json';
+  const FALLBACK_CONFIG = {
+    siteName: 'forms-as-code',
+    tagline: 'Portable form data, rendered with its versioned HTML template.',
+    footer: "Local prototype. Template HTML is resolved from configured trusted catalogs; arbitrary template URIs are never fetched.",
+    favicon: './branding/favicon.svg',
+    catalogs: [{ label: 'army-form-templates', url: 'https://army-form-templates.s3.us-east-1.amazonaws.com/catalog.json' }]
+  };
   const CATALOG_URL_KEY = 'forms-as-code:catalog-url';
   const SOURCES_KEY = 'forms-as-code:template-sources:v1';
   const THEME_KEY = 'forms-as-code:theme';
@@ -9,44 +15,7 @@
   const LOCAL_SOURCE_STORE = 'sources';
   const CATALOG_CACHE_PREFIX = 'forms-as-code:template-catalog:v1:';
   const EXAMPLE_ROW_MARKER = 'EXAMPLE - REPLACE OR DELETE';
-  const templates = new Map([
-    ['https://forms.example.org/forms-as-code/da-form-5304@2020-07.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-5304', version: '2020-07.1', title: 'Family Care Plan Counseling Checklist', edition: 'JUL 2020', code: 'DA5304', path: '../../forms/da/5304/JUL2020.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-1594@2019-12.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-1594', version: '2019-12.1', title: "Daily Staff Journal or Duty Officer's Log", edition: 'DEC 2019', code: 'DA1594', path: '../../forms/da/1594/DEC2019.html'
-    }],
-    ['https://forms.example.org/forms-as-code/dd-form-1750@1970-09.1', {
-      uri: 'https://forms.example.org/forms-as-code/dd-form-1750', version: '1970-09.1', title: 'Packing List', edition: 'SEP 70 (EG)', code: 'DD1750', path: '../../forms/dd/1750/SEP70-EG.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-31@2023-10.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-31', version: '2023-10.1', title: 'Request and Authority for Leave', edition: 'OCT 2023', code: 'DA31', path: '../../forms/da/31/OCT2023.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-5960@2022-01.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-5960', version: '2022-01.1', title: 'BAH Authorization and Dependency Declaration', edition: 'OCT 2026', code: 'DA5960', path: '../../forms/da/5960/OCT2026.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-705-aft@2026-04.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-705-aft', version: '2026-04.1', title: 'Army Fitness Test Scorecard', edition: 'APR 2026', code: 'DA705AFT', path: '../../forms/da/705-aft/APR2026.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-2062@2023-12.3', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-2062', version: '2023-12.3', title: 'Hand Receipt/Shortage Listing', edition: 'DEC 2023', code: 'DA2062', path: '../../forms/da/2062/DEC2023.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-4856@2023-03.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-4856', version: '2023-03.1', title: 'Developmental Counseling Form', edition: 'MAR 2023', code: 'DA4856', path: '../../forms/da/4856/MAR2023.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-5121@2026-10.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-5121', version: '2026-10.1', title: 'Overseas Tour Election Statement', edition: 'OCT 2026', code: 'DA5121', path: '../../forms/da/5121/OCT2026.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-260@2018-06.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-260', version: '2018-06.1', title: 'Request for Publishing - DA Administrative Publications', edition: 'JUN 2018', code: 'DA260', path: '../../forms/da/260/JUN2018.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-2404@2026-08.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-2404', version: '2026-08.1', title: 'Equipment Inspection and Maintenance Worksheet', edition: 'AUG 2026', code: 'DA2404', path: '../../forms/da/2404/AUG2026.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-5500@2026-07.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-5500', version: '2026-07.1', title: 'Army Body Composition Screening and Assessment Worksheet', edition: 'JUL 2026', code: 'DA5500', path: '../../forms/da/5500/JUL2026.html'
-    }]
-  ]);
+  const templates = new Map();
   const launcher = document.querySelector('#launcher');
   const workspace = document.querySelector('#workspace');
   const templateSourceLabel = document.querySelector('#template-source-label');
@@ -71,6 +40,10 @@
   const appStatus = document.querySelector('#app-status');
   const submissionFile = document.querySelector('#submission-file');
   const dropZone = document.querySelector('#drop-zone');
+  const siteName = document.querySelector('#site-name');
+  const siteTagline = document.querySelector('#site-tagline');
+  const siteFooter = document.querySelector('#site-footer');
+  const siteFavicon = document.querySelector('#site-favicon');
   const encoder = new TextEncoder();
   let activeTemplate = null;
   let activeForm = null;
@@ -79,6 +52,7 @@
   let catalogTemplates = [];
   let selectedTemplateKey = null;
   let sources = [];
+  let siteConfig = FALLBACK_CONFIG;
   let draggedSourceId = null;
 
   function setStatus(message) {
@@ -103,6 +77,50 @@
     return `${formDesignation(template.code)} - ${template.title}${template.edition ? ` (${template.edition})` : ''}`;
   }
   function sourceId() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`; }
+  function remoteSource(catalog, index) {
+    const url = new URL(catalog.url, document.baseURI);
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error(`Catalog ${index + 1} must use a public HTTP(S) URL.`);
+    return { id: sourceId(), type: 'remote', label: typeof catalog.label === 'string' && catalog.label.trim() ? catalog.label.trim() : url.hostname, url: url.href, status: 'loading', templates: [] };
+  }
+  function configuredSources() {
+    if (!Array.isArray(siteConfig.catalogs) || !siteConfig.catalogs.length) throw new Error('site.config.json must define at least one catalog.');
+    return siteConfig.catalogs.map(remoteSource);
+  }
+  async function loadSiteConfig() {
+    try {
+      const response = await fetch('./site.config.json', { credentials: 'same-origin', cache: 'no-cache' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const config = await response.json();
+      if (!config || typeof config !== 'object' || Array.isArray(config)) throw new Error('Configuration must be a JSON object.');
+      siteConfig = { ...FALLBACK_CONFIG, ...config };
+      configuredSources();
+    } catch (error) {
+      siteConfig = FALLBACK_CONFIG;
+      console.warn(`Could not load site.config.json; using built-in defaults: ${error.message}`);
+    }
+    const name = typeof siteConfig.siteName === 'string' && siteConfig.siteName.trim() ? siteConfig.siteName.trim() : FALLBACK_CONFIG.siteName;
+    siteName.textContent = name;
+    siteTagline.textContent = typeof siteConfig.tagline === 'string' ? siteConfig.tagline : FALLBACK_CONFIG.tagline;
+    siteFooter.textContent = typeof siteConfig.footer === 'string' ? siteConfig.footer : FALLBACK_CONFIG.footer;
+    document.title = name;
+    try {
+      const favicon = new URL(typeof siteConfig.favicon === 'string' ? siteConfig.favicon : FALLBACK_CONFIG.favicon, document.baseURI);
+      if (favicon.origin !== window.location.origin || favicon.username || favicon.password || !/\.(svg|png|ico)$/i.test(favicon.pathname)) throw new Error('Favicon must be a same-origin SVG, PNG, or ICO file.');
+      siteFavicon.href = favicon.href;
+      siteFavicon.type = favicon.pathname.toLocaleLowerCase().endsWith('.svg') ? 'image/svg+xml' : favicon.pathname.toLocaleLowerCase().endsWith('.png') ? 'image/png' : 'image/x-icon';
+    } catch (error) { console.warn(`Ignoring invalid favicon configuration: ${error.message}`); }
+    const colorProperties = {
+      primary: '--app-primary', primaryDark: '--app-primary-dark', accent: '--app-accent', headerText: '--app-header-text',
+      darkText: '--app-dark-text', darkBackground: '--app-dark-background', darkSurface: '--app-dark-surface', darkBorder: '--app-dark-border',
+      darkHover: '--app-dark-hover', darkDropZone: '--app-dark-drop-zone', darkDropZoneBorder: '--app-dark-drop-zone-border', darkMuted: '--app-dark-muted'
+    };
+    if (siteConfig.appearance && typeof siteConfig.appearance === 'object' && !Array.isArray(siteConfig.appearance)) {
+      for (const [name, property] of Object.entries(colorProperties)) {
+        const value = siteConfig.appearance[name];
+        if (typeof value === 'string' && CSS.supports('color', value)) document.documentElement.style.setProperty(property, value);
+      }
+    }
+  }
   function readSources() {
     const queryUrl = new URLSearchParams(window.location.search).get('catalog');
     if (queryUrl) return [{ id: sourceId(), type: 'remote', label: 'URL catalog', url: queryUrl, status: 'loading', templates: [] }];
@@ -110,9 +128,9 @@
       const saved = JSON.parse(localStorage.getItem(SOURCES_KEY));
       if (Array.isArray(saved) && saved.length) return saved.filter(source => source && ['remote', 'local'].includes(source.type) && typeof source.id === 'string').map(source => ({ ...source, status: 'loading', templates: [] }));
       const legacy = localStorage.getItem(CATALOG_URL_KEY);
-      if (legacy) return [{ id: sourceId(), type: 'remote', label: legacy === DEFAULT_CATALOG_URL ? 'Hosted catalog' : 'Remote catalog', url: legacy, status: 'loading', templates: [] }];
-    } catch { /* Use the default source when storage is unavailable or invalid. */ }
-    return [{ id: sourceId(), type: 'remote', label: 'Hosted catalog', url: DEFAULT_CATALOG_URL, status: 'loading', templates: [] }];
+      if (legacy) return [{ id: sourceId(), type: 'remote', label: 'Remote catalog', url: legacy, status: 'loading', templates: [] }];
+    } catch { /* Use the configured sources when storage is unavailable or invalid. */ }
+    return configuredSources();
   }
   function saveSources() {
     const persistent = sources.map(({ id, type, label, url }) => ({ id, type, label, ...(type === 'remote' ? { url } : {}) }));
@@ -197,7 +215,7 @@
           try {
             const url = new URL(address.value.trim());
             if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('URL must be public HTTP(S).');
-            source.url = url.href; source.label = url.href === DEFAULT_CATALOG_URL ? 'Hosted catalog' : url.hostname; saveSources(); loadRemoteSource(source);
+            source.url = url.href; source.label = url.hostname; saveSources(); loadRemoteSource(source);
           } catch (error) { source.status = 'error'; source.message = error.message; mergeSources(); }
         });
       } else {
@@ -978,7 +996,7 @@
       wrapper.append(document.importNode(node, true));
     }
     templateHost.append(wrapper);
-    document.title = `${templateDisplayName(template)} - forms-as-code`;
+    document.title = `${templateDisplayName(template)} - ${siteConfig.siteName}`;
     notice.textContent = parsed.querySelector('meta[name="forms-as-code:notice"]')?.content || '';
     templateToolbar();
     const boundPaths = new Set([...wrapper.querySelectorAll('[data-forms-as-code]')].map(control => control.dataset.formsAsCode));
@@ -1036,7 +1054,6 @@
     setStatus(`Opened ${template.title} from its same-origin JSON link.`);
   }
 
-  setCatalogTemplates([...templates.values()]);
   function selectedTemplate() {
     if (selectedTemplateKey) return templates.get(selectedTemplateKey) || null;
     const matches = matchingTemplates(templateSearch.value);
@@ -1106,8 +1123,16 @@
   }
   try { setTheme(localStorage.getItem(THEME_KEY) || 'light'); } catch { setTheme('light'); }
   themeToggle.addEventListener('change', () => setTheme(themeToggle.checked ? 'dark' : 'light'));
-  sources = readSources();
-  loadSources();
+  async function initialize() {
+    await loadSiteConfig();
+    sources = readSources();
+    await loadSources();
+    const parameters = new URLSearchParams(window.location.search);
+    const linked = parameters.get('submission');
+    if (linked) await loadLinkedJson(linked);
+    else if (window.opener && parameters.has('handoff')) window.opener.postMessage({ type: 'forms-as-code:app-ready' }, window.location.origin);
+  }
+  initialize().catch(error => setStatus(`Could not initialize forms-as-code: ${error.message}`));
   function openSettings() {
     settingsPanel.hidden = false;
     document.body.classList.add('has-modal');
@@ -1140,7 +1165,4 @@
     const files = [...localTemplateDirectory.files]; localTemplateDirectory.value = '';
     if (files.length) await addLocalSource(files);
   });
-  const linked = new URLSearchParams(window.location.search).get('submission');
-  if (linked) loadLinkedJson(linked).catch(error => setStatus(`Could not open linked submission: ${error.message}`));
-  else if (window.opener && new URLSearchParams(window.location.search).has('handoff')) window.opener.postMessage({ type: 'forms-as-code:app-ready' }, window.location.origin);
 })();

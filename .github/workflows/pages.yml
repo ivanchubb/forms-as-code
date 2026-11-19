@@ -26,17 +26,16 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf _site
-          mkdir -p _site/assets _site/examples
-          cp app/index.html app/app.js app/app.css _site/
+          mkdir -p _site/assets _site/branding
+          cp app/index.html app/app.js app/app.css app/site.config.json _site/
+          cp app/branding/* _site/branding/
           cp assets/* _site/assets/
-          cp examples/*.json _site/examples/
           python3 - <<'PY'
           from pathlib import Path
 
           path = Path('_site/index.html')
           text = path.read_text()
           text = text.replace('../assets/', 'assets/')
-          text = text.replace('../examples/', 'examples/')
           path.write_text(text)
           PY
           touch _site/.nojekyll

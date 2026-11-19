@@ -36,7 +36,7 @@ Build a field inventory before coding: visible label/instructions, source widget
 
 If a field's meaning, valid values, or conditional requirements cannot be established from the PDF, preserve it as a text field or ask a focused question; do not silently guess.
 
-## 3. Create one HTML template and one JSON example
+## 3. Create one HTML template
 
 - Add the versioned template under `../forms/<form-family>/<form-number>/<edition>.html` as one immutable, self-contained HTML file with accessible markup, embedded form-specific CSS, metadata, and bound controls.
 - Include non-empty `forms-as-code:template-id`, `forms-as-code:template-version`, `forms-as-code:form-code`, `forms-as-code:form-title`, and `forms-as-code:form-edition` meta elements plus a `<title>` formatted as `<form designation> - <form title>`.
@@ -44,7 +44,6 @@ If a field's meaning, valid values, or conditional requirements cannot be establ
 - Change `template-version` whenever the published template artifact changes.
 - Use a compact `form-code` such as `DA2404` or `DD1750`, a descriptive title without the designator or edition, and an edition such as `AUG 2026`.
 - Include one `<form data-forms-as-code-form>` container and bind submitted controls with stable `data-forms-as-code="path.to.value"` paths.
-- Add `examples/<form-slug>.json` only when an example is useful, and always use conspicuously synthetic data rather than personal data copied from a completed form.
 - Add form provenance, field mapping and adaptations, privacy warning, limitations, and verification status to the template directory's `README.md`.
 - Rely on the generated catalog for remote discovery instead of adding a form-specific hard-coded registry entry unless a built-in offline fallback is explicitly required.
 - The app fetches only validated catalog paths from their catalog origin and must not trust a retrieval URI supplied by submission JSON.
@@ -61,7 +60,7 @@ Missing identity metadata, mismatched identity values, unsafe markup, or a missi
 
 Use current envelope fields: `formatVersion`, unique `id`, `createdAt`, `template.uri`, `template.version`, required boolean `locked`, and `data`. New submissions start with `locked: false`. If `locked` is true, compatible forms-as-code clients must make bound fields read-only. This is only an application instruction until cryptographic integrity/signing is implemented.
 
-Keep the same binding paths in HTML, CSV columns, and the example JSON. Use native controls where possible:
+Keep the same binding paths in HTML and CSV columns. Use native controls where possible:
 
 - text input for scalar text and native date input for complete calendar dates;
 - radio group for exactly-one choices;
@@ -97,7 +96,7 @@ Create print-specific CSS rather than relying on screen layout. Match the source
 
 Run checks appropriate to the repo and report their limits:
 
-- parse every JSON file and validate example submissions against the envelope format and the selected template's bindings;
+- parse and validate any JSON fixtures against the envelope format and the selected template's bindings;
 - `node --check` all JavaScript;
 - run `python3 scripts/build_catalog.py` from the `forms` repository and inspect the generated entry for the intended URI, version, title, edition, code, and path;
 - parse HTML and verify all five canonical metadata values and `<title>` are non-empty and consistent;
