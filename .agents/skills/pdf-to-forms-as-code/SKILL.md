@@ -115,6 +115,7 @@ Run checks appropriate to the repo and report their limits:
 
 - parse and validate any JSON fixtures against the envelope format and the selected template's bindings;
 - `node --check` all JavaScript;
+- run `python3 scripts/validate_forms.py <template-path>` from the `forms` repository while authoring, then run `python3 scripts/validate_forms.py` to lint every canonical template before proposing a merge; the linter must remain deterministic and independent of Git history, and `form-validation.json` must stay aligned with this skill when standards change;
 - run `python3 scripts/build_catalog.py` from the `forms` repository and inspect the generated entry for the intended URI, version, title, edition, code, and path;
 - parse HTML and verify all five canonical metadata values and `<title>` are non-empty and consistent;
 - verify the marked form and bindings exist while templates contain no scripts, event handlers, unsafe links, CSS-loaded resources, or external asset references;
