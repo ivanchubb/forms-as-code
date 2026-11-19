@@ -1,0 +1,53 @@
+# forms-as-code automation help
+
+forms-as-code is a static browser application for filling, validating, saving, and printing versioned forms.
+The application discovers trusted HTML templates from the catalogs configured by the deployment.
+Form data and uploaded files are processed locally by browser JavaScript and are not uploaded by this workflow.
+Information supplied to an external AI service remains subject to that service's data-handling policy.
+
+## Discover capabilities
+
+Read ./agent.json for a machine-readable summary of supported actions and limits.
+Read ./automation.html for the human-readable automation and bulk forms guide.
+
+## Open a form
+
+Use ?template=DA4856 to open the sole trusted version of an exact form code.
+Form-code matching ignores case, spaces, and hyphens, but it is not fuzzy title search.
+Use ?template=DA4856&version=2023-03.2 to require an exact version.
+If multiple versions match and version is omitted, the application reports an ambiguity instead of guessing.
+
+## Download a bulk CSV template
+
+Use ?template=DA4856&version=2023-03.2&action=bulk-csv to render the trusted template and download its bulk CSV contract.
+The browser must execute JavaScript for this action.
+Plain curl or Python HTTP requests only retrieve static files and cannot execute application actions.
+
+The downloaded CSV uses row 1 for stable machine-readable binding paths.
+Do not rename, remove, duplicate, or add columns in row 1.
+Row 2 contains concise human-readable labels and is ignored on import.
+Row 3 contains example values and is ignored on import while its marker remains present.
+Add completed records as subsequent rows.
+Use only facts provided by the user, and do not invent signatures, acknowledgments, incidents, ratings, or dates.
+
+## Render and print completed records
+
+Open the same template in a JavaScript-capable browser.
+Use Print CSV and select the completed CSV.
+The application validates the records, renders them with the trusted template, and opens the normal browser print dialog.
+Choose Save as PDF to create a combined PDF.
+File selection cannot be initiated by a URL because browsers prohibit websites from silently reading local files.
+
+Batches over 1,000 records require confirmation because they may consume substantial browser memory.
+A generated ZIP is limited to 65,535 submissions.
+
+## Automation state
+
+The document element exposes data-app-state with loading, rendering, downloading, ready, or error.
+Errors and completion messages are also exposed through live status outputs.
+
+## Deferred capabilities
+
+This static deployment does not expose HTTP upload, validation, conversion, ZIP, or PDF-rendering endpoints.
+It does not support action=describe.
+It does not digitally sign completed records.

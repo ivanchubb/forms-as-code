@@ -1,0 +1,51 @@
+{
+  "name": "forms-as-code",
+  "formatVersion": "1",
+  "kind": "static-browser-application",
+  "documentation": {
+    "human": "./automation.html",
+    "llm": "./llms.txt"
+  },
+  "queryParameters": {
+    "template": {
+      "requiredForActions": true,
+      "description": "Exact form code. Matching is case-insensitive and ignores spaces and hyphens."
+    },
+    "version": {
+      "required": false,
+      "description": "Exact template version. Required when more than one trusted version matches a code."
+    },
+    "action": {
+      "values": ["bulk-csv"],
+      "requiresJavaScript": true
+    },
+    "catalog": {
+      "required": false,
+      "description": "Public HTTP(S) catalog URL override."
+    }
+  },
+  "workflows": {
+    "openTemplate": "./?template=DA4856&version=2023-03.2",
+    "downloadBulkCsv": "./?template=DA4856&version=2023-03.2&action=bulk-csv",
+    "printBulkCsv": "Open the template in a browser, choose Print CSV, select the completed CSV, and use the browser print dialog."
+  },
+  "automation": {
+    "stateAttribute": "html[data-app-state]",
+    "states": ["loading", "rendering", "downloading", "ready", "error"]
+  },
+  "limits": {
+    "largeBatchConfirmationAbove": 1000,
+    "zipEntries": 65535
+  },
+  "privacy": {
+    "browserProcessing": "Local files are processed in the browser and are not uploaded by the application workflow.",
+    "externalAgent": "Data supplied to an external agent is subject to that agent's data-handling policy."
+  },
+  "unsupported": [
+    "HTTP file upload",
+    "HTTP CSV or JSON conversion",
+    "HTTP PDF rendering",
+    "action=describe",
+    "digital signatures"
+  ]
+}

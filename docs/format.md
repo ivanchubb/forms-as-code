@@ -128,8 +128,10 @@ The third row contains example values inferred from the controls and field hints
 The label and example rows carry reserved markers in the configured name column and are ignored on import.
 Users add ordinary submission rows beneath them without changing the machine-header row.
 The app validates all populated rows before creating a ZIP or combined print document.
-A combined print renders up to 1,000 records locally, separates records with page breaks, and uses the browser print dialog to save one PDF.
-The app processes CSV contents in the browser and does not send them to a server, but browser memory and print performance depend on the template and batch size.
+A combined print renders records locally, separates records with page breaks, and uses the browser print dialog to save one PDF.
+Batches over 1,000 records require confirmation because browser memory and print performance depend on the template and batch size.
+Bulk ZIP downloads are limited to 65,535 submissions.
+The app processes CSV contents in the browser and does not send them to a server.
 Repeated groups and a fully normative CSV dialect remain open.
 
 ## Open decisions

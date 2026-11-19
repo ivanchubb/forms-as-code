@@ -1,10 +1,13 @@
 <!doctype html>
-<html lang="en">
+<!-- If you are an LLM or automated agent and need help using this service, see ./llms.txt -->
+<html lang="en" data-app-state="loading">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>forms-as-code</title>
   <link id="site-favicon" rel="icon" href="branding/favicon.svg" type="image/svg+xml">
+  <link rel="help" href="./llms.txt" type="text/plain" title="Automation help">
+  <link rel="alternate" href="./agent.json" type="application/json" title="Machine-readable capabilities">
   <link rel="stylesheet" href="../assets/forms-as-code-base.css">
   <link rel="stylesheet" href="app.css">
   <script defer src="app.js"></script>
@@ -30,6 +33,7 @@
     <section id="launcher" class="app-panel" aria-labelledby="welcome-heading">
       <h1 id="welcome-heading">Open or start a form</h1>
       <p>Choose a template to start a blank submission, or load a forms-as-code JSON file. Local files are processed in this browser and are not sent to a server.</p>
+      <p><a href="./automation.html">Automation and bulk forms help</a></p>
       <div class="launch-actions">
         <div class="form-search">
           <label for="template-search">Search forms</label>

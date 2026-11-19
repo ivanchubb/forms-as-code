@@ -177,8 +177,11 @@ Select **Print CSV** and choose the completed CSV.
 The app validates every row, renders the records locally, and opens the browser print dialog.
 Choose **Save as PDF** to create one PDF containing all records, with a page break between records.
 Blank rows and the untouched reference row are ignored.
-A batch may contain up to 1,000 records, although large or complex batches can require substantial browser memory.
+Batches over 1,000 records require confirmation because large or complex batches can require substantial browser memory.
+Bulk ZIP downloads are limited to 65,535 submissions.
 CSV contents are processed in the browser and are not sent to a server by this workflow.
+The deployed site also publishes `llms.txt`, `agent.json`, and a visible automation guide.
+Shareable URLs support exact form-code selection, optional exact versions, and automatic bulk CSV download, for example `?template=DA4856&version=2023-03.2&action=bulk-csv`.
 
 ## License
 

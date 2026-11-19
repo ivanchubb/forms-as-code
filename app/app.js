@@ -60,6 +60,7 @@
   let siteConfig = FALLBACK_CONFIG;
   let draggedSourceId = null;
 
+  function setAppState(state) { document.documentElement.dataset.appState = state; }
   function setStatus(message) {
     appStatus.textContent = message;
     const formStatus = document.querySelector('#form-status');
@@ -74,6 +75,7 @@
     sourceIndicator.setAttribute('aria-label', message);
   }
   function templateKey(reference) { return `${reference?.uri}@${reference?.version}`; }
+  function normalizedFormCode(code) { return String(code || '').replace(/[\s-]+/g, '').toLocaleUpperCase(); }
   function formDesignation(code) {
     const match = code.match(/^(DA|DD)(.+)$/i);
     return match ? `${match[1].toUpperCase()} Form ${match[2].replace(/AFT$/i, '-AFT')}` : code;
@@ -853,7 +855,7 @@
       const referenceRows = rows.filter(({ row }) => [LABEL_ROW_MARKER, EXAMPLE_ROW_MARKER].includes(row[referenceColumn]?.trim()));
       const submissionRows = rows.filter(({ row }) => ![LABEL_ROW_MARKER, EXAMPLE_ROW_MARKER].includes(row[referenceColumn]?.trim()));
       if (!submissionRows.length) throw new Error(referenceRows.length ? 'CSV contains only its field-label and example reference rows. Add a submission row using the machine-readable header columns.' : 'CSV has no populated submission rows.');
-      if (submissionRows.length > 1000) throw new Error('A bulk load may contain at most 1,000 populated rows.');
+      if (submissionRows.length > 1000 && !window.confirm(`This CSV contains ${submissionRows.length.toLocaleString()} records. Large batches may use substantial memory or make the browser unresponsive. Continue?`)) throw new Error('Large batch canceled by user.');
       return submissionRows.map(({ row, number }) => {
         try {
           if (row.length !== headers.length) throw new Error(`Expected ${headers.length} columns but found ${row.length}.`);
@@ -865,6 +867,8 @@
     }
     async function importCsv(file) {
       const rows = await readCsvData(file);
+      if (rows.length > 65535) throw new Error('A bulk ZIP may contain at most 65,535 submissions.');
+      setAppState('rendering');
       const files = []; const counts = new Map();
       for (const data of rows) {
         const name = safeName(getAt(data, meta.namePath));
@@ -874,6 +878,7 @@
       }
       saveBlob(createZip(files), `${meta.code}-submissions.zip`);
       setStatus(`Validated ${files.length} rows and saved ${meta.code}-submissions.zip.`);
+      setAppState('ready');
     }
     function printableClone() {
       const source = templateHost.querySelector('.forms-as-code-template');
@@ -901,6 +906,7 @@
     }
     async function printCsv(file) {
       const rows = await readCsvData(file);
+      setAppState('rendering');
       const originalData = collectData();
       const originalLocked = locked;
       const batch = document.createElement('div');
@@ -928,7 +934,7 @@
       document.body.append(batch);
       document.body.classList.add('is-bulk-printing');
       setStatus(`Prepared ${rows.length} forms. Choose Save as PDF in the print dialog.`);
-      const cleanup = () => { batch.remove(); document.body.classList.remove('is-bulk-printing'); };
+      const cleanup = () => { batch.remove(); document.body.classList.remove('is-bulk-printing'); setAppState('ready'); };
       window.addEventListener('afterprint', cleanup, { once: true });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       window.print();
@@ -936,7 +942,8 @@
     document.querySelector('#save-submission').addEventListener('click', async () => {
       try { await save(); } catch (error) { setStatus(`Could not save: ${error.message}`); }
     });
-    document.querySelector('#bulk-csv').addEventListener('click', () => {
+    function downloadBulkCsv() {
+      setAppState('downloading');
       const headers = [...groups.keys()];
       const labels = headers.map(path => csvLabel(path, groups.get(path)));
       labels[headers.indexOf(meta.namePath)] = LABEL_ROW_MARKER;
@@ -945,7 +952,9 @@
       const csv = `\uFEFF${headers.map(csvEscape).join(',')}\r\n${labels.map(csvEscape).join(',')}\r\n${row.join(',')}\r\n`;
       saveBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${meta.code}-bulk-template.csv`);
       setStatus('Downloaded CSV with stable machine headers, human-readable field labels, and an example row. Reference rows are ignored on import.');
-    });
+      setAppState('ready');
+    }
+    document.querySelector('#bulk-csv').addEventListener('click', downloadBulkCsv);
     document.querySelector('#lock-submission').addEventListener('click', async () => {
       if (locked) { setLocked(false); setStatus('Fields are unlocked. Save to persist locked: false.'); return; }
       if (!form.reportValidity()) return;
@@ -965,13 +974,13 @@
     document.querySelector('#print-csv-file').addEventListener('change', async event => {
       const file = event.target.files?.[0]; event.target.value = '';
       if (!file) return;
-      try { await printCsv(file); } catch (error) { setStatus(`Could not print CSV: ${error.message}`); }
+      try { await printCsv(file); } catch (error) { setAppState('error'); setStatus(`Could not print CSV: ${error.message}`); }
     });
     document.querySelector('#print-form').addEventListener('click', () => window.print());
     form.addEventListener('input', () => { syncDerivedControls(); syncConditionalVisibility(); syncAutomaticRemarks(); syncConditionalRequired(); setStatus('Unsaved changes.'); });
     form.addEventListener('change', () => { syncDerivedControls(); syncConditionalVisibility(); syncAutomaticRemarks(); syncConditionalRequired(); setStatus('Unsaved changes.'); });
     syncDerivedControls(); syncConditionalVisibility(); syncConditionalRequired();
-    return { form, loadSubmission, importCsv, collectData };
+    return { form, loadSubmission, importCsv, collectData, downloadBulkCsv };
   }
 
   function csvEscape(value) {
@@ -1025,7 +1034,7 @@
     return rows;
   }
   function createZip(files) {
-    if (files.length > 1000) throw new Error('A bulk ZIP may contain at most 1,000 submissions.');
+    if (files.length > 65535) throw new Error('A bulk ZIP may contain at most 65,535 submissions.');
     const now = new Date();
     const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | Math.floor(now.getSeconds() / 2);
     const dosDate = ((Math.max(1980, now.getFullYear()) - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
@@ -1096,6 +1105,7 @@
     if (!parsed.body.querySelector('form[data-forms-as-code-form]')) throw new Error('Template HTML must contain a form marked data-forms-as-code-form.');
   }
   async function renderTemplate(template) {
+    setAppState('rendering');
     const parsed = await fetchTemplate(template);
     document.head.querySelectorAll('style[data-forms-as-code-template]').forEach(style => style.remove());
     for (const sourceStyle of parsed.querySelectorAll('head style')) {
@@ -1122,6 +1132,7 @@
     activeForm = initializeForm(activeTemplate, { code, namePath, legacyPaths });
     document.querySelector('#load-submission').addEventListener('change', onWorkspaceFile);
     launcher.hidden = true; workspace.hidden = false;
+    setAppState('ready');
     return activeForm;
   }
   function templateToolbar() {
@@ -1157,7 +1168,7 @@
     const file = event.target.files?.[0]; event.target.value = '';
     if (!file) return;
     if (file.name.toLowerCase().endsWith('.csv') || file.type === 'text/csv') {
-      try { await activeForm.importCsv(file); } catch (error) { setStatus(`Could not load CSV: ${error.message}`); }
+      try { await activeForm.importCsv(file); } catch (error) { setAppState('error'); setStatus(`Could not load CSV: ${error.message}`); }
     } else await loadJsonFile(file);
   }
   async function loadLinkedJson(path) {
@@ -1169,6 +1180,44 @@
     setStatus(`Opened ${template.title} from its same-origin JSON link.`);
   }
 
+  function updateTemplateUrl(template) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('template', template.code);
+    url.searchParams.set('version', template.version);
+    url.searchParams.delete('action');
+    url.searchParams.delete('submission');
+    url.searchParams.delete('handoff');
+    history.replaceState(null, '', url);
+  }
+  function linkedTemplate(parameters) {
+    const requestedCode = parameters.get('template');
+    if (!parameters.has('template')) return null;
+    if (!requestedCode?.trim()) throw new Error('The template query parameter cannot be empty.');
+    const code = normalizedFormCode(requestedCode);
+    const hasVersion = parameters.has('version');
+    const version = parameters.get('version');
+    if (hasVersion && !version) throw new Error('The version query parameter cannot be empty.');
+    const matches = catalogTemplates.filter(template => normalizedFormCode(template.code) === code && (!hasVersion || template.version === version));
+    if (!matches.length) throw new Error(`No trusted template matches ${requestedCode}${hasVersion ? ` version ${version}` : ''}.`);
+    if (matches.length > 1) throw new Error(`Multiple trusted versions match ${requestedCode}. Add the version query parameter.`);
+    return matches[0];
+  }
+  async function openLinkedTemplate(parameters) {
+    const action = parameters.get('action');
+    if (action && action !== 'bulk-csv') throw new Error(`Unsupported action: ${action}.`);
+    if (parameters.has('version') && !parameters.has('template')) throw new Error('The version query parameter requires a template query parameter.');
+    const template = linkedTemplate(parameters);
+    if (!template) {
+      if (action) throw new Error('The action query parameter requires a template query parameter.');
+      return false;
+    }
+    await renderTemplate(template);
+    selectedTemplateKey = templateKey(template);
+    templateSearch.value = templateDisplayName(template);
+    if (action === 'bulk-csv') activeForm.downloadBulkCsv();
+    else setStatus(`Started a blank ${template.title} submission.`);
+    return true;
+  }
   function selectedTemplate() {
     if (selectedTemplateKey) return templates.get(selectedTemplateKey) || null;
     const matches = matchingTemplates(templateSearch.value);
@@ -1203,8 +1252,8 @@
   document.querySelector('#create-form').addEventListener('click', async () => {
     const template = selectedTemplate();
     if (!template) { setStatus('Choose a form from the search suggestions first.'); return; }
-    try { await renderTemplate(template); setStatus(`Started a blank ${template.title} submission.`); }
-    catch (error) { setStatus(`Could not start form: ${error.message}`); }
+    try { await renderTemplate(template); updateTemplateUrl(template); setStatus(`Started a blank ${template.title} submission.`); }
+    catch (error) { setAppState('error'); setStatus(`Could not start form: ${error.message}`); }
   });
   submissionFile.addEventListener('change', async event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) await loadJsonFile(file); });
   dropZone.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); submissionFile.click(); } });
@@ -1246,8 +1295,9 @@
     const linked = parameters.get('submission');
     if (linked) await loadLinkedJson(linked);
     else if (window.opener && parameters.has('handoff')) window.opener.postMessage({ type: 'forms-as-code:app-ready' }, window.location.origin);
+    else if (!await openLinkedTemplate(parameters)) setAppState('ready');
   }
-  initialize().catch(error => setStatus(`Could not initialize forms-as-code: ${error.message}`));
+  initialize().catch(error => { setAppState('error'); setStatus(`Could not initialize forms-as-code: ${error.message}`); });
   function openSettings() {
     settingsPanel.hidden = false;
     document.body.classList.add('has-modal');
