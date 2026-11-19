@@ -18,7 +18,8 @@ See [`docs/format.md`](docs/format.md) for the current contract and open design 
 - [`.agents/skills/pdf-to-forms-as-code/SKILL.md`](.agents/skills/pdf-to-forms-as-code/SKILL.md) - repeatable workflow for adding one HTML template from a supplied PDF.
 - [`assets/forms-as-code-base.css`](assets/forms-as-code-base.css) - common presentation styles loaded by the app.
 - [`app/`](app/) - the single forms-as-code application: trusted HTML resolution, shared styling, data binding, validation, Save/Load/Lock, CSV, ZIP, and combined print workflows.
-- [`app/site.config.json`](app/site.config.json) - neutral deployment branding and ordered default template catalogs.
+- [`app/site.config.json`](app/site.config.json) - active neutral deployment configuration used by the default static deployment.
+- [`configs/default.json`](configs/default.json) - reusable copy of the neutral default deployment configuration.
 - [`configs/army.json`](configs/army.json) - optional Army-branded deployment configuration kept outside the organization-agnostic renderer.
 - The trusted Army form templates are maintained in the sibling [`../forms/`](../forms/) repository and discovered through its published catalog; forms-as-code does not store canonical form templates.
 - [`spec/submission.schema.json`](spec/submission.schema.json) - draft JSON Schema for a forms-as-code submission envelope.
@@ -70,6 +71,7 @@ Hosts can customize the site without changing application code through a JSON co
 Production static hosts should deploy their selected file as `site.config.json` alongside `app.js`.
 For local development, `serve.sh [config.json]` serves the selected file at that URL without copying or modifying it.
 With no argument, it uses the default blue theme from `app/site.config.json`.
+`configs/default.json` contains the same reusable neutral configuration for deployment tooling or explicit local selection.
 The `siteName`, `tagline`, and `footer` properties set visible branding.
 The renderer has a neutral blue default and no organization-specific theme names.
 An optional `appearance` object can override light and dark presentation colors for another organization.
@@ -148,9 +150,10 @@ Alternatively, run the included helper from the forms-as-code directory with the
 ./serve.sh
 ```
 
-Provide another configuration file to change the deployment presentation:
+Provide another configuration file to select or change the deployment presentation:
 
 ```sh
+./serve.sh configs/default.json
 ./serve.sh configs/army.json
 ```
 
