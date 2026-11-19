@@ -76,6 +76,8 @@ An optional `appearance` object can override light and dark presentation colors 
 The Army example uses the green and gold palette from the Army Publishing application.
 The optional `favicon` property accepts an app-relative or same-origin `.svg`, `.png`, or `.ico` URL and defaults to `./branding/favicon.svg`.
 Cross-origin and embedded data favicons are rejected.
+The default footer links to this project's source using `sourceUrl` and optional `sourceLabel`.
+Set `"sourceUrl": false` to hide the source link for a deployment.
 
 The `catalogs` property is an ordered, non-empty list:
 
@@ -84,6 +86,7 @@ The `catalogs` property is an ordered, non-empty list:
   "siteName": "Community Forms",
   "tagline": "Forms and submissions for Example County.",
   "footer": "Official service of Example County.",
+  "sourceUrl": false,
   "appearance": {
     "primary": "#234f33",
     "primaryDark": "#173622",

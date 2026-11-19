@@ -2,6 +2,8 @@
   "siteName": "forms-as-code",
   "tagline": "Portable form data, rendered with its versioned HTML template.",
   "footer": "Local prototype. Template HTML is resolved from configured trusted catalogs; arbitrary template URIs are never fetched.",
+  "sourceUrl": "https://github.com/ivanchubb/forms-as-code",
+  "sourceLabel": "View source on GitHub",
   "favicon": "./branding/favicon.svg",
   "catalogs": [
     {

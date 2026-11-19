@@ -58,9 +58,21 @@ The browser isolates invalid files so one malformed template does not block vali
 It can warn and fall back when third-party templates omit `form-title` or `form-edition`, but the canonical `forms` catalog generator intentionally requires both fields and `<title>` before publication.
 Missing identity metadata, mismatched identity values, unsafe markup, or a missing marked form makes that individual template unusable.
 
-Use current envelope fields: `formatVersion`, unique `id`, `createdAt`, `template.uri`, `template.version`, required boolean `locked`, and `data`. New submissions start with `locked: false`. If `locked` is true, compatible forms-as-code clients must make bound fields read-only. This is only an application instruction until cryptographic integrity/signing is implemented.
+Use current envelope fields: `formatVersion`, unique `id`, `createdAt`, `template.uri`, `template.version`, required boolean `locked`, and `data`.
+New submissions start with `locked: false`.
+If `locked` is true, compatible forms-as-code clients must make bound fields read-only and require an `integrity` record with `algorithm: "SHA-256"`, `canonicalization: "RFC8785"`, and a lowercase hexadecimal `digest`.
+The digest covers the canonical object containing only `formatVersion`, `template` (`uri`, `version`, and `sha256` when present), and `data`.
+Clients must check integrity whenever the record exists, reject a locked submission when it is absent, and reject a mismatched digest before populating controls.
+Validate and normalize a clone when loading so verification never mutates the covered data.
+Unlocking and saving omits integrity; locking and saving recalculates it.
+The digest detects changes but is not a signature or security boundary because anyone can calculate a replacement digest.
 
-Keep the same binding paths in HTML and CSV columns. Use native controls where possible:
+Keep the same binding paths in HTML and CSV columns.
+Treat dot-separated segments as object keys by default.
+Infer an array only when every immediate child under a parent is a decimal index and the indexes include `0`; require zero-based contiguous indexes.
+Never mix numeric indexes and named keys under one parent.
+For fixed semantic measurements, prefer names such as `first`, `second`, and `average` instead of one-based numeric keys.
+Use native controls where possible:
 
 - text input for scalar text and native date input for complete calendar dates;
 - radio group for exactly-one choices;
@@ -74,7 +86,12 @@ The serializer must preserve strings as strings, checkboxes as booleans, multipl
 
 ### Single form
 
-Provide simple, consistent **Save**, **Load**, **Print**, and **Lock fields** actions. Call the app **forms-as-code**, not “forms-as-code Viewer”; the same app is the primary editor. Save creates a JSON file. Load accepts a compatible JSON submission and restores values plus its locked state. Lock fields sets `locked: true` and disables bound controls; the same button should become **Unlock fields** so the user can explicitly resume editing, then Save to persist `locked: false`. Clearly state that this flag is an application convenience, not a security boundary or signature.
+Provide simple, consistent **Save**, **Load**, **Print**, and **Lock fields** actions.
+Call the app **forms-as-code**, not “forms-as-code Viewer”; the same app is the primary editor.
+Save creates a JSON file.
+Load accepts a compatible JSON submission, verifies integrity when present, and restores values plus its locked state.
+Lock fields sets `locked: true`, calculates the candidate signing-payload digest, and disables bound controls; the same button should become **Unlock fields** so the user can explicitly resume editing, then Save to persist `locked: false` without an integrity record.
+Clearly state that locking is an application convenience and an integrity digest is not a signature.
 
 The local forms-as-code app should accept a JSON file, resolve only a trusted template ID/version allowlist, and open the filled template in a new tab so it looks like the template loaded natively. Use origin- and source-checked `postMessage` with a readiness/acknowledgement handshake. Never fetch/execute an arbitrary URI supplied by untrusted JSON. Include a popup-blocked fallback. Keep submission data in the browser and make no network upload for local viewing.
 
@@ -82,7 +99,7 @@ For local development bind the static server to loopback, e.g. `python3 -m http.
 
 ### Bulk CSV
 
-- Generate CSV headers from unique `data-forms-as-code` paths in DOM order, plus a clearly marked example row derived from the template controls. The importer must skip the untouched reference row so it cannot accidentally create a synthetic submission.
+- Generate CSV templates with stable `data-forms-as-code` paths in the first row, human-readable field labels in the second row, and example values in the third row. Use `data-forms-as-code-csv-label` first, then a concise `aria-label`, associated label, or `title`, and otherwise humanize the binding path. Do not copy long accessible instructions into CSV labels. Add a brief `data-forms-as-code-csv-label` when a field's visible label is ambiguous outside the rendered form, especially in repeated sections. Target 40 characters or fewer, include section or row context only when needed, and omit instructions or formatting examples. Mark both reference rows in the name column and make the importer skip them so they cannot create synthetic submissions.
 - Load detects JSON vs CSV by extension/type. One populated CSV row creates one JSON submission; a successful CSV load produces a ZIP of all submissions.
 - Use RFC 4180-compatible quoting and UTF-8/BOM handling for Excel. Document the cell representation of choices, booleans, arrays, and dates. For DoD IDs, instruct Excel users to import the column as **Text** so leading zeroes survive.
 - Require the exact expected headers (allow reordering, reject duplicates/missing/unknown columns), skip entirely blank rows, impose a reasonable row limit, and validate every row before creating any ZIP. If one row fails, create no partial ZIP and report the CSV record number and reason.
@@ -104,7 +121,7 @@ Run checks appropriate to the repo and report their limits:
 - test fault isolation with one malformed sibling template and confirm valid templates remain available with a source warning;
 - test CSV quoting, multiline cells, BOM, header validation, row errors, and blank rows;
 - test ZIP integrity with `unzip -t` and inspect entry names/content;
-- verify radio/checkbox/select load and save round trips, sparse/partially filled JSON draft restoration, locked submissions read-only behavior, and the new-tab handshake;
+- verify radio/checkbox/select load and save round trips, sparse/partially filled JSON draft restoration, locked submissions read-only behavior, valid integrity round trips, rejection after covered data is changed, verification whenever integrity exists, and the new-tab handshake;
 - visually inspect the HTML against every source PDF page and check print pagination when possible.
 
 Do not claim cryptographic signing, CAC/PIV interoperability, official acceptance, or tamper evidence unless actually implemented and independently verified. Make limitations visible in the form notes and final response.

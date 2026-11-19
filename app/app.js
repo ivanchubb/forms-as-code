@@ -5,6 +5,8 @@
     siteName: 'forms-as-code',
     tagline: 'Portable form data, rendered with its versioned HTML template.',
     footer: "Local prototype. Template HTML is resolved from configured trusted catalogs; arbitrary template URIs are never fetched.",
+    sourceUrl: 'https://github.com/ivanchubb/forms-as-code',
+    sourceLabel: 'View source on GitHub',
     favicon: './branding/favicon.svg',
     catalogs: [{ label: 'army-form-templates', url: 'https://army-form-templates.s3.us-east-1.amazonaws.com/catalog.json' }]
   };
@@ -14,6 +16,7 @@
   const LOCAL_SOURCE_DB = 'forms-as-code-local-sources';
   const LOCAL_SOURCE_STORE = 'sources';
   const CATALOG_CACHE_PREFIX = 'forms-as-code:template-catalog:v1:';
+  const LABEL_ROW_MARKER = 'FIELD LABELS - DO NOT EDIT';
   const EXAMPLE_ROW_MARKER = 'EXAMPLE - REPLACE OR DELETE';
   const templates = new Map();
   const launcher = document.querySelector('#launcher');
@@ -43,6 +46,8 @@
   const siteName = document.querySelector('#site-name');
   const siteTagline = document.querySelector('#site-tagline');
   const siteFooter = document.querySelector('#site-footer');
+  const sourceLinkWrap = document.querySelector('#source-link-wrap');
+  const sourceLink = document.querySelector('#source-link');
   const siteFavicon = document.querySelector('#site-favicon');
   const encoder = new TextEncoder();
   let activeTemplate = null;
@@ -102,6 +107,15 @@
     siteName.textContent = name;
     siteTagline.textContent = typeof siteConfig.tagline === 'string' ? siteConfig.tagline : FALLBACK_CONFIG.tagline;
     siteFooter.textContent = typeof siteConfig.footer === 'string' ? siteConfig.footer : FALLBACK_CONFIG.footer;
+    if (siteConfig.sourceUrl === false) sourceLinkWrap.hidden = true;
+    else {
+      try {
+        const sourceUrl = new URL(typeof siteConfig.sourceUrl === 'string' ? siteConfig.sourceUrl : FALLBACK_CONFIG.sourceUrl);
+        if (!['http:', 'https:'].includes(sourceUrl.protocol) || sourceUrl.username || sourceUrl.password) throw new Error('Source URL must use HTTP(S) without credentials.');
+        sourceLink.href = sourceUrl.href;
+        sourceLink.textContent = typeof siteConfig.sourceLabel === 'string' && siteConfig.sourceLabel.trim() ? siteConfig.sourceLabel.trim() : FALLBACK_CONFIG.sourceLabel;
+      } catch (error) { sourceLinkWrap.hidden = true; console.warn(`Ignoring invalid source link configuration: ${error.message}`); }
+    }
     document.title = name;
     try {
       const favicon = new URL(typeof siteConfig.favicon === 'string' ? siteConfig.favicon : FALLBACK_CONFIG.favicon, document.baseURI);
@@ -120,6 +134,40 @@
         if (typeof value === 'string' && CSS.supports('color', value)) document.documentElement.style.setProperty(property, value);
       }
     }
+  }
+  function canonicalString(value) {
+    for (let index = 0; index < value.length; index++) {
+      const unit = value.charCodeAt(index);
+      if (unit >= 0xd800 && unit <= 0xdbff) {
+        const next = value.charCodeAt(++index);
+        if (!(next >= 0xdc00 && next <= 0xdfff)) throw new Error('Integrity payload contains invalid Unicode.');
+      } else if (unit >= 0xdc00 && unit <= 0xdfff) throw new Error('Integrity payload contains invalid Unicode.');
+    }
+    return JSON.stringify(value);
+  }
+  function canonicalize(value) {
+    if (typeof value === 'string') return canonicalString(value);
+    if (value === null || typeof value === 'boolean') return JSON.stringify(value);
+    if (typeof value === 'number' && Number.isFinite(value)) return JSON.stringify(value);
+    if (Array.isArray(value)) return `[${value.map(canonicalize).join(',')}]`;
+    if (value && typeof value === 'object') return `{${Object.keys(value).sort().map(key => `${canonicalString(key)}:${canonicalize(value[key])}`).join(',')}}`;
+    throw new Error('Integrity payload contains a value that cannot be canonicalized.');
+  }
+  function integrityPayload(submission) {
+    const templateIdentity = { uri: submission.template.uri, version: submission.template.version };
+    if (submission.template.sha256) templateIdentity.sha256 = submission.template.sha256;
+    return { formatVersion: submission.formatVersion, template: templateIdentity, data: submission.data };
+  }
+  async function makeIntegrity(submission) {
+    const bytes = new TextEncoder().encode(canonicalize(integrityPayload(submission)));
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    return { algorithm: 'SHA-256', canonicalization: 'RFC8785', digest: [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('') };
+  }
+  async function verifyIntegrity(submission) {
+    if (!submission.integrity) throw new Error('Submission is missing its integrity digest.');
+    if (submission.integrity.algorithm !== 'SHA-256' || submission.integrity.canonicalization !== 'RFC8785' || !/^[a-f0-9]{64}$/.test(submission.integrity.digest || '')) throw new Error('Submission integrity metadata is invalid or unsupported.');
+    const expected = await makeIntegrity(submission);
+    if (expected.digest !== submission.integrity.digest) throw new Error('Submission integrity check failed. Its covered content changed after it was locked.');
   }
   function readSources() {
     const queryUrl = new URLSearchParams(window.location.search).get('catalog');
@@ -345,14 +393,34 @@
     if (!template) throw new Error('This forms-as-code app does not have the referenced trusted HTML template.');
     return template;
   }
-  function pathParts(path) { return path.split('.').map(part => /^\d+$/.test(part) ? Number(part) : part); }
+  function pathParts(path) { return path.split('.'); }
   function getAt(object, path) { return pathParts(path).reduce((value, part) => value == null ? undefined : value[part], object); }
-  function setAt(object, path, value) {
+  function arrayPaths(paths) {
+    const children = new Map();
+    for (const path of paths) {
+      const parts = pathParts(path);
+      for (let index = 0; index < parts.length - 1; index++) {
+        const parent = parts.slice(0, index + 1).join('.');
+        if (!children.has(parent)) children.set(parent, new Set());
+        children.get(parent).add(parts[index + 1]);
+      }
+    }
+    const arrays = new Set();
+    for (const [path, names] of children) {
+      if (!names.has('0') || ![...names].every(name => /^\d+$/.test(name))) continue;
+      const indexes = [...names].map(Number).sort((left, right) => left - right);
+      if (indexes.some((value, index) => value !== index)) throw new Error(`Array binding ${path} must use contiguous zero-based indexes.`);
+      arrays.add(path);
+    }
+    return arrays;
+  }
+  function setAt(object, path, value, arrays = new Set()) {
     const parts = pathParts(path);
     let current = object;
-    for (let i = 0; i < parts.length - 1; i++) {
-      const part = parts[i];
-      if (current[part] == null) current[part] = typeof parts[i + 1] === 'number' ? [] : {};
+    for (let index = 0; index < parts.length - 1; index++) {
+      const part = parts[index];
+      const parent = parts.slice(0, index + 1).join('.');
+      if (current[part] == null) current[part] = arrays.has(parent) ? [] : {};
       current = current[part];
     }
     current[parts.at(-1)] = value;
@@ -381,8 +449,10 @@
     const status = document.querySelector('#form-status');
     const lockButton = document.querySelector('#lock-submission');
     const groups = new Map();
+    let bindingArrayPaths = new Set();
     let locked = false;
 
+    function setDataAt(data, path, value) { setAt(data, path, value, bindingArrayPaths); }
     function rebuildBindings() {
       controls = [...form.querySelectorAll('[data-forms-as-code]')];
       groups.clear();
@@ -390,6 +460,7 @@
         if (!groups.has(control.dataset.formsAsCode)) groups.set(control.dataset.formsAsCode, []);
         groups.get(control.dataset.formsAsCode).push(control);
       }
+      bindingArrayPaths = arrayPaths(groups.keys());
     }
     function repeatParts(name) {
       return {
@@ -503,24 +574,24 @@
         if (control.dataset.formsAsCodeDerived === 'date-add-days') {
           const from = Date.parse(`${getAt(data, control.dataset.formsAsCodeDerivedStart) || ''}T00:00:00Z`);
           const days = Number.parseInt(getAt(data, control.dataset.formsAsCodeDerivedDays) || '', 10);
-          if (Number.isNaN(from) || !Number.isInteger(days) || days < 1) setAt(data, control.dataset.formsAsCode, '');
-          else setAt(data, control.dataset.formsAsCode, new Date(from + (days - 1) * 86400000).toISOString().slice(0, 10));
+          if (Number.isNaN(from) || !Number.isInteger(days) || days < 1) setDataAt(data, control.dataset.formsAsCode, '');
+          else setDataAt(data, control.dataset.formsAsCode, new Date(from + (days - 1) * 86400000).toISOString().slice(0, 10));
           continue;
         }
         if (control.dataset.formsAsCodeDerived === 'date-difference-inclusive') {
           const from = Date.parse(`${getAt(data, control.dataset.formsAsCodeDerivedStart || `${dependency}.from`) || ''}T00:00:00Z`);
           const to = Date.parse(`${getAt(data, control.dataset.formsAsCodeDerivedEnd || `${dependency}.to`) || ''}T00:00:00Z`);
           const days = Number.isNaN(from) || Number.isNaN(to) ? '' : Math.floor((to - from) / 86400000) + 1;
-          setAt(data, control.dataset.formsAsCode, days > 0 ? String(days) : '');
+          setDataAt(data, control.dataset.formsAsCode, days > 0 ? String(days) : '');
           continue;
         }
-        setAt(data, control.dataset.formsAsCode, Object.prototype.hasOwnProperty.call(mapping, source) ? mapping[source] : '');
+        setDataAt(data, control.dataset.formsAsCode, Object.prototype.hasOwnProperty.call(mapping, source) ? mapping[source] : '');
       }
       return data;
     }
     function collectData() {
       const data = {};
-      for (const [path, group] of groups) setAt(data, path, valueOf(group));
+      for (const [path, group] of groups) setDataAt(data, path, valueOf(group));
       return normalizeDerived(data);
     }
     function syncDerivedControls() {
@@ -579,10 +650,37 @@
       const data = {};
       for (const [path, group] of groups) {
         const first = group[0];
-        setAt(data, path, first.type === 'checkbox' ? (first.dataset.formsAsCodeMode === 'multiple' ? [] : false)
+        setDataAt(data, path, first.type === 'checkbox' ? (first.dataset.formsAsCodeMode === 'multiple' ? [] : false)
           : first instanceof HTMLSelectElement && first.multiple ? [] : '');
       }
       return normalizeDerived(data);
+    }
+    function humanizePath(path) {
+      const parts = path.split('.').map(part => part.replace(/([a-z])([A-Z])/g, '$1 $2'));
+      return parts.map((part, index) => {
+        if (!/^\d+$/.test(part)) return part;
+        return String(Number(part) + 1);
+      }).join(' - ').replace(/ - (\d+)$/, ' $1').replace(/\b\w/g, letter => letter.toUpperCase());
+    }
+    function conciseCsvLabel(value) {
+      const normalized = value.replace(/\s+/g, ' ').trim().replace(/[.:;,-]+$/, '');
+      return normalized.length <= 72 ? normalized : `${normalized.slice(0, 69).trimEnd()}...`;
+    }
+    function csvLabel(path, group) {
+      const first = group[0];
+      const explicit = first.dataset.formsAsCodeCsvLabel?.trim();
+      const candidates = [
+        first.getAttribute('aria-label')?.trim(),
+        ...(first.labels ? [...first.labels].map(label => label.textContent.replace(/\s+/g, ' ').trim()) : []),
+        first.getAttribute('title')?.trim()
+      ];
+      const inferred = candidates.find(value => value && value.length <= 40);
+      const label = explicit || inferred || humanizePath(path);
+      const parts = pathParts(path);
+      const numeric = parts.findLastIndex(part => /^\d+$/.test(part));
+      if (numeric < 0 || explicit || !inferred || /\b(?:row|item|record|attempt|test)\s+\d+\b/i.test(label)) return conciseCsvLabel(label);
+      const collection = (parts[numeric - 1] || 'row').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, letter => letter.toUpperCase());
+      return conciseCsvLabel(`${collection} ${Number(parts[numeric]) + 1} - ${label}`);
     }
     function exampleValue(path, group) {
       const first = group[0];
@@ -621,8 +719,8 @@
     }
     function exampleData() {
       const data = {};
-      for (const [path, group] of groups) setAt(data, path, exampleValue(path, group));
-      setAt(data, meta.namePath, EXAMPLE_ROW_MARKER);
+      for (const [path, group] of groups) setDataAt(data, path, exampleValue(path, group));
+      setDataAt(data, meta.namePath, EXAMPLE_ROW_MARKER);
       return normalizeDerived(data);
     }
     function csvValue(value) {
@@ -661,7 +759,11 @@
         if (value === undefined) return;
         if (Array.isArray(value)) {
           if (path && !isKnownPrefix(path)) { unknown.push(path); return; }
-          value.forEach((item, index) => visit(item, path ? `${path}.${index}` : String(index)));
+          value.forEach((item, index) => {
+            const itemPath = path ? `${path}.${index}` : String(index);
+            if (item === null && !groups.has(itemPath) && !isKnownPrefix(itemPath)) return;
+            visit(item, itemPath);
+          });
         } else if (value !== null && typeof value === 'object') {
           if (path && !isKnownPrefix(path)) { unknown.push(path); return; }
           for (const [key, item] of Object.entries(value)) visit(item, path ? `${path}.${key}` : key);
@@ -698,8 +800,12 @@
         if (first.maxLength >= 0 && typeof value === 'string' && value.length > first.maxLength) throw new Error(`${path} is too long.`);
       }
     }
-    function makeSubmission(data, isLocked = locked) {
-      return { formatVersion: FORMAT_VERSION, id: makeId(), createdAt: new Date().toISOString(), template: { uri: template.uri, version: template.version }, locked: isLocked, data };
+    async function makeSubmission(data, isLocked = locked) {
+      const templateIdentity = { uri: template.uri, version: template.version };
+      if (template.sha256) templateIdentity.sha256 = template.sha256;
+      const submission = { formatVersion: FORMAT_VERSION, id: makeId(), createdAt: new Date().toISOString(), template: templateIdentity, locked: isLocked, data: JSON.parse(JSON.stringify(data)) };
+      if (isLocked) submission.integrity = await makeIntegrity(submission);
+      return submission;
     }
     function filenameFor(data, duplicate = 1) {
       const suffix = duplicate > 1 ? `-${duplicate}` : '';
@@ -714,21 +820,24 @@
       lockButton.textContent = value ? 'Unlock fields' : 'Lock fields';
     }
     function prepare(data, options) { validate(data, options); return data; }
-    function loadSubmission(submission) {
+    async function loadSubmission(submission) {
       if (submission?.formatVersion !== FORMAT_VERSION || submission.template?.uri !== template.uri || submission.template?.version !== template.version) throw new Error('Submission format or template reference does not match.');
       if (typeof submission.locked !== 'boolean' || typeof submission.id !== 'string') throw new Error('Submission envelope is incomplete.');
+      if (submission.integrity) await verifyIntegrity(submission);
+      else if (submission.locked) throw new Error('Locked submission is missing its integrity digest.');
+      if (submission.integrity && (template.sha256 || submission.template.sha256) && template.sha256 !== submission.template.sha256) throw new Error('Submission template digest does not match the trusted catalog.');
       syncRepeats(submission.data);
-      prepare(submission.data, { allowPartial: true });
+      prepare(JSON.parse(JSON.stringify(submission.data)), { allowPartial: true });
       populate(submission.data); setLocked(submission.locked);
-      setStatus(submission.locked ? 'Loaded locked submission. Choose Unlock fields to edit.' : 'Loaded submission.');
+      setStatus(submission.integrity ? `Integrity verified (${submission.integrity.digest.slice(0, 12)}…).${submission.locked ? ' Choose Unlock fields to edit.' : ''}` : 'Loaded submission.');
     }
 
-    function save() {
+    async function save() {
       if (!form.reportValidity()) return;
       const data = prepare(collectData(), { allowPartial: false });
-      const submission = makeSubmission(data);
+      const submission = await makeSubmission(data);
       saveBlob(new Blob([`${JSON.stringify(submission, null, 2)}\n`], { type: 'application/json' }), filenameFor(data));
-      setStatus(locked ? 'Saved locked submission.' : 'Saved submission.');
+      setStatus(locked ? `Saved locked submission with SHA-256 digest ${submission.integrity.digest.slice(0, 12)}….` : 'Saved submission.');
     }
     async function readCsvData(file) {
       const records = parseCsv(await file.text());
@@ -741,15 +850,15 @@
       if (missing.length || extra.length) throw new Error(`CSV headers do not match. Missing: ${missing.join(', ') || 'none'}. Unknown: ${extra.join(', ') || 'none'}.`);
       const rows = records.slice(1).map((row, index) => ({ row, number: index + 2 })).filter(({ row }) => row.some(value => value.trim() !== ''));
       const referenceColumn = headers.indexOf(meta.namePath);
-      const referenceRows = rows.filter(({ row }) => row[referenceColumn]?.trim() === EXAMPLE_ROW_MARKER);
-      const submissionRows = rows.filter(({ row }) => row[referenceColumn]?.trim() !== EXAMPLE_ROW_MARKER);
-      if (!submissionRows.length) throw new Error(referenceRows.length ? `CSV contains only the reference row marked “${EXAMPLE_ROW_MARKER}”. Replace its name or delete it, then add submission rows.` : 'CSV has no populated submission rows.');
+      const referenceRows = rows.filter(({ row }) => [LABEL_ROW_MARKER, EXAMPLE_ROW_MARKER].includes(row[referenceColumn]?.trim()));
+      const submissionRows = rows.filter(({ row }) => ![LABEL_ROW_MARKER, EXAMPLE_ROW_MARKER].includes(row[referenceColumn]?.trim()));
+      if (!submissionRows.length) throw new Error(referenceRows.length ? 'CSV contains only its field-label and example reference rows. Add a submission row using the machine-readable header columns.' : 'CSV has no populated submission rows.');
       if (submissionRows.length > 1000) throw new Error('A bulk load may contain at most 1,000 populated rows.');
       return submissionRows.map(({ row, number }) => {
         try {
           if (row.length !== headers.length) throw new Error(`Expected ${headers.length} columns but found ${row.length}.`);
           const data = blankData();
-          headers.forEach((path, column) => setAt(data, path, csvCell(row[column], groups.get(path), path)));
+          headers.forEach((path, column) => setDataAt(data, path, csvCell(row[column], groups.get(path), path)));
           return prepare(data, { allowPartial: false });
         } catch (error) { throw new Error(`CSV record ${number}: ${error.message}`); }
       });
@@ -760,7 +869,7 @@
       for (const data of rows) {
         const name = safeName(getAt(data, meta.namePath));
         const count = (counts.get(name) || 0) + 1; counts.set(name, count);
-        const submission = makeSubmission(data, false);
+        const submission = await makeSubmission(data, false);
         files.push({ name: filenameFor(data, count), content: `${JSON.stringify(submission, null, 2)}\n` });
       }
       saveBlob(createZip(files), `${meta.code}-submissions.zip`);
@@ -824,22 +933,28 @@
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       window.print();
     }
-    document.querySelector('#save-submission').addEventListener('click', () => {
-      try { save(); } catch (error) { setStatus(`Could not save: ${error.message}`); }
+    document.querySelector('#save-submission').addEventListener('click', async () => {
+      try { await save(); } catch (error) { setStatus(`Could not save: ${error.message}`); }
     });
     document.querySelector('#bulk-csv').addEventListener('click', () => {
       const headers = [...groups.keys()];
+      const labels = headers.map(path => csvLabel(path, groups.get(path)));
+      labels[headers.indexOf(meta.namePath)] = LABEL_ROW_MARKER;
       const example = exampleData();
       const row = headers.map(path => csvEscape(csvValue(getAt(example, path))));
-      const csv = `\uFEFF${headers.map(csvEscape).join(',')}\r\n${row.join(',')}\r\n`;
+      const csv = `\uFEFF${headers.map(csvEscape).join(',')}\r\n${labels.map(csvEscape).join(',')}\r\n${row.join(',')}\r\n`;
       saveBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${meta.code}-bulk-template.csv`);
-      setStatus(`Downloaded CSV with a reference row. Delete it or replace the name marker “${EXAMPLE_ROW_MARKER}”; rows still carrying that marker are ignored on import.`);
+      setStatus('Downloaded CSV with stable machine headers, human-readable field labels, and an example row. Reference rows are ignored on import.');
     });
-    document.querySelector('#lock-submission').addEventListener('click', () => {
+    document.querySelector('#lock-submission').addEventListener('click', async () => {
       if (locked) { setLocked(false); setStatus('Fields are unlocked. Save to persist locked: false.'); return; }
       if (!form.reportValidity()) return;
-      try { prepare(collectData(), { allowPartial: false }); setLocked(true); setStatus('Fields are locked. Save to persist locked: true.'); }
-      catch (error) { setStatus(error.message); }
+      try {
+        const data = prepare(collectData(), { allowPartial: false });
+        const preview = await makeSubmission(data, true);
+        setLocked(true);
+        setStatus(`Fields are locked. SHA-256 ${preview.integrity.digest.slice(0, 12)}…. Save to persist the digest.`);
+      } catch (error) { setStatus(error.message); }
     });
     document.querySelector('#new-submission').addEventListener('click', () => {
       form.reset();
@@ -1023,7 +1138,7 @@
   async function renderSubmission(submission) {
     const template = resolveSubmission(submission);
     await renderTemplate(template);
-    activeForm.loadSubmission(submission);
+    await activeForm.loadSubmission(submission);
     return template;
   }
   async function loadJsonFile(file) {

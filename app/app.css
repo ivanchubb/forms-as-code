@@ -76,10 +76,11 @@ body.has-modal { overflow: hidden; }
 .app-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .65rem; border-bottom: 1px solid #c8d0d9; background: white; }
 .app-toolbar output { margin-left: auto; color: #345; }
 #load-submission, #print-csv-file { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
-.button-label { display: inline-block; padding: .45rem .8rem; border: 1px solid #617386; border-radius: .25rem; color: #18344b; background: white; font: inherit; cursor: pointer; }
+.button-label { display: inline-block; padding: .45rem .8rem; border: 1px solid #617386; border-radius: .25rem; color: #18344b; background: white; font: inherit; text-transform: none; cursor: pointer; }
 #template-host { background: white; }
 .forms-as-code-hidden { display: none !important; }
 #template-host > .forms-as-code-template { min-height: 4rem; }
+#template-host form.is-locked input:disabled, #template-host form.is-locked textarea:disabled, #template-host form.is-locked select:disabled { background: #f1f1f1 !important; accent-color: #737b82; cursor: not-allowed; }
 .template-notice { margin: .5rem 0; padding: .5rem .75rem; border-left: 3px solid #9a6724; color: #59421f; background: #fff8e8; font-size: .85rem; }
 .app-footer { max-width: 1100px; margin: 1rem auto; padding: 0 1rem; color: #52616e; font-size: .85rem; }
 :root[data-theme="dark"] .app-panel, :root[data-theme="dark"] .settings-card, :root[data-theme="dark"] .settings-header, :root[data-theme="dark"] .template-options, :root[data-theme="dark"] .template-options button, :root[data-theme="dark"] .source-row, :root[data-theme="dark"] .app-toolbar { color: var(--app-dark-text); background: var(--app-dark-surface); border-color: var(--app-dark-border); }
