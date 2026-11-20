@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="forms-as-code:template-id" content="https://ivanchubb.github.io/forms-as-code/examples/gsa-sf91">
+  <meta name="forms-as-code:template-version" content="2020-11.2">
+  <meta name="forms-as-code:form-code" content="SF91">
+  <meta name="forms-as-code:form-title" content="Motor Vehicle Accident Report">
+  <meta name="forms-as-code:form-edition" content="Rev. November 2020">
+  <meta name="forms-as-code:name-path" content="accident.reportNumber">
+  <meta name="forms-as-code:notice" content="Unofficial abbreviated HTML adaptation of GSA Standard Form 91. Use the current official form for federal reporting requirements.">
+  <title>Standard Form 91 - Motor Vehicle Accident Report</title>
+  <style>
+    .document { --field: #e7f2ff; width: 7.25in; margin: 0 auto; padding: .05in; color: #000; background: #fff; font-family: Arial, Helvetica, sans-serif; font-size: 7.5pt; line-height: 1.05; }
+    .paper-page { min-height: 9.6in; position: relative; }
+    .paper-page + .paper-page { break-before: page; margin-top: .35in; }
+    .sf-head { display: grid; grid-template-columns: 1.2in 1fr 1.7in; align-items: center; border: 2px solid #000; }
+    .sf-number, .sf-meta { padding: .08in; font-size: 8pt; }
+    .sf-number strong { display: block; font-size: 17pt; }
+    .sf-meta { min-width: 0; overflow: hidden; border-left: 1px solid #000; text-align: right; }
+    .sf-meta input { display: block; width: 100%; min-width: 0; margin-top: .03in; padding: .025in; border: 0; border-bottom: 1px solid #666; font: 8pt Arial, sans-serif; }
+    .sf-title { padding: .08in; border-left: 1px solid #000; text-align: center; }
+    .sf-title h1 { margin: 0; font-size: 17pt; }
+    .warning { margin: .07in 0; padding: .06in; border: 2px solid #000; text-align: center; font-weight: bold; }
+    .section-title { margin-top: .04in; padding: .03in .06in; border: 1px solid #000; color: #fff; background: #000; font-size: 9pt; font-weight: bold; text-transform: uppercase; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .field { min-height: .38in; padding: .03in .05in; border: 1px solid #000; border-top: 0; }
+    .field.span-2 { grid-column: span 2; }
+    .field.span-3 { grid-column: span 3; }
+    .field.span-4 { grid-column: 1 / -1; }
+    .field > span { display: block; font-size: 7pt; font-weight: bold; text-transform: uppercase; }
+    input:not([type="checkbox"]):not([type="radio"]), select, textarea { background: var(--field); }
+    .field input:not([type="checkbox"]):not([type="radio"]), .field select, .field textarea { width: 100%; margin-top: .035in; padding: .025in; border: 0; border-bottom: 1px solid #666; font: 8.5pt Arial, sans-serif; }
+    .field textarea { min-height: .55in; resize: vertical; }
+    .checkline { display: flex; flex-wrap: wrap; gap: .08in .2in; margin-top: .05in; }
+    .checkline label { display: inline-flex; gap: .04in; align-items: center; font-size: 8pt; text-transform: none; }
+    .instructions { margin: .04in 0; padding: .05in; border: 1px solid #000; font-size: 7pt; }
+    .source { margin: .1in 0 0; font-size: 7pt; }
+    @media (max-width: 850px) { .document { width: 100%; } .grid { grid-template-columns: 1fr 1fr; } .field.span-3, .field.span-4 { grid-column: 1 / -1; } }
+    @media print { .document { width: 7.25in; padding: 0; zoom: .62; } .paper-page { min-height: 0; } .paper-page + .paper-page { margin-top: 0; } input:not([type="checkbox"]):not([type="radio"]), select, textarea { background: transparent; } .form-footer { position: static; } @page { size: letter portrait; margin: .25in .35in; } }
+  </style>
+</head>
+<body>
+<form data-forms-as-code-form class="forms-as-code-form document">
+  <div class="paper-page">
+    <header class="sf-head"><div class="sf-number">STANDARD FORM <strong>91</strong></div><div class="sf-title"><h1>MOTOR VEHICLE ACCIDENT REPORT</h1><b>Complete at scene and submit according to agency policy</b></div><div class="sf-meta">Revised November 2020<br>General Services Administration</div></header>
+    <div class="warning">Do not make statements admitting responsibility. Record facts, identify witnesses, and notify the proper authority.</div>
+
+    <div class="section-title">I - Accident identification</div>
+    <div class="grid">
+      <label class="field span-2"><span>1. Agency report number</span><input data-forms-as-code="accident.reportNumber" data-forms-as-code-csv-label="Agency report number" required></label>
+      <label class="field"><span>2. Date</span><input type="date" data-forms-as-code="accident.date" data-forms-as-code-csv-label="Accident date" required></label>
+      <label class="field"><span>3. Time</span><input type="time" data-forms-as-code="accident.time" data-forms-as-code-csv-label="Accident time" required></label>
+      <label class="field span-2"><span>4. Exact location</span><input data-forms-as-code="accident.location" data-forms-as-code-csv-label="Accident location" required></label>
+      <label class="field"><span>5. City</span><input data-forms-as-code="accident.city" data-forms-as-code-csv-label="Accident city" required></label>
+      <label class="field"><span>6. State</span><input data-forms-as-code="accident.state" data-forms-as-code-csv-label="Accident state" required></label>
+      <label class="field span-2"><span>7. Weather</span><select data-forms-as-code="conditions.weather" data-forms-as-code-csv-label="Weather"><option value="">Select</option><option>Clear</option><option>Rain</option><option>Snow</option><option>Fog</option><option>Other</option></select></label>
+      <label class="field span-2"><span>8. Road condition</span><select data-forms-as-code="conditions.road" data-forms-as-code-csv-label="Road condition"><option value="">Select</option><option>Dry</option><option>Wet</option><option>Snow or ice</option><option>Construction</option><option>Other</option></select></label>
+    </div>
+
+    <div class="section-title">II - Government vehicle and operator</div>
+    <div class="grid">
+      <label class="field span-2"><span>9. Operator name</span><input data-forms-as-code="operator.fullName" data-forms-as-code-csv-label="Operator name" required></label>
+      <label class="field"><span>10. Work phone</span><input type="tel" data-forms-as-code="operator.phone" data-forms-as-code-csv-label="Operator phone"></label>
+      <label class="field"><span>11. Driver license</span><input data-forms-as-code="operator.license" data-forms-as-code-csv-label="Operator license number"></label>
+      <label class="field"><span>12. Vehicle year</span><input type="number" min="1900" max="2100" data-forms-as-code="governmentVehicle.year" data-forms-as-code-csv-label="Government vehicle year" required></label>
+      <label class="field"><span>13. Make</span><input data-forms-as-code="governmentVehicle.make" data-forms-as-code-csv-label="Government vehicle make" required></label>
+      <label class="field"><span>14. Model</span><input data-forms-as-code="governmentVehicle.model" data-forms-as-code-csv-label="Government vehicle model" required></label>
+      <label class="field"><span>15. Tag or unit number</span><input data-forms-as-code="governmentVehicle.tag" data-forms-as-code-csv-label="Government tag or unit" required></label>
+      <label class="field span-2"><span>16. Owning agency</span><input data-forms-as-code="governmentVehicle.agency" data-forms-as-code-csv-label="Owning agency" required></label>
+      <label class="field span-2"><span>17. Damage</span><input data-forms-as-code="governmentVehicle.damage" data-forms-as-code-csv-label="Government vehicle damage" required></label>
+    </div>
+
+    <div class="section-title">III - Other vehicle and operator</div>
+    <div class="grid">
+      <label class="field span-2"><span>18. Other operator name</span><input data-forms-as-code="otherOperator.fullName" data-forms-as-code-csv-label="Other operator name"></label>
+      <label class="field"><span>19. Phone</span><input type="tel" data-forms-as-code="otherOperator.phone" data-forms-as-code-csv-label="Other operator phone"></label>
+      <label class="field"><span>20. Driver license</span><input data-forms-as-code="otherOperator.license" data-forms-as-code-csv-label="Other operator license"></label>
+      <label class="field span-2"><span>21. Address</span><input data-forms-as-code="otherOperator.address" data-forms-as-code-csv-label="Other operator address"></label>
+      <label class="field"><span>22. Vehicle year/make</span><input data-forms-as-code="otherVehicle.yearMake" data-forms-as-code-csv-label="Other vehicle year and make"></label>
+      <label class="field"><span>23. Tag number/state</span><input data-forms-as-code="otherVehicle.tagState" data-forms-as-code-csv-label="Other vehicle tag and state"></label>
+      <label class="field span-2"><span>24. Insurance company</span><input data-forms-as-code="otherVehicle.insurer" data-forms-as-code-csv-label="Other vehicle insurer"></label>
+      <label class="field span-2"><span>25. Policy number</span><input data-forms-as-code="otherVehicle.policy" data-forms-as-code-csv-label="Other insurance policy"></label>
+      <label class="field span-4"><span>26. Damage to other vehicle or property</span><input data-forms-as-code="otherVehicle.damage" data-forms-as-code-csv-label="Other vehicle or property damage"></label>
+    </div>
+
+    <div class="section-title">IV - Police, injuries, and witnesses</div>
+    <div class="grid">
+      <div class="field span-2"><span>27. Police notified</span><div class="checkline"><label><input type="checkbox" data-forms-as-code="response.policeNotified" data-forms-as-code-csv-label="Police notified"> Yes</label></div></div>
+      <label class="field span-2"><span>28. Police report number</span><input data-forms-as-code="response.policeReportNumber" data-forms-as-code-csv-label="Police report number"></label>
+      <div class="field span-2"><span>29. Injuries reported</span><div class="checkline"><label><input type="checkbox" data-forms-as-code="response.injuries" data-forms-as-code-csv-label="Injuries reported"> Yes</label></div></div>
+      <div class="field span-2"><span>30. Ambulance requested</span><div class="checkline"><label><input type="checkbox" data-forms-as-code="response.ambulance" data-forms-as-code-csv-label="Ambulance requested"> Yes</label></div></div>
+      <label class="field span-2"><span>31. Witness 1 name and contact</span><input data-forms-as-code="witnesses.0" data-forms-as-code-csv-label="Witness 1 name and contact"></label>
+      <label class="field span-2"><span>32. Witness 2 name and contact</span><input data-forms-as-code="witnesses.1" data-forms-as-code-csv-label="Witness 2 name and contact"></label>
+    </div>
+    <div class="instructions"><b>Continue on page 2.</b> Record a factual description and diagram. Include lane, direction of travel, signals, signs, and the location of vehicles or pedestrians.</div>
+    <footer class="form-footer"><span>STANDARD FORM 91 (REV. 11/2020)</span><span>Page 1 of 2</span></footer>
+  </div>
+
+  <div class="paper-page">
+    <header class="sf-head"><div class="sf-number">STANDARD FORM <strong>91</strong></div><div class="sf-title"><h1>MOTOR VEHICLE ACCIDENT REPORT</h1><b>Narrative and certification</b></div><div class="sf-meta">Report no.<br><input aria-label="Report number repeated for page 2" data-forms-as-code="accident.reportNumber"></div></header>
+    <div class="section-title">V - Description of accident</div>
+    <div class="grid"><label class="field span-4"><span>33. Describe the accident in detail</span><textarea rows="12" data-forms-as-code="narrative.description" data-forms-as-code-csv-label="Accident narrative" required></textarea></label><label class="field span-4"><span>34. Diagram or describe vehicle positions, direction, lanes, traffic controls, and point of impact</span><textarea rows="12" data-forms-as-code="narrative.diagramDescription" data-forms-as-code-csv-label="Diagram description" required></textarea></label></div>
+    <div class="section-title">VI - Operator statement and certification</div>
+    <div class="instructions">I certify that the information provided in this report is true and complete to the best of my knowledge. The typed name below records the preparer's intent for this demonstration; it is not a cryptographic signature.</div>
+    <div class="grid"><label class="field span-2"><span>35. Operator typed name</span><input data-forms-as-code="certification.typedName" data-forms-as-code-csv-label="Operator typed name" required></label><label class="field"><span>36. Date</span><input type="date" data-forms-as-code="certification.date" data-forms-as-code-csv-label="Certification date" required></label><label class="field"><span>37. Supervisor notified</span><input type="checkbox" data-forms-as-code="certification.supervisorNotified" data-forms-as-code-csv-label="Supervisor notified"></label><label class="field span-2"><span>38. Supervisor name</span><input data-forms-as-code="certification.supervisorName" data-forms-as-code-csv-label="Supervisor name"></label><label class="field span-2"><span>39. Organization and office</span><input data-forms-as-code="certification.organization" data-forms-as-code-csv-label="Organization and office"></label></div>
+    <p class="source">Unofficial abbreviated HTML adaptation. Source: GSA Standard Form 91, Motor Vehicle Accident Report, Rev. November 2020, https://www.gsa.gov/system/files/SF91-20.pdf. Consult the official form for all fields, instructions, and agency requirements.</p>
+    <footer class="form-footer"><span>STANDARD FORM 91 (REV. 11/2020)</span><span>Page 2 of 2</span></footer>
+  </div>
+</form>
+</body>
+</html>

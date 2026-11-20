@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="forms-as-code:template-id" content="https://ivanchubb.github.io/forms-as-code/examples/irs-w9">
+  <meta name="forms-as-code:template-version" content="2024-03.2">
+  <meta name="forms-as-code:form-code" content="W9">
+  <meta name="forms-as-code:form-title" content="Request for Taxpayer Identification Number and Certification">
+  <meta name="forms-as-code:form-edition" content="Rev. March 2024">
+  <meta name="forms-as-code:name-path" content="payee.name">
+  <meta name="forms-as-code:notice" content="Unofficial HTML adaptation of IRS Form W-9 (Rev. March 2024). Compare with the current official form and instructions at IRS.gov before use.">
+  <title>Form W-9 - Request for Taxpayer Identification Number and Certification</title>
+  <style>
+    .document { --field: #e7f2ff; width: 7.7in; min-height: 10in; margin: 0 auto; padding: .08in; color: #000; background: #fff; font-family: Arial, Helvetica, sans-serif; font-size: 9pt; line-height: 1.15; }
+    .w9-head { display: grid; grid-template-columns: 1.25in 1fr 1.55in; border-bottom: 3px solid #000; }
+    .form-id { padding: .08in; border-right: 1px solid #000; font-size: 10pt; }
+    .form-id strong { display: block; font-size: 25pt; line-height: .95; }
+    .w9-title { padding: .08in .14in; text-align: center; }
+    .w9-title h1 { margin: 0; font-size: 16pt; }
+    .w9-title p { margin: .04in 0 0; font-weight: bold; }
+    .department { padding: .08in; border-left: 1px solid #000; font-size: 7.5pt; }
+    .requester-note { padding: .08in; border-bottom: 1px solid #000; text-align: center; font-weight: bold; }
+    .line { display: grid; grid-template-columns: .25in 1fr; border-bottom: 1px solid #000; }
+    .line-number { padding: .07in .04in; font-weight: bold; text-align: center; }
+    .line-content { padding: .05in .07in; border-left: 1px solid #000; }
+    .line-content label, .tin label, .sign label { display: block; font-size: 7.5pt; }
+    input:not([type="checkbox"]):not([type="radio"]), select, textarea { background: var(--field); }
+    .line-content input:not([type="checkbox"]):not([type="radio"]), .line-content select { width: 100%; margin-top: .04in; padding: .04in; border: 0; border-bottom: 1px solid #777; font: 10pt Arial, sans-serif; }
+    .classes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .06in .14in; margin-top: .05in; }
+    .classes label { display: flex; gap: .04in; align-items: flex-start; font-size: 8pt; }
+    .classes input { width: auto; margin: 0; }
+    .split { display: grid; grid-template-columns: 1fr 2.45in; border-bottom: 2px solid #000; }
+    .split > div { padding: .07in; }
+    .split > div + div { border-left: 1px solid #000; }
+    .part { display: flex; align-items: baseline; gap: .12in; padding: .07in; border-bottom: 2px solid #000; }
+    .part strong { padding: .04in .09in; color: #fff; background: #000; font-size: 11pt; }
+    .tin { display: grid; grid-template-columns: 1fr .22in 1fr; gap: .1in; padding: .15in .12in .2in; }
+    .tin input { width: 100%; margin-top: .06in; padding: .07in; border: 1px solid #000; letter-spacing: .12em; font: 11pt monospace; }
+    .or { display: grid; align-self: stretch; place-items: center; text-align: center; font-weight: bold; }
+    .certification { padding: .08in .12in; font-size: 8.4pt; }
+    .certification h2 { margin: 0 0 .06in; font-size: 10pt; }
+    .certification ol { margin: .05in 0 .08in .22in; padding: 0; }
+    .certification li { margin: .04in 0; }
+    .sign { display: grid; grid-template-columns: .75in 1fr 1.45in; border-top: 2px solid #000; border-bottom: 2px solid #000; }
+    .sign > * { padding: .07in; }
+    .sign strong { display: flex; align-items: center; font-size: 11pt; }
+    .sign label + label { border-left: 1px solid #000; }
+    .sign input { width: 100%; margin-top: .04in; border: 0; border-bottom: 1px solid #000; font: 10pt Arial, sans-serif; }
+    .source { margin: .08in 0 0; font-size: 7pt; }
+    @media (max-width: 850px) { .document { width: 100%; min-height: 0; } .classes { grid-template-columns: 1fr 1fr; } }
+    @media print { .document { width: 7.7in; min-height: 10in; padding: 0; } input:not([type="checkbox"]):not([type="radio"]), select, textarea { background: transparent; } .form-footer { position: static; } @page { size: letter portrait; margin: .35in .4in; } }
+  </style>
+</head>
+<body>
+<form data-forms-as-code-form class="forms-as-code-form document">
+  <header class="w9-head">
+    <div class="form-id">Form <strong>W-9</strong><span>(Rev. March 2024)</span></div>
+    <div class="w9-title"><h1>Request for Taxpayer Identification Number and Certification</h1><p>Go to www.irs.gov/FormW9 for instructions and the latest information.</p></div>
+    <div class="department">Department of the Treasury<br>Internal Revenue Service</div>
+  </header>
+  <div class="requester-note">Give form to the requester. Do not send to the IRS.</div>
+
+  <div class="line"><div class="line-number">1</div><div class="line-content"><label>Name of entity/individual. An entry is required.<input data-forms-as-code="payee.name" data-forms-as-code-csv-label="Payee legal name" required></label></div></div>
+  <div class="line"><div class="line-number">2</div><div class="line-content"><label>Business name/disregarded entity name, if different<input data-forms-as-code="payee.businessName" data-forms-as-code-csv-label="Business or entity name"></label></div></div>
+  <div class="line"><div class="line-number">3a</div><div class="line-content">Check the appropriate federal tax classification.
+    <div class="classes">
+      <label><input type="radio" name="classification" value="Individual/sole proprietor" data-forms-as-code="tax.classification" required> Individual/sole proprietor</label>
+      <label><input type="radio" name="classification" value="C corporation" data-forms-as-code="tax.classification"> C corporation</label>
+      <label><input type="radio" name="classification" value="S corporation" data-forms-as-code="tax.classification"> S corporation</label>
+      <label><input type="radio" name="classification" value="Partnership" data-forms-as-code="tax.classification"> Partnership</label>
+      <label><input type="radio" name="classification" value="Trust/estate" data-forms-as-code="tax.classification"> Trust/estate</label>
+      <label><input type="radio" name="classification" value="LLC" data-forms-as-code="tax.classification"> LLC</label>
+      <label><input type="radio" name="classification" value="Other" data-forms-as-code="tax.classification"> Other</label>
+    </div>
+  </div></div>
+  <div class="line"><div class="line-number">3b</div><div class="line-content"><label>If partnership, trust/estate, or certain LLC, check if foreign partners, owners, or beneficiaries exist.<input type="checkbox" data-forms-as-code="tax.foreignOwners" data-forms-as-code-csv-label="Foreign owners or beneficiaries"></label></div></div>
+  <div class="line"><div class="line-number">4</div><div class="line-content"><label>Exemptions (codes apply only to certain entities)<input data-forms-as-code="tax.exemptionCodes" data-forms-as-code-csv-label="Exemption codes"></label></div></div>
+  <div class="split">
+    <div><div class="line"><div class="line-number">5</div><div class="line-content"><label>Address (number, street, and apt. or suite no.)<input data-forms-as-code="address.street" data-forms-as-code-csv-label="Street address" autocomplete="street-address" required></label></div></div><div class="line"><div class="line-number">6</div><div class="line-content"><label>City, state, and ZIP code<input data-forms-as-code="address.cityStateZip" data-forms-as-code-csv-label="City state and ZIP" required></label></div></div><div class="line"><div class="line-number">7</div><div class="line-content"><label>List account number(s) here (optional)<input data-forms-as-code="accounts" data-forms-as-code-csv-label="Requester account numbers"></label></div></div></div>
+    <div><label>Requester's name and address (optional)<textarea rows="7" data-forms-as-code="requester.nameAddress" data-forms-as-code-csv-label="Requester name and address"></textarea></label></div>
+  </div>
+
+  <div class="part"><strong>Part I</strong><b>Taxpayer Identification Number (TIN)</b></div>
+  <p>Enter your TIN in the appropriate box. The TIN provided must match the name given on line 1.</p>
+  <div class="tin"><label>Social security number<input inputmode="numeric" pattern="[0-9]{9}" maxlength="9" data-forms-as-code="tin.ssn" data-forms-as-code-csv-label="Social security number" aria-label="Nine digit Social security number"></label><span class="or">or</span><label>Employer identification number<input inputmode="numeric" pattern="[0-9]{9}" maxlength="9" data-forms-as-code="tin.ein" data-forms-as-code-csv-label="Employer identification number" aria-label="Nine digit employer identification number"></label></div>
+
+  <div class="part"><strong>Part II</strong><b>Certification</b></div>
+  <div class="certification"><h2>Under penalties of perjury, I certify that:</h2><ol><li>The number shown on this form is my correct taxpayer identification number (or I am waiting for a number to be issued to me); and</li><li>I am not subject to backup withholding, or I have entered the applicable status below; and</li><li>I am a U.S. citizen or other U.S. person; and</li><li>Any FATCA code entered on this form indicating exemption from FATCA reporting is correct.</li></ol><label><input type="checkbox" data-forms-as-code="certification.subjectToBackupWithholding" data-forms-as-code-csv-label="Subject to backup withholding"> I am subject to backup withholding.</label></div>
+  <div class="sign"><strong>Sign Here</strong><label>Signature of U.S. person (typed name for this demonstration)<input data-forms-as-code="certification.typedName" data-forms-as-code-csv-label="Certification typed name" required></label><label>Date<input type="date" data-forms-as-code="certification.date" data-forms-as-code-csv-label="Certification date" required></label></div>
+  <p class="source">Unofficial HTML adaptation. Source: IRS Form W-9 (Rev. March 2024), https://www.irs.gov/pub/irs-pdf/fw9.pdf. The official form and instructions control.</p>
+  <footer class="form-footer"><span>Form W-9 (Rev. 3-2024)</span><span>forms-as-code adaptation 2024-03.2</span></footer>
+</form>
+</body>
+</html>

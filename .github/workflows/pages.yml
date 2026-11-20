@@ -26,17 +26,27 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf _site
-          mkdir -p _site/assets _site/branding
+          mkdir -p _site/assets _site/branding _site/examples/templates
           cp app/index.html app/app.js app/app.css app/site.config.json app/llms.txt app/agent.json app/automation.html _site/
           cp app/branding/* _site/branding/
           cp assets/* _site/assets/
+          cp examples/catalog.json _site/examples/catalog.json
+          cp examples/templates/*.html _site/examples/templates/
           python3 - <<'PY'
+          import json
           from pathlib import Path
 
           for path in Path('_site').glob('*.html'):
               text = path.read_text()
               text = text.replace('../assets/', 'assets/')
               path.write_text(text)
+
+          config_path = Path('_site/site.config.json')
+          config = json.loads(config_path.read_text())
+          for catalog in config.get('catalogs', []):
+              if catalog.get('url') == '../examples/catalog.json':
+                  catalog['url'] = './examples/catalog.json'
+          config_path.write_text(json.dumps(config, indent=2) + '\n')
           PY
           touch _site/.nojekyll
 

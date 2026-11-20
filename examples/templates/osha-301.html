@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="forms-as-code:template-id" content="https://ivanchubb.github.io/forms-as-code/examples/osha-301">
+  <meta name="forms-as-code:template-version" content="2004-01.2">
+  <meta name="forms-as-code:form-code" content="OSHA301">
+  <meta name="forms-as-code:form-title" content="Injury and Illness Incident Report">
+  <meta name="forms-as-code:form-edition" content="Rev. 01/2004">
+  <meta name="forms-as-code:name-path" content="employee.fullName">
+  <meta name="forms-as-code:notice" content="Unofficial HTML adaptation of OSHA Form 301. Review OSHA recordkeeping requirements and the current official form before operational use.">
+  <title>OSHA Form 301 - Injury and Illness Incident Report</title>
+  <style>
+    .document { --field: #e7f2ff; width: 7.25in; min-height: 9.6in; margin: 0 auto; padding: .05in; color: #000; background: #fff; font-family: Arial, Helvetica, sans-serif; font-size: 7.5pt; line-height: 1.05; }
+    .osha-head { display: grid; grid-template-columns: 1.35in 1fr 1.35in; align-items: center; border-bottom: 3px solid #000; }
+    .osha-mark { padding: .08in; font-size: 18pt; font-weight: bold; letter-spacing: -.06em; }
+    .osha-title { padding: .08in; text-align: center; }
+    .osha-title h1 { margin: 0; font-size: 16pt; }
+    .osha-title p { margin: .04in 0 0; font-size: 10pt; font-weight: bold; }
+    .osha-number { padding: .08in; text-align: right; font-size: 12pt; font-weight: bold; }
+    .intro { margin: .04in 0; font-size: 7pt; }
+    .section-title { margin-top: .04in; padding: .035in .07in; color: #fff; background: #000; font-size: 10pt; font-weight: bold; }
+    .question { display: grid; grid-template-columns: .28in 1fr; border-right: 1px solid #000; border-bottom: 1px solid #000; border-left: 1px solid #000; }
+    .number { padding: .045in .03in; text-align: center; font-weight: bold; }
+    .answer { min-height: .34in; padding: .035in .06in; border-left: 1px solid #000; }
+    .answer label { display: block; font-weight: bold; }
+    input:not([type="checkbox"]):not([type="radio"]), select, textarea { background: var(--field); }
+    .answer input:not([type="checkbox"]):not([type="radio"]), .answer textarea { width: 100%; margin-top: .04in; padding: .03in; border: 0; border-bottom: 1px solid #666; font: 9pt Arial, sans-serif; }
+    .answer textarea { min-height: .28in; resize: vertical; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: .08in; }
+    .choice { display: flex; flex-wrap: wrap; gap: .08in .25in; margin-top: .05in; }
+    .choice label { display: inline-flex; align-items: center; gap: .04in; font-weight: normal; }
+    .source { margin: .04in 0 0; font-size: 6.5pt; }
+    @media (max-width: 850px) { .document { width: 100%; min-height: 0; } }
+    @media print { .document { width: 7.25in; min-height: 0; padding: 0; zoom: .78; } input:not([type="checkbox"]):not([type="radio"]), select, textarea { background: transparent; } .form-footer { position: static; } @page { size: letter portrait; margin: .25in .35in; } }
+  </style>
+</head>
+<body>
+<form data-forms-as-code-form class="forms-as-code-form document">
+  <header class="osha-head"><div class="osha-mark">OSHA</div><div class="osha-title"><h1>Injury and Illness Incident Report</h1><p>Attention: This form contains information relating to employee health and must be used in a manner that protects confidentiality.</p></div><div class="osha-number">U.S. Department of Labor<br>Form 301</div></header>
+  <p class="intro">This Injury and Illness Incident Report is one of the first forms completed when a recordable work-related injury or illness occurs. Complete one report for each case. This adaptation preserves the recognizable numbered paper workflow while making the answers machine-readable.</p>
+
+  <div class="section-title">Information about the employee</div>
+  <div class="question"><div class="number">1</div><div class="answer"><label>Full name<input data-forms-as-code="employee.fullName" data-forms-as-code-csv-label="Employee name" required></label></div></div>
+  <div class="question"><div class="number">2</div><div class="answer"><label>Street address<input data-forms-as-code="employee.street" data-forms-as-code-csv-label="Employee street address" required></label></div></div>
+  <div class="question"><div class="number">3</div><div class="answer two"><label>City<input data-forms-as-code="employee.city" data-forms-as-code-csv-label="Employee city" required></label><label>State and ZIP<input data-forms-as-code="employee.stateZip" data-forms-as-code-csv-label="Employee state and ZIP" required></label></div></div>
+  <div class="question"><div class="number">4</div><div class="answer"><label>Date of birth<input type="date" data-forms-as-code="employee.dateOfBirth" data-forms-as-code-csv-label="Employee date of birth" required></label></div></div>
+  <div class="question"><div class="number">5</div><div class="answer"><label>Date hired<input type="date" data-forms-as-code="employee.dateHired" data-forms-as-code-csv-label="Employee date hired"></label></div></div>
+  <div class="question"><div class="number">6</div><div class="answer"><b>Gender</b><div class="choice"><label><input type="radio" name="gender" value="Male" data-forms-as-code="employee.gender"> Male</label><label><input type="radio" name="gender" value="Female" data-forms-as-code="employee.gender"> Female</label><label><input type="radio" name="gender" value="Not recorded" data-forms-as-code="employee.gender"> Not recorded</label></div></div></div>
+
+  <div class="section-title">Information about the physician or other health care professional</div>
+  <div class="question"><div class="number">7</div><div class="answer"><label>Name of physician or other health care professional<input data-forms-as-code="medical.professionalName" data-forms-as-code-csv-label="Health professional name"></label></div></div>
+  <div class="question"><div class="number">8</div><div class="answer"><label>If treatment was given away from the worksite, where was it given?<input data-forms-as-code="medical.facilityName" data-forms-as-code-csv-label="Treatment facility"></label><div class="two"><label>Facility address<input data-forms-as-code="medical.facilityAddress" data-forms-as-code-csv-label="Treatment facility address"></label><div class="choice"><label><input type="checkbox" data-forms-as-code="medical.emergencyRoom" data-forms-as-code-csv-label="Emergency room treatment"> Emergency room</label><label><input type="checkbox" data-forms-as-code="medical.hospitalizedOvernight" data-forms-as-code-csv-label="Hospitalized overnight"> Hospitalized overnight</label></div></div></div></div>
+
+  <div class="section-title">Information about the case</div>
+  <div class="question"><div class="number">9</div><div class="answer two"><label>Date of injury or illness<input type="date" data-forms-as-code="case.date" data-forms-as-code-csv-label="Case date" required></label><label>Time employee began work<input type="time" data-forms-as-code="case.workStartTime" data-forms-as-code-csv-label="Work start time"></label></div></div>
+  <div class="question"><div class="number">10</div><div class="answer"><label>Time of event<input type="time" data-forms-as-code="case.eventTime" data-forms-as-code-csv-label="Event time"></label><div class="choice"><label><input type="checkbox" data-forms-as-code="case.timeUnknown" data-forms-as-code-csv-label="Event time unknown"> Check if time cannot be determined</label></div></div></div>
+  <div class="question"><div class="number">11</div><div class="answer"><label>What was the employee doing just before the incident occurred? Describe the activity and the tools, equipment, or material in use.<textarea data-forms-as-code="case.activityBefore" data-forms-as-code-csv-label="Activity before incident" required></textarea></label></div></div>
+  <div class="question"><div class="number">12</div><div class="answer"><label>What happened? Explain how the injury occurred.<textarea data-forms-as-code="case.whatHappened" data-forms-as-code-csv-label="Incident description" required></textarea></label></div></div>
+  <div class="question"><div class="number">13</div><div class="answer"><label>What was the injury or illness? State the part of body affected and how it was affected.<textarea data-forms-as-code="case.injuryDescription" data-forms-as-code-csv-label="Injury or illness description" required></textarea></label></div></div>
+  <div class="question"><div class="number">14</div><div class="answer"><label>What object or substance directly harmed the employee?<input data-forms-as-code="case.objectOrSubstance" data-forms-as-code-csv-label="Object or substance" required></label></div></div>
+  <div class="question"><div class="number">15</div><div class="answer"><label>If the employee died, when did death occur?<input type="date" data-forms-as-code="case.dateOfDeath" data-forms-as-code-csv-label="Date of death"></label></div></div>
+
+  <div class="section-title">Completed by</div>
+  <div class="question"><div class="number"></div><div class="answer two"><label>Name<input data-forms-as-code="preparer.name" data-forms-as-code-csv-label="Preparer name" required></label><label>Title<input data-forms-as-code="preparer.title" data-forms-as-code-csv-label="Preparer title" required></label><label>Phone<input type="tel" data-forms-as-code="preparer.phone" data-forms-as-code-csv-label="Preparer phone"></label><label>Date<input type="date" data-forms-as-code="preparer.date" data-forms-as-code-csv-label="Prepared date" required></label></div></div>
+  <p class="source">Unofficial HTML adaptation. Source: OSHA Form 301, Injury and Illness Incident Report, Rev. 01/2004, published as part of OSHA's recordkeeping forms package. Current requirements and official materials at https://www.osha.gov/recordkeeping/forms.</p>
+  <footer class="form-footer"><span>OSHA's Form 301 (Rev. 01/2004)</span><span>forms-as-code adaptation 2004-01.2</span></footer>
+</form>
+</body>
+</html>

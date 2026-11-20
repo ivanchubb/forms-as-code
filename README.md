@@ -18,10 +18,11 @@ See [`docs/format.md`](docs/format.md) for the current contract and open design 
 - [`.agents/skills/pdf-to-forms-as-code/SKILL.md`](.agents/skills/pdf-to-forms-as-code/SKILL.md) - repeatable workflow for adding one HTML template from a supplied PDF.
 - [`assets/forms-as-code-base.css`](assets/forms-as-code-base.css) - common presentation styles loaded by the app.
 - [`app/`](app/) - the single forms-as-code application: trusted HTML resolution, shared styling, data binding, validation, Save/Load/Lock, CSV, ZIP, and combined print workflows.
-- [`app/site.config.json`](app/site.config.json) - active neutral deployment configuration used by the default static deployment.
-- [`configs/default.json`](configs/default.json) - reusable copy of the neutral default deployment configuration.
-- [`configs/army.json`](configs/army.json) - optional Army-branded deployment configuration kept outside the organization-agnostic renderer.
-- The trusted Army form templates are maintained in the sibling [`../forms/`](../forms/) repository and discovered through its published catalog; forms-as-code does not store canonical form templates.
+- [`app/site.config.json`](app/site.config.json) - active neutral demonstration configuration used by the default static deployment.
+- [`configs/default.json`](configs/default.json) - reusable neutral configuration with no preconfigured catalog.
+- [`configs/example.json`](configs/example.json) and [`docs/configuration.md`](docs/configuration.md) - complete configuration example and field reference.
+- [`examples/`](examples/) - public, unofficial example templates and a same-origin catalog deployed with the website.
+- Deployment-specific branding, catalogs, and canonical operational templates belong in the deploying organization's repositories.
 - [`spec/submission.schema.json`](spec/submission.schema.json) - draft JSON Schema for a forms-as-code submission envelope.
 
 ## Core idea
@@ -51,7 +52,8 @@ flowchart LR
   Submission -->|JSON only| Receive
 ```
 
-Each form is one versioned HTML file with presentation markup, metadata, and `data-forms-as-code` bindings in the sibling `forms` repository.
+Each form is one versioned HTML file with presentation markup, metadata, and `data-forms-as-code` bindings.
+This repository includes clearly labeled demonstration templates, while organizations can maintain operational templates in separate repositories.
 When opening a submission, the app resolves the template ID and version through its validated sources and fetches only the catalog-approved HTML path from the catalog's origin.
 The template cannot load arbitrary scripts, stylesheets, or assets.
 The JSON submission carries its template reference and answers, not a duplicate of the presentation.
@@ -68,20 +70,21 @@ The canonical `forms` repository applies stricter publication checks and require
 ## Deployment configuration
 
 Hosts can customize the site without changing application code through a JSON configuration file.
+See the complete [configuration field reference](docs/configuration.md).
 Production static hosts should deploy their selected file as `site.config.json` alongside `app.js`.
 For local development, `serve.sh [config.json]` serves the selected file at that URL without copying or modifying it.
-With no argument, it uses the default blue theme from `app/site.config.json`.
-`configs/default.json` contains the same reusable neutral configuration for deployment tooling or explicit local selection.
+With no argument, it uses the neutral demonstration configuration from `app/site.config.json`, including the bundled example catalog.
+The source configuration uses `../examples/catalog.json` because the local app lives under `app/`; the Pages workflow rewrites that URL to `./examples/catalog.json` when it flattens the app into the site root.
+`configs/default.json` is the reusable catalog-free neutral configuration for deployment tooling or explicit local selection.
 The `siteName`, `tagline`, and `footer` properties set visible branding.
 The renderer has a neutral blue default and no organization-specific theme names.
 An optional `appearance` object can override light and dark presentation colors for another organization.
-The Army example uses the green and gold palette from the Army Publishing application.
 The optional `favicon` property accepts an app-relative or same-origin `.svg`, `.png`, or `.ico` URL and defaults to `./branding/favicon.svg`.
 Cross-origin and embedded data favicons are rejected.
 The default footer links to this project's source using `sourceUrl` and optional `sourceLabel`.
 Set `"sourceUrl": false` to hide the source link for a deployment.
 
-The `catalogs` property is an ordered, non-empty list:
+The `catalogs` property is an ordered list and may be empty:
 
 ```json
 {
@@ -102,8 +105,22 @@ The `catalogs` property is an ordered, non-empty list:
 ```
 
 Catalogs earlier in the list take precedence when multiple catalogs contain the same template ID and version.
-A user's saved source list remains their browser-specific override of deployment defaults.
-Invalid or unavailable configuration falls back to the built-in default configuration so the application remains usable.
+A user's saved non-empty source list remains their browser-specific override of deployment defaults.
+Malformed configuration or invalid catalog settings fall back to the built-in default configuration so the application remains usable.
+Invalid optional branding values are ignored independently.
+
+## Bundled examples
+
+The default GitHub Pages deployment includes three same-origin, printable adaptations of recognizable public U.S. government forms:
+
+- **IRS Form W-9** demonstrates vendor intake, classification choices, certification, JSON save/load, locking, and bulk CSV workflows.
+- **OSHA Form 301** demonstrates structured workplace incident intake and is well suited to batch reporting and combined printing.
+- **GSA Standard Form 91** demonstrates a dense, two-page motor vehicle accident report with explicit print page boundaries.
+
+Each template cites its authoritative source and is prominently identified as an unofficial HTML adaptation.
+The current official form, instructions, and legal requirements always control.
+The examples prioritize Letter-size print geometry, stable page breaks, numbered fields, and document-style typography rather than ordinary responsive web-form presentation.
+The bundled catalog requires no cloud bucket, credentials, or CORS configuration because GitHub Pages serves it with the application.
 
 ### Hosting remote catalogs
 
@@ -136,8 +153,7 @@ Private deployments should place an authenticated catalog service or same-origin
 
 ## Development
 
-Run the local forms-as-code app from the workspace root so the app can fetch sibling-repository forms.
-The server must run from `/home/chubb`, not from the `forms-as-code` directory, because templates are maintained in the sibling `forms` repository:
+Run the local forms-as-code app from the workspace root when testing templates maintained in sibling repositories:
 
 ```sh
 cd /home/chubb
@@ -150,11 +166,11 @@ Alternatively, run the included helper from the forms-as-code directory with the
 ./serve.sh
 ```
 
-Provide another configuration file to select or change the deployment presentation:
+Provide another organization-owned configuration file to select or change the deployment presentation:
 
 ```sh
 ./serve.sh configs/default.json
-./serve.sh configs/army.json
+./serve.sh ../organization-forms/site.config.json
 ```
 
 The helper prints the selected configuration and application URL.
@@ -162,7 +178,7 @@ It serves the configuration virtually, without overwriting `app/site.config.json
 Set `PORT` to override port 8000:
 
 ```sh
-PORT=8080 ./serve.sh configs/army.json
+PORT=8080 ./serve.sh ../organization-forms/site.config.json
 ```
 
 Open <http://localhost:8000/forms-as-code/app/>.
@@ -181,7 +197,7 @@ Batches over 1,000 records require confirmation because large or complex batches
 Bulk ZIP downloads are limited to 65,535 submissions.
 CSV contents are processed in the browser and are not sent to a server by this workflow.
 The deployed site also publishes `llms.txt`, `agent.json`, and a visible automation guide.
-Shareable URLs support exact form-code selection, optional exact versions, and automatic bulk CSV download, for example `?template=DA4856&version=2023-03.2&action=bulk-csv`.
+Shareable URLs support exact form-code selection, optional exact versions, and automatic bulk CSV download, for example `?template=FORM100&version=2026.1&action=bulk-csv`.
 
 ## License
 
