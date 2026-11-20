@@ -38,6 +38,23 @@
   const templateSearch = document.querySelector('#template-search');
   const templateOptions = document.querySelector('#template-options');
   const templateHost = document.querySelector('#template-host');
+
+  function prepareEmptyDatesForPrint() {
+    for (const control of document.querySelectorAll('input[type="date"]')) {
+      if (control.value) continue;
+      control.dataset.formsAsCodePrintDate = 'empty';
+      control.type = 'text';
+      control.value = '';
+    }
+  }
+  function restoreEmptyDatesAfterPrint() {
+    for (const control of document.querySelectorAll('input[data-forms-as-code-print-date="empty"]')) {
+      control.type = 'date';
+      delete control.dataset.formsAsCodePrintDate;
+    }
+  }
+  window.addEventListener('beforeprint', prepareEmptyDatesForPrint);
+  window.addEventListener('afterprint', restoreEmptyDatesAfterPrint);
   const toolbar = document.querySelector('#app-toolbar');
   const notice = document.querySelector('#template-notice');
   const appStatus = document.querySelector('#app-status');
