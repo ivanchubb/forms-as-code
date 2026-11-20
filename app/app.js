@@ -444,6 +444,7 @@
 
   function initializeForm(template, meta) {
     const form = templateHost.querySelector('form[data-forms-as-code-form]');
+    const wrapper = form.closest('.forms-as-code-template');
     let controls = [];
     const status = document.querySelector('#form-status');
     const lockButton = document.querySelector('#lock-submission');
