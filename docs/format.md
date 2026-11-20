@@ -4,7 +4,8 @@ This is an exploratory contract, not a stable interoperability specification. Ex
 
 ## One app, one HTML template, one submission
 
-A form has one self-contained HTML file in a trusted template source outside forms-as-code.
+A form has one self-contained HTML file in a trusted template source.
+Demonstration templates may ship with the static site, while operational templates can remain in separately managed repositories or catalogs.
 It contains form markup, template metadata, embedded presentation CSS, and `data-forms-as-code` bindings.
 Common application behavior, including data binding, CSV/ZIP workflows, save/load, and printing, belongs to the forms-as-code app.
 
@@ -13,23 +14,23 @@ Common application behavior, including data binding, CSV/ZIP workflows, save/loa
 Every loadable template must contain these non-empty identity elements in `<head>`:
 
 ```html
-<meta name="forms-as-code:template-id" content="https://forms.example.org/forms-as-code/da-form-2404">
-<meta name="forms-as-code:template-version" content="2026-08.1">
-<meta name="forms-as-code:form-code" content="DA2404">
+<meta name="forms-as-code:template-id" content="https://forms.example.org/forms-as-code/form-100">
+<meta name="forms-as-code:template-version" content="2026.1">
+<meta name="forms-as-code:form-code" content="FORM100">
 ```
 
 - `template-id` is the stable identifier shared by every edition of the same logical form.
 - `template-version` identifies one immutable template artifact and must change when that artifact changes.
-- `form-code` is the compact form designator used for display and filenames, such as `DA2404` or `DD1750`.
+- `form-code` is the compact form designator used for display and filenames, such as `FORM100` or `PERMIT20`.
 - The identity values in a fetched HTML document must exactly match its trusted catalog entry.
 - A missing or mismatched identity value makes that individual template unusable because submissions could not be resolved safely.
 
 Authors should also provide these non-empty display elements:
 
 ```html
-<meta name="forms-as-code:form-title" content="Equipment Inspection and Maintenance Worksheet">
-<meta name="forms-as-code:form-edition" content="AUG 2026">
-<title>DA Form 2404 - Equipment Inspection and Maintenance Worksheet</title>
+<meta name="forms-as-code:form-title" content="Equipment Inspection Worksheet">
+<meta name="forms-as-code:form-edition" content="2026">
+<title>Form 100 - Equipment Inspection Worksheet</title>
 ```
 
 `form-title` contains the descriptive title without the form designator or edition.

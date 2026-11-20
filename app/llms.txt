@@ -12,14 +12,14 @@ Read ./automation.html for the human-readable automation and bulk forms guide.
 
 ## Open a form
 
-Use ?template=DA4856 to open the sole trusted version of an exact form code.
+Use ?template=FORM100 to open the sole trusted version of an exact form code.
 Form-code matching ignores case, spaces, and hyphens, but it is not fuzzy title search.
-Use ?template=DA4856&version=2023-03.2 to require an exact version.
+Use ?template=FORM100&version=2026.1 to require an exact version.
 If multiple versions match and version is omitted, the application reports an ambiguity instead of guessing.
 
 ## Download a bulk CSV template
 
-Use ?template=DA4856&version=2023-03.2&action=bulk-csv to render the trusted template and download its bulk CSV contract.
+Use ?template=FORM100&version=2026.1&action=bulk-csv to render the trusted template and download its bulk CSV contract.
 The browser must execute JavaScript for this action.
 Plain curl or Python HTTP requests only retrieve static files and cannot execute application actions.
 

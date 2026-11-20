@@ -1,14 +1,9 @@
 {
   "siteName": "forms-as-code",
   "tagline": "Portable form data, rendered with its versioned HTML template.",
-  "footer": "Local prototype. Template HTML is resolved from configured trusted catalogs; arbitrary template URIs are never fetched.",
+  "footer": "Local prototype. Add a public template catalog or select local templates to begin.",
   "sourceUrl": "https://github.com/ivanchubb/forms-as-code",
   "sourceLabel": "View source on GitHub",
   "favicon": "./branding/favicon.svg",
-  "catalogs": [
-    {
-      "label": "army-form-templates",
-      "url": "https://army-form-templates.s3.us-east-1.amazonaws.com/catalog.json"
-    }
-  ]
+  "catalogs": []
 }

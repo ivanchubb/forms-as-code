@@ -4,11 +4,11 @@
   const FALLBACK_CONFIG = {
     siteName: 'forms-as-code',
     tagline: 'Portable form data, rendered with its versioned HTML template.',
-    footer: "Local prototype. Template HTML is resolved from configured trusted catalogs; arbitrary template URIs are never fetched.",
+    footer: 'Local prototype. Add a public template catalog or select local templates to begin.',
     sourceUrl: 'https://github.com/ivanchubb/forms-as-code',
     sourceLabel: 'View source on GitHub',
     favicon: './branding/favicon.svg',
-    catalogs: [{ label: 'army-form-templates', url: 'https://army-form-templates.s3.us-east-1.amazonaws.com/catalog.json' }]
+    catalogs: []
   };
   const CATALOG_URL_KEY = 'forms-as-code:catalog-url';
   const SOURCES_KEY = 'forms-as-code:template-sources:v1';
@@ -76,10 +76,7 @@
   }
   function templateKey(reference) { return `${reference?.uri}@${reference?.version}`; }
   function normalizedFormCode(code) { return String(code || '').replace(/[\s-]+/g, '').toLocaleUpperCase(); }
-  function formDesignation(code) {
-    const match = code.match(/^(DA|DD)(.+)$/i);
-    return match ? `${match[1].toUpperCase()} Form ${match[2].replace(/AFT$/i, '-AFT')}` : code;
-  }
+  function formDesignation(code) { return code; }
   function templateDisplayName(template) {
     return `${formDesignation(template.code)} - ${template.title}${template.edition ? ` (${template.edition})` : ''}`;
   }
@@ -90,7 +87,7 @@
     return { id: sourceId(), type: 'remote', label: typeof catalog.label === 'string' && catalog.label.trim() ? catalog.label.trim() : url.hostname, url: url.href, status: 'loading', templates: [] };
   }
   function configuredSources() {
-    if (!Array.isArray(siteConfig.catalogs) || !siteConfig.catalogs.length) throw new Error('site.config.json must define at least one catalog.');
+    if (!Array.isArray(siteConfig.catalogs)) throw new Error('site.config.json catalogs must be an array.');
     return siteConfig.catalogs.map(remoteSource);
   }
   async function loadSiteConfig() {
@@ -613,7 +610,7 @@
       });
     }
     function syncConditionalVisibility(data = collectData()) {
-      for (const element of form.querySelectorAll('[data-forms-as-code-visible-when]')) {
+      for (const element of wrapper.querySelectorAll('[data-forms-as-code-visible-when]')) {
         const hidden = !matchesVisibilityRule(element.dataset.formsAsCodeVisibleWhen, data);
         const wasHidden = element.classList.contains('forms-as-code-hidden');
         element.classList.toggle('forms-as-code-hidden', hidden);
@@ -630,10 +627,10 @@
     function syncAutomaticRemarks(data = collectData()) {
       const remarks = form.querySelector('[data-forms-as-code-auto-remarks]');
       if (!remarks) return;
-      const types = getAt(data, 'absenceTypes') || [];
-      const statements = [];
-      if (Array.isArray(types) && types.includes('Permanent Change of Station (PCS)')) statements.push('FOR EMERGENCIES: First try to contact your gaining and losing commanders. The Army Travel Assistance Center (ATAC) supports Soldiers in a PCS status, and Family members traveling on official orders, with emergency leave extensions and changes in port call. Contact ATAC at 1-800-833-6622, Option 5, or at 1-800-582-5552, or email ASKHRC.ARMY@US.ARMY.MIL.');
-      if (getAt(data, 'absenceCategory') === 'NON-CHARGEABLE' || (Array.isArray(types) && types.some(type => type.includes('Non-Chargeable')))) statements.push('NON-CHARGEABLE ABSENCE: Is not directed by any official of the US Government. I cannot conduct public business under this authorization, and will not be reimbursed for travel, per diem, or any other expense. I may cancel this absence at any time and report back to my regular place of duty.');
+      const statements = [...wrapper.querySelectorAll('template[data-forms-as-code-auto-remark]')]
+        .filter(statement => matchesVisibilityRule(statement.dataset.formsAsCodeAutoRemark, data))
+        .map(statement => statement.content.textContent.trim())
+        .filter(Boolean);
       const text = statements.join('\n\n');
       if (!remarks.value || remarks.value === automaticRemarks) remarks.value = text;
       automaticRemarks = text;

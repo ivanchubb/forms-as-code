@@ -42,7 +42,7 @@ If a field's meaning, valid values, or conditional requirements cannot be establ
 - Include non-empty `forms-as-code:template-id`, `forms-as-code:template-version`, `forms-as-code:form-code`, `forms-as-code:form-title`, and `forms-as-code:form-edition` meta elements plus a `<title>` formatted as `<form designation> - <form title>`.
 - Keep `template-id` stable across editions of the same logical form and treat it as an identifier rather than a retrieval URL.
 - Change `template-version` whenever the published template artifact changes.
-- Use a compact `form-code` such as `DA2404` or `DD1750`, a descriptive title without the designator or edition, and an edition such as `AUG 2026`.
+- Use a compact `form-code` such as `FORM100` or `PERMIT20`, a descriptive title without the designator or edition, and the source form's canonical edition.
 - Include one `<form data-forms-as-code-form>` container and bind submitted controls with stable `data-forms-as-code="path.to.value"` paths.
 - Add form provenance, field mapping and adaptations, privacy warning, limitations, and verification status to the template directory's `README.md`.
 - Rely on the generated catalog for remote discovery instead of adding a form-specific hard-coded registry entry unless a built-in offline fallback is explicitly required.
@@ -101,9 +101,9 @@ For local development bind the static server to loopback, e.g. `python3 -m http.
 
 - Generate CSV templates with stable `data-forms-as-code` paths in the first row, human-readable field labels in the second row, and example values in the third row. Use `data-forms-as-code-csv-label` first, then a concise `aria-label`, associated label, or `title`, and otherwise humanize the binding path. Do not copy long accessible instructions into CSV labels. Add a brief `data-forms-as-code-csv-label` when a field's visible label is ambiguous outside the rendered form, especially in repeated sections. Target 40 characters or fewer, include section or row context only when needed, and omit instructions or formatting examples. Mark both reference rows in the name column and make the importer skip them so they cannot create synthetic submissions.
 - Load detects JSON vs CSV by extension/type. One populated CSV row creates one JSON submission; a successful CSV load produces a ZIP of all submissions.
-- Use RFC 4180-compatible quoting and UTF-8/BOM handling for Excel. Document the cell representation of choices, booleans, arrays, and dates. For DoD IDs, instruct Excel users to import the column as **Text** so leading zeroes survive.
+- Use RFC 4180-compatible quoting and UTF-8/BOM handling for Excel. Document the cell representation of choices, booleans, arrays, and dates. For identifiers with leading zeroes, instruct Excel users to import the column as **Text**.
 - Require the exact expected headers (allow reordering, reject duplicates/missing/unknown columns), skip entirely blank rows, impose a reasonable row limit, and validate every row before creating any ZIP. If one row fails, create no partial ZIP and report the CSV record number and reason.
-- ZIP entries should be readable and safe. Sanitize names and avoid path separators. Use `<FORMCODE>-<sanitized-name>.json` (derive a compact stable code from the official form designator, such as `DA705AFT`); if sanitized names collide, append `-2`, `-3`, etc. Preserve the established `DA5960-<sanitized-name>.json` convention for DA Form 5960. Never put a full DoD ID or other sensitive identifier in a filename. Bulk submissions start unlocked.
+- ZIP entries should be readable and safe. Sanitize names and avoid path separators. Use `<FORMCODE>-<sanitized-name>.json`, deriving a compact stable code from the official form designator; if sanitized names collide, append `-2`, `-3`, etc. Never put a full government identifier or other sensitive identifier in a filename. Bulk submissions start unlocked.
 
 ## 5. Match print behavior
 
@@ -136,7 +136,7 @@ Do not claim cryptographic signing, CAC/PIV interoperability, official acceptanc
 - Misaligning a table header by forgetting the row-number column.
 - Making an initials prompt plain text without its small fillable field in the correct location.
 - Letting CSS shrink the form onto two pages or leaving a normal-flow footer only at the end; use print rules and test preview. Shared base styles may use a fixed footer; override that for multi-page forms or the final page number can be repeated on every printed page. Repeat page headers/privacy blocks wherever the source PDF repeats them.
-- Calling the product “Viewer,” exposing full DoD IDs in ZIP names, or labeling a browser download as “Download” when the user-facing action should be “Save.” Derive ZIP filename prefixes from the form being converted, rather than copying another template's code.
+- Calling the product “Viewer,” exposing sensitive identifiers in ZIP names, or labeling a browser download as “Download” when the user-facing action should be “Save.” Derive ZIP filename prefixes from the form being converted, rather than copying another template's code.
 - Adding a Git SHA/hash to the footer without a stable build source; do not add hash machinery unless requested and well-defined.
 - Treating `locked: true` as a cryptographic lock or signature. Until signing exists, it only tells the app to disable editing.
 - Fetching arbitrary HTML from a template URI in untrusted JSON, or putting sensitive submission data in a URL, analytics, logs, or third-party service.
