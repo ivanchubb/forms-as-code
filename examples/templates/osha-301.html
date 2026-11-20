@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="forms-as-code:template-id" content="https://ivanchubb.github.io/forms-as-code/examples/osha-301">
-  <meta name="forms-as-code:template-version" content="2004-01.2">
+  <meta name="forms-as-code:template-version" content="2004-01.3">
   <meta name="forms-as-code:form-code" content="OSHA301">
   <meta name="forms-as-code:form-title" content="Injury and Illness Incident Report">
   <meta name="forms-as-code:form-edition" content="Rev. 01/2004">
@@ -32,7 +32,7 @@
     .choice label { display: inline-flex; align-items: center; gap: .04in; font-weight: normal; }
     .source { margin: .04in 0 0; font-size: 6.5pt; }
     @media (max-width: 850px) { .document { width: 100%; min-height: 0; } }
-    @media print { .document { width: 7.25in; min-height: 0; padding: 0; zoom: .78; } input:not([type="checkbox"]):not([type="radio"]), select, textarea { background: transparent; } .form-footer { position: static; } @page { size: letter portrait; margin: .25in .35in; } }
+    @media print { .document { width: 7.25in; min-height: 0; padding: 0; zoom: .78; } .section-title { border: 1.5px solid #000; color: #000; background: #ddd; print-color-adjust: exact; -webkit-print-color-adjust: exact; } input:not([type="checkbox"]):not([type="radio"]), select, textarea { background: transparent; } .form-footer { position: static; } @page { size: letter portrait; margin: .25in .35in; } }
   </style>
 </head>
 <body>
@@ -64,7 +64,7 @@
   <div class="section-title">Completed by</div>
   <div class="question"><div class="number"></div><div class="answer two"><label>Name<input data-forms-as-code="preparer.name" data-forms-as-code-csv-label="Preparer name" required></label><label>Title<input data-forms-as-code="preparer.title" data-forms-as-code-csv-label="Preparer title" required></label><label>Phone<input type="tel" data-forms-as-code="preparer.phone" data-forms-as-code-csv-label="Preparer phone"></label><label>Date<input type="date" data-forms-as-code="preparer.date" data-forms-as-code-csv-label="Prepared date" required></label></div></div>
   <p class="source">Unofficial HTML adaptation. Source: OSHA Form 301, Injury and Illness Incident Report, Rev. 01/2004, published as part of OSHA's recordkeeping forms package. Current requirements and official materials at https://www.osha.gov/recordkeeping/forms.</p>
-  <footer class="form-footer"><span>OSHA's Form 301 (Rev. 01/2004)</span><span>forms-as-code adaptation 2004-01.2</span></footer>
+  <footer class="form-footer"><span>OSHA's Form 301 (Rev. 01/2004)</span><span>forms-as-code adaptation 2004-01.3</span></footer>
 </form>
 </body>
 </html>
