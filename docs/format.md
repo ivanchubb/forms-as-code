@@ -6,13 +6,13 @@ This is an exploratory contract, not a stable interoperability specification. Ex
 
 A form has one self-contained HTML file in the trusted forms repository, outside forms-as-code. It contains the form markup, its version and ID metadata, and `data-forms-as-code` bindings. Common styles are maintained canonically in forms-as-code and embedded into each portable template; data binding, CSV/ZIP workflows, and save/load behavior belong to the forms-as-code app. Templates contain no JavaScript and may not load external stylesheets or assets.
 
-A submission is a JSON file containing a format version, unique ID, reference to the template ID and immutable version, a boolean `locked` state, and structured `data`. The app resolves that exact reference through its trusted allowlist and fetches only the corresponding HTML file. It never blindly fetches a URI supplied by untrusted JSON. The current allowlist is local and hard-coded.
+A submission is a JSON file containing a format version, unique ID, reference to the template ID and immutable version, a boolean `locked` state, optional `lockedFields` binding paths for a partial lock, and structured `data`. The app resolves that exact reference through its trusted allowlist and fetches only the corresponding HTML file. It never blindly fetches a URI supplied by untrusted JSON. The current allowlist is local and hard-coded.
 
 The `example.org` template URIs are reserved examples; they are not hosted and must not be treated as live services. The app currently uses HTML controls and binding attributes for field metadata and validation. A separate per-form schema/manifest is not loaded.
 
 ## Submission behavior
 
-A locked submission is rendered read-only until the user explicitly chooses **Unlock fields**. `locked` is application state only: it can be changed by editing the JSON or using the app's unlock control, and it is not tamper protection or proof of signing. Missing bindings in an incomplete draft default to blank or unchecked; unknown bindings and invalid provided values are rejected.
+A submission with `locked: true` is rendered entirely read-only until the user explicitly chooses **Unlock fields**. When `locked` is false, optional `lockedFields` paths disable only those bound controls; certificate-based signatures can use this to preserve fields appearing before a signature while leaving later sections editable. Both lock forms are application state only: they can be changed by editing the JSON, and they are not tamper protection or proof of signing. Missing bindings in an incomplete draft default to blank or unchecked; unknown bindings and invalid provided values are rejected.
 
 The template URI identifies a template but is not, by itself, proof that a retrieved template is original. Production submissions should pin an immutable template artifact, preferably with a digest. Digest algorithm and coverage still need a normative definition.
 

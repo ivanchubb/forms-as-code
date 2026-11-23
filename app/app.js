@@ -63,6 +63,9 @@
     if (submission.formatVersion !== FORMAT_VERSION) throw new Error('Unsupported forms-as-code submission version.');
     if (typeof submission.id !== 'string') throw new Error('Submission is missing its ID.');
     if (typeof submission.locked !== 'boolean') throw new Error('Submission must contain a boolean locked field.');
+    if (submission.lockedFields !== undefined && (!Array.isArray(submission.lockedFields) || submission.lockedFields.some(path => typeof path !== 'string'))) {
+      throw new Error('Submission lockedFields must be an array of field paths.');
+    }
     if (!submission.data || typeof submission.data !== 'object' || Array.isArray(submission.data)) throw new Error('Submission data must be a JSON object.');
     const template = templates.get(templateKey(submission.template));
     if (!template) throw new Error('This forms-as-code app does not have the referenced trusted HTML template.');
@@ -105,6 +108,7 @@
     const lockButton = document.querySelector('#lock-submission');
     const groups = new Map();
     let locked = false;
+    let lockedFields = new Set();
 
     function rebuildBindings() {
       controls = [...form.querySelectorAll('[data-forms-as-code]')];
@@ -159,7 +163,7 @@
       count.value = String(target);
       form.querySelectorAll('[data-forms-as-code-page-total]').forEach(element => { element.textContent = String(target + 1); });
       rebuildBindings();
-      form.querySelectorAll('[data-forms-as-code-repeat-remove]').forEach(button => { button.disabled = locked; });
+      applyLockedState();
     }
     function syncRepeats(data) {
       for (const count of form.querySelectorAll('[data-forms-as-code-repeat-count]')) setRepeatCount(count.dataset.formsAsCodeRepeatCount, getAt(data, count.dataset.formsAsCode) || 0);
@@ -417,19 +421,34 @@
       }
     }
     function makeSubmission(data, isLocked = locked) {
-      return { formatVersion: FORMAT_VERSION, id: makeId(), createdAt: new Date().toISOString(), template: { uri: template.uri, version: template.version }, locked: isLocked, data };
+      const submission = { formatVersion: FORMAT_VERSION, id: makeId(), createdAt: new Date().toISOString(), template: { uri: template.uri, version: template.version }, locked: isLocked, data };
+      if (!isLocked && lockedFields.size) submission.lockedFields = [...lockedFields].sort();
+      return submission;
     }
     function filenameFor(data, duplicate = 1) {
       const suffix = duplicate > 1 ? `-${duplicate}` : '';
       return `${meta.code}-${safeName(getAt(data, meta.namePath))}${suffix}.json`;
     }
+    function applyLockedState() {
+      for (const control of controls) control.disabled = locked || lockedFields.has(control.dataset.formsAsCode);
+      for (const button of form.querySelectorAll('[data-forms-as-code-repeat-add], [data-forms-as-code-repeat-remove]')) button.disabled = locked;
+      form.classList.toggle('is-locked', locked);
+      form.classList.toggle('is-partially-locked', !locked && lockedFields.size > 0);
+      lockButton.disabled = false;
+      lockButton.textContent = locked || lockedFields.size ? 'Unlock fields' : 'Lock fields';
+    }
     function setLocked(value) {
       locked = value;
-      for (const control of controls) control.disabled = value;
-      for (const button of form.querySelectorAll('[data-forms-as-code-repeat-add], [data-forms-as-code-repeat-remove]')) button.disabled = value;
-      form.classList.toggle('is-locked', value);
-      lockButton.disabled = false;
-      lockButton.textContent = value ? 'Unlock fields' : 'Lock fields';
+      if (value) lockedFields.clear();
+      applyLockedState();
+    }
+    function setLockedFields(paths) {
+      const uniquePaths = [...new Set(paths)];
+      const unknown = uniquePaths.filter(path => !groups.has(path));
+      if (unknown.length) throw new Error(`Unknown locked field path${unknown.length === 1 ? '' : 's'}: ${unknown.join(', ')}.`);
+      locked = false;
+      lockedFields = new Set(uniquePaths);
+      applyLockedState();
     }
     function prepare(data, options) { validate(data, options); return data; }
     function loadSubmission(submission) {
@@ -437,8 +456,12 @@
       if (typeof submission.locked !== 'boolean' || typeof submission.id !== 'string') throw new Error('Submission envelope is incomplete.');
       syncRepeats(submission.data);
       prepare(submission.data, { allowPartial: true });
-      populate(submission.data); setLocked(submission.locked);
-      setStatus(submission.locked ? 'Loaded locked submission. Choose Unlock fields to edit.' : 'Loaded submission.');
+      populate(submission.data);
+      if (submission.locked) setLocked(true);
+      else setLockedFields(submission.lockedFields || []);
+      setStatus(submission.locked
+        ? 'Loaded locked submission. Choose Unlock fields to edit.'
+        : lockedFields.size ? 'Loaded submission with signed fields locked.' : 'Loaded submission.');
     }
 
     function save() {
@@ -491,15 +514,37 @@
       setStatus(`Downloaded CSV with a reference row. Delete it or replace the name marker “${EXAMPLE_ROW_MARKER}”; rows still carrying that marker are ignored on import.`);
     });
     document.querySelector('#lock-submission').addEventListener('click', () => {
-      if (locked) { setLocked(false); setStatus('Fields are unlocked. Save to persist locked: false.'); return; }
+      if (locked || lockedFields.size) { setLockedFields([]); setStatus('Fields are unlocked. Save to clear all lock state.'); return; }
       if (!form.reportValidity()) return;
       try { prepare(collectData(), { allowPartial: false }); setLocked(true); setStatus('Fields are locked. Save to persist locked: true.'); }
       catch (error) { setStatus(error.message); }
     });
+    form.addEventListener('forms-as-code-lock-all', () => {
+      try {
+        prepare(collectData(), { allowPartial: false });
+        setLocked(true);
+        setStatus('Fields are locked. Save to persist locked: true.');
+      } catch (error) {
+        setStatus(`Could not lock fields: ${error.message}`);
+      }
+    });
+    form.addEventListener('forms-as-code-lock-fields', event => {
+      const paths = event.detail?.paths;
+      if (!Array.isArray(paths) || paths.some(path => typeof path !== 'string')) {
+        setStatus('Could not lock signed fields: expected an array of field paths.');
+        return;
+      }
+      try {
+        setLockedFields([...new Set(paths)]);
+        setStatus(`Locked ${lockedFields.size} signed field${lockedFields.size === 1 ? '' : 's'}. Save to persist the partial lock.`);
+      } catch (error) {
+        setStatus(`Could not lock signed fields: ${error.message}`);
+      }
+    });
     document.querySelector('#new-submission').addEventListener('click', () => {
       form.reset();
       for (const count of form.querySelectorAll('[data-forms-as-code-repeat-count]')) setRepeatCount(count.dataset.formsAsCodeRepeatCount, 0);
-      setLocked(false); syncDerivedControls(); syncConditionalVisibility(); syncConditionalRequired(); setStatus('Started a blank submission.');
+      setLockedFields([]); syncDerivedControls(); syncConditionalVisibility(); syncConditionalRequired(); setStatus('Started a blank submission.');
     });
     document.querySelector('#print-form').addEventListener('click', () => window.print());
     form.addEventListener('input', () => { syncDerivedControls(); syncConditionalVisibility(); syncAutomaticRemarks(); syncConditionalRequired(); setStatus('Unsaved changes.'); });
@@ -730,4 +775,6 @@
   const linked = new URLSearchParams(window.location.search).get('submission');
   if (linked) loadLinkedJson(linked).catch(error => setStatus(`Could not open linked submission: ${error.message}`));
   else if (window.opener && new URLSearchParams(window.location.search).has('handoff')) window.opener.postMessage({ type: 'forms-as-code:app-ready' }, window.location.origin);
-})();
+
+
+})(); // EOF

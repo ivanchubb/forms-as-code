@@ -51,7 +51,16 @@
     },
     "locked": {
       "type": "boolean",
-      "description": "Whether the viewer should make the submission read-only. This is an application state flag, not tamper protection or proof of signing."
+      "description": "Whether the viewer should make the entire submission read-only. This is an application state flag, not tamper protection or proof of signing."
+    },
+    "lockedFields": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Optional data-forms-as-code binding paths to render read-only when locked is false."
     }
   }
 }
