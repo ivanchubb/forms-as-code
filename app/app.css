@@ -86,13 +86,13 @@ body.has-modal { overflow: hidden; }
 #template-host form.is-locked input:disabled, #template-host form.is-locked textarea:disabled, #template-host form.is-locked select:disabled { background: #f1f1f1 !important; accent-color: #737b82; cursor: not-allowed; }
 .template-notice { margin: .5rem 0; padding: .5rem .75rem; border-left: 3px solid #9a6724; color: #59421f; background: #fff8e8; font-size: .85rem; }
 .app-footer { max-width: 1100px; margin: 1rem auto; padding: 0 1rem; color: #52616e; font-size: .85rem; }
-:root[data-theme="dark"] .app-panel, :root[data-theme="dark"] .settings-card, :root[data-theme="dark"] .settings-header, :root[data-theme="dark"] .template-options, :root[data-theme="dark"] .template-options button, :root[data-theme="dark"] .source-row, :root[data-theme="dark"] .app-toolbar { color: var(--app-dark-text); background: var(--app-dark-surface); border-color: var(--app-dark-border); }
+:root[data-theme="dark"] .app-panel, :root[data-theme="dark"] .help-guide pre, :root[data-theme="dark"] .settings-card, :root[data-theme="dark"] .settings-header, :root[data-theme="dark"] .template-options, :root[data-theme="dark"] .template-options button, :root[data-theme="dark"] .source-row, :root[data-theme="dark"] .app-toolbar { color: var(--app-dark-text); background: var(--app-dark-surface); border-color: var(--app-dark-border); }
 :root[data-theme="dark"] .source-row { border-left-color: #e1b84b; }
 :root[data-theme="dark"] .source-row.is-healthy { border-left-color: #299653; }
 :root[data-theme="dark"] .source-row.is-error { border-left-color: #c33d3d; }
 :root[data-theme="dark"] .template-options button:hover, :root[data-theme="dark"] .template-options button:focus { background: var(--app-dark-hover); }
 :root[data-theme="dark"] .drop-zone { background: var(--app-dark-drop-zone); border-color: var(--app-dark-drop-zone-border); }
-:root[data-theme="dark"] .settings-header p, :root[data-theme="dark"] .settings-note, :root[data-theme="dark"] .source-details span, :root[data-theme="dark"] #catalog-status, :root[data-theme="dark"] #app-status, :root[data-theme="dark"] .app-footer { color: var(--app-dark-muted); }
+:root[data-theme="dark"] .settings-header p, :root[data-theme="dark"] .settings-note, :root[data-theme="dark"] .drag-handle, :root[data-theme="dark"] .source-details span, :root[data-theme="dark"] #catalog-status, :root[data-theme="dark"] #app-status, :root[data-theme="dark"] .app-toolbar output, :root[data-theme="dark"] .app-footer { color: var(--app-dark-muted); }
 .bulk-print-root { display: none; }
 @media print {
   .app-header, #launcher, .app-toolbar, .template-notice, .app-footer { display: none !important; }
