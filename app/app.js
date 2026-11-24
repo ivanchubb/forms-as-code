@@ -152,9 +152,11 @@
         const value = siteConfig.appearance[name];
         if (typeof value === 'string' && CSS.supports('color', value)) document.documentElement.style.setProperty(property, value);
       }
-      const fontFamily = siteConfig.appearance.fontFamily;
-      if (typeof fontFamily === 'string' && fontFamily.trim() && CSS.supports('font-family', fontFamily)) {
-        document.documentElement.style.setProperty('--app-font-family', fontFamily.trim());
+      for (const [name, property] of [['fontFamily', '--app-font-family'], ['brandFontFamily', '--app-brand-font-family']]) {
+        const value = siteConfig.appearance[name];
+        if (typeof value === 'string' && value.trim() && CSS.supports('font-family', value)) {
+          document.documentElement.style.setProperty(property, value.trim());
+        }
       }
     }
   }

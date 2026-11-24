@@ -52,7 +52,8 @@ A configured font must already be available on the device; the renderer does not
 | `darkDropZone` | File drop-zone surface in dark mode. |
 | `darkDropZoneBorder` | File drop-zone border in dark mode. |
 | `darkMuted` | Secondary text in dark mode. |
-| `fontFamily` | CSS font-family list for the application chrome, with suitable fallbacks. |
+| `fontFamily` | CSS font-family list for application body text and controls, with suitable fallbacks. |
+| `brandFontFamily` | CSS font-family list for the site name, with suitable fallbacks. |
 
 Branding colors are deployment configuration, while light or dark mode remains an individual browser preference.
 
