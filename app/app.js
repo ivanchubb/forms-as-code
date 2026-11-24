@@ -141,6 +141,9 @@
     } catch (error) { console.warn(`Ignoring invalid favicon configuration: ${error.message}`); }
     const colorProperties = {
       primary: '--app-primary', primaryDark: '--app-primary-dark', accent: '--app-accent', headerText: '--app-header-text',
+      lightText: '--app-light-text', lightBackground: '--app-light-background', lightSurface: '--app-light-surface', lightBorder: '--app-light-border',
+      documentText: '--app-document-text', documentBackground: '--app-document-background',
+      statusPending: '--app-status-pending', statusWarning: '--app-status-warning', statusSuccess: '--app-status-success', statusError: '--app-status-error',
       darkText: '--app-dark-text', darkBackground: '--app-dark-background', darkSurface: '--app-dark-surface', darkBorder: '--app-dark-border',
       darkHover: '--app-dark-hover', darkDropZone: '--app-dark-drop-zone', darkDropZoneBorder: '--app-dark-drop-zone-border', darkMuted: '--app-dark-muted'
     };
@@ -148,6 +151,10 @@
       for (const [name, property] of Object.entries(colorProperties)) {
         const value = siteConfig.appearance[name];
         if (typeof value === 'string' && CSS.supports('color', value)) document.documentElement.style.setProperty(property, value);
+      }
+      const fontFamily = siteConfig.appearance.fontFamily;
+      if (typeof fontFamily === 'string' && fontFamily.trim() && CSS.supports('font-family', fontFamily)) {
+        document.documentElement.style.setProperty('--app-font-family', fontFamily.trim());
       }
     }
   }

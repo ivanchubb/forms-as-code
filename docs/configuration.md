@@ -24,8 +24,9 @@ Invalid optional source-link, favicon, and color values are ignored independentl
 
 ## Appearance fields
 
-All appearance values are CSS colors.
+Appearance values are CSS colors except for `fontFamily`, which is a CSS font-family list.
 Omitted values retain the neutral renderer defaults.
+A configured font must already be available on the device; the renderer does not download external font files.
 
 | Field | Use |
 | --- | --- |
@@ -33,6 +34,16 @@ Omitted values retain the neutral renderer defaults.
 | `primaryDark` | Darker primary color used for emphasis and hover states. |
 | `accent` | Focus, status, and supporting accent color. |
 | `headerText` | Text color displayed over the primary header. |
+| `lightText` | Main text color in light mode. |
+| `lightBackground` | Page background in light mode. |
+| `lightSurface` | Panel and control surface in light mode. |
+| `lightBorder` | Borders in light mode. |
+| `documentText` | Foreground for the form document canvas in both themes. |
+| `documentBackground` | Background for the form document canvas in both themes. |
+| `statusPending` | Loading or pending status indicator. |
+| `statusWarning` | Warning status indicator. |
+| `statusSuccess` | Successful status indicator. |
+| `statusError` | Error status indicator. |
 | `darkText` | Main text color in dark mode. |
 | `darkBackground` | Page background in dark mode. |
 | `darkSurface` | Panel and control surface in dark mode. |
@@ -41,6 +52,7 @@ Omitted values retain the neutral renderer defaults.
 | `darkDropZone` | File drop-zone surface in dark mode. |
 | `darkDropZoneBorder` | File drop-zone border in dark mode. |
 | `darkMuted` | Secondary text in dark mode. |
+| `fontFamily` | CSS font-family list for the application chrome, with suitable fallbacks. |
 
 Branding colors are deployment configuration, while light or dark mode remains an individual browser preference.
 
