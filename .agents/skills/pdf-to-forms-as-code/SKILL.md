@@ -36,18 +36,43 @@ Build a field inventory before coding: visible label/instructions, source widget
 
 If a field's meaning, valid values, or conditional requirements cannot be established from the PDF, preserve it as a text field or ask a focused question; do not silently guess.
 
-## 3. Create one HTML template and one JSON example
+## 3. Create one HTML template
 
-- Add the versioned template under `../forms/<form-family>/<form-number>/<edition>.html`: one self-contained HTML file containing accessible form markup, embedded form-specific presentation CSS, template ID/version metadata, and controls bound through the app's current binding attribute.
-- Add `examples/<form-slug>.json`: one synthetic submission using the current envelope. Never use personal data copied from a completed form.
+- Add the versioned template under `../forms/<form-family>/<form-number>/<edition>.html` as one immutable, self-contained HTML file with accessible markup, embedded form-specific CSS, metadata, and bound controls.
+- Include non-empty `forms-as-code:template-id`, `forms-as-code:template-version`, `forms-as-code:form-code`, `forms-as-code:form-title`, and `forms-as-code:form-edition` meta elements plus a `<title>` formatted as `<form designation> - <form title>`.
+- Keep `template-id` stable across editions of the same logical form and treat it as an identifier rather than a retrieval URL.
+- Change `template-version` whenever the published template artifact changes.
+- Use a compact `form-code` such as `FORM100` or `PERMIT20`, a descriptive title without the designator or edition, and the source form's canonical edition.
+- Include one `<form data-forms-as-code-form>` container and bind submitted controls with stable `data-forms-as-code="path.to.value"` paths.
 - Add form provenance, field mapping and adaptations, privacy warning, limitations, and verification status to the template directory's `README.md`.
-- Register the trusted template ID/version and local HTML path in `app/app.js`. The app fetches only this HTML file when rendering a submission. It must not trust a URI or execute code from the submission.
-- Do not add a per-form manifest, JSON Schema, stylesheet, runtime script, or bulk helper. Common styling and workflows belong to forms-as-code. Templates must not load scripts, external stylesheets, or other assets. Keep calculations and conditional rules in native HTML constraints and declarative data attributes supported by the app; if a needed behavior is unsupported, extend the shared app rather than adding template-specific JavaScript.
-- Document that the HTML conversion is unofficial unless formally approved. Keep the form notice and app-level limitations clear.
+- Rely on the generated catalog for remote discovery instead of adding a form-specific hard-coded registry entry unless a built-in offline fallback is explicitly required.
+- The app fetches only validated catalog paths from their catalog origin and must not trust a retrieval URI supplied by submission JSON.
+- Do not add a per-form manifest, JSON Schema, stylesheet, runtime script, or bulk helper.
+- Common styling and workflows belong to forms-as-code.
+- Templates must not load scripts, external stylesheets, external images/media, CSS imports, CSS `url(...)` resources, or other external assets.
+- Keep calculations and conditional rules in native HTML constraints and declarative data attributes supported by the app; if a needed behavior is unsupported, extend the shared app rather than adding template-specific JavaScript.
+- Document that the HTML conversion is unofficial unless formally approved.
+- Keep the form notice and app-level limitations clear.
 
-Use current envelope fields: `formatVersion`, unique `id`, `createdAt`, `template.uri`, `template.version`, required boolean `locked`, and `data`. New submissions start with `locked: false`. If `locked` is true, compatible forms-as-code clients must make bound fields read-only. This is only an application instruction until cryptographic integrity/signing is implemented.
+The browser isolates invalid files so one malformed template does not block valid siblings.
+It can warn and fall back when third-party templates omit `form-title` or `form-edition`, but the canonical `forms` catalog generator intentionally requires both fields and `<title>` before publication.
+Missing identity metadata, mismatched identity values, unsafe markup, or a missing marked form makes that individual template unusable.
 
-Keep the same binding paths in HTML, CSV columns, and the example JSON. Use native controls where possible:
+Use current envelope fields: `formatVersion`, unique `id`, `createdAt`, `template.uri`, `template.version`, required boolean `locked`, and `data`.
+New submissions start with `locked: false`.
+If `locked` is true, compatible forms-as-code clients must make bound fields read-only and require an `integrity` record with `algorithm: "SHA-256"`, `canonicalization: "RFC8785"`, and a lowercase hexadecimal `digest`.
+The digest covers the canonical object containing only `formatVersion`, `template` (`uri`, `version`, and `sha256` when present), and `data`.
+Clients must check integrity whenever the record exists, reject a locked submission when it is absent, and reject a mismatched digest before populating controls.
+Validate and normalize a clone when loading so verification never mutates the covered data.
+Unlocking and saving omits integrity; locking and saving recalculates it.
+The digest detects changes but is not a signature or security boundary because anyone can calculate a replacement digest.
+
+Keep the same binding paths in HTML and CSV columns.
+Treat dot-separated segments as object keys by default.
+Infer an array only when every immediate child under a parent is a decimal index and the indexes include `0`; require zero-based contiguous indexes.
+Never mix numeric indexes and named keys under one parent.
+For fixed semantic measurements, prefer names such as `first`, `second`, and `average` instead of one-based numeric keys.
+Use native controls where possible:
 
 - text input for scalar text and native date input for complete calendar dates;
 - radio group for exactly-one choices;
@@ -61,7 +86,12 @@ The serializer must preserve strings as strings, checkboxes as booleans, multipl
 
 ### Single form
 
-Provide simple, consistent **Save**, **Load**, **Print**, and **Lock fields** actions. Call the app **forms-as-code**, not “forms-as-code Viewer”; the same app is the primary editor. Save creates a JSON file. Load accepts a compatible JSON submission and restores values plus its locked state. Lock fields sets `locked: true` and disables bound controls; the same button should become **Unlock fields** so the user can explicitly resume editing, then Save to persist `locked: false`. Clearly state that this flag is an application convenience, not a security boundary or signature.
+Provide simple, consistent **Save**, **Load**, **Print**, and **Lock fields** actions.
+Call the app **forms-as-code**, not “forms-as-code Viewer”; the same app is the primary editor.
+Save creates a JSON file.
+Load accepts a compatible JSON submission, verifies integrity when present, and restores values plus its locked state.
+Lock fields sets `locked: true`, calculates the candidate signing-payload digest, and disables bound controls; the same button should become **Unlock fields** so the user can explicitly resume editing, then Save to persist `locked: false` without an integrity record.
+Clearly state that locking is an application convenience and an integrity digest is not a signature.
 
 The local forms-as-code app should accept a JSON file, resolve only a trusted template ID/version allowlist, and open the filled template in a new tab so it looks like the template loaded natively. Use origin- and source-checked `postMessage` with a readiness/acknowledgement handshake. Never fetch/execute an arbitrary URI supplied by untrusted JSON. Include a popup-blocked fallback. Keep submission data in the browser and make no network upload for local viewing.
 
@@ -69,11 +99,11 @@ For local development bind the static server to loopback, e.g. `python3 -m http.
 
 ### Bulk CSV
 
-- Generate CSV headers from unique `data-forms-as-code` paths in DOM order, plus a clearly marked example row derived from the template controls. The importer must skip the untouched reference row so it cannot accidentally create a synthetic submission.
+- Generate CSV templates with stable `data-forms-as-code` paths in the first row, human-readable field labels in the second row, and example values in the third row. Use `data-forms-as-code-csv-label` first, then a concise `aria-label`, associated label, or `title`, and otherwise humanize the binding path. Do not copy long accessible instructions into CSV labels. Add a brief `data-forms-as-code-csv-label` when a field's visible label is ambiguous outside the rendered form, especially in repeated sections. Target 40 characters or fewer, include section or row context only when needed, and omit instructions or formatting examples. Mark both reference rows in the name column and make the importer skip them so they cannot create synthetic submissions.
 - Load detects JSON vs CSV by extension/type. One populated CSV row creates one JSON submission; a successful CSV load produces a ZIP of all submissions.
-- Use RFC 4180-compatible quoting and UTF-8/BOM handling for Excel. Document the cell representation of choices, booleans, arrays, and dates. For DoD IDs, instruct Excel users to import the column as **Text** so leading zeroes survive.
+- Use RFC 4180-compatible quoting and UTF-8/BOM handling for Excel. Document the cell representation of choices, booleans, arrays, and dates. For identifiers with leading zeroes, instruct Excel users to import the column as **Text**.
 - Require the exact expected headers (allow reordering, reject duplicates/missing/unknown columns), skip entirely blank rows, impose a reasonable row limit, and validate every row before creating any ZIP. If one row fails, create no partial ZIP and report the CSV record number and reason.
-- ZIP entries should be readable and safe. Sanitize names and avoid path separators. Use `<FORMCODE>-<sanitized-name>.json` (derive a compact stable code from the official form designator, such as `DA705AFT`); if sanitized names collide, append `-2`, `-3`, etc. Preserve the established `DA5960-<sanitized-name>.json` convention for DA Form 5960. Never put a full DoD ID or other sensitive identifier in a filename. Bulk submissions start unlocked.
+- ZIP entries should be readable and safe. Sanitize names and avoid path separators. Use `<FORMCODE>-<sanitized-name>.json`, deriving a compact stable code from the official form designator; if sanitized names collide, append `-2`, `-3`, etc. Never put a full government identifier or other sensitive identifier in a filename. Bulk submissions start unlocked.
 
 ## 5. Match print behavior
 
@@ -83,12 +113,16 @@ Create print-specific CSS rather than relying on screen layout. Match the source
 
 Run checks appropriate to the repo and report their limits:
 
-- parse every JSON file and validate example submissions against the envelope format and the selected template's bindings;
+- parse and validate any JSON fixtures against the envelope format and the selected template's bindings;
 - `node --check` all JavaScript;
-- parse HTML and verify app asset references resolve, while templates contain no scripts or external asset references;
+- run `python3 scripts/validate_forms.py <template-path>` from the `forms` repository while authoring, then run `python3 scripts/validate_forms.py` to lint every canonical template before proposing a merge; the linter must remain deterministic and independent of Git history, and `form-validation.json` must stay aligned with this skill when standards change;
+- run `python3 scripts/build_catalog.py` from the `forms` repository and inspect the generated entry for the intended URI, version, title, edition, code, and path;
+- parse HTML and verify all five canonical metadata values and `<title>` are non-empty and consistent;
+- verify the marked form and bindings exist while templates contain no scripts, event handlers, unsafe links, CSS-loaded resources, or external asset references;
+- test fault isolation with one malformed sibling template and confirm valid templates remain available with a source warning;
 - test CSV quoting, multiline cells, BOM, header validation, row errors, and blank rows;
 - test ZIP integrity with `unzip -t` and inspect entry names/content;
-- verify radio/checkbox/select load and save round trips, sparse/partially filled JSON draft restoration, locked submissions read-only behavior, and the new-tab handshake;
+- verify radio/checkbox/select load and save round trips, sparse/partially filled JSON draft restoration, locked submissions read-only behavior, valid integrity round trips, rejection after covered data is changed, verification whenever integrity exists, and the new-tab handshake;
 - visually inspect the HTML against every source PDF page and check print pagination when possible.
 
 Do not claim cryptographic signing, CAC/PIV interoperability, official acceptance, or tamper evidence unless actually implemented and independently verified. Make limitations visible in the form notes and final response.
@@ -102,7 +136,7 @@ Do not claim cryptographic signing, CAC/PIV interoperability, official acceptanc
 - Misaligning a table header by forgetting the row-number column.
 - Making an initials prompt plain text without its small fillable field in the correct location.
 - Letting CSS shrink the form onto two pages or leaving a normal-flow footer only at the end; use print rules and test preview. Shared base styles may use a fixed footer; override that for multi-page forms or the final page number can be repeated on every printed page. Repeat page headers/privacy blocks wherever the source PDF repeats them.
-- Calling the product “Viewer,” exposing full DoD IDs in ZIP names, or labeling a browser download as “Download” when the user-facing action should be “Save.” Derive ZIP filename prefixes from the form being converted, rather than copying another template's code.
+- Calling the product “Viewer,” exposing sensitive identifiers in ZIP names, or labeling a browser download as “Download” when the user-facing action should be “Save.” Derive ZIP filename prefixes from the form being converted, rather than copying another template's code.
 - Adding a Git SHA/hash to the footer without a stable build source; do not add hash machinery unless requested and well-defined.
 - Treating `locked: true` as a cryptographic lock or signature. Until signing exists, it only tells the app to disable editing.
 - Fetching arbitrary HTML from a template URI in untrusted JSON, or putting sensitive submission data in a URL, analytics, logs, or third-party service.

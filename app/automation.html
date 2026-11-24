@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Automation and bulk forms help - forms-as-code</title>
+  <link rel="stylesheet" href="../assets/forms-as-code-base.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="./">forms-as-code</a>
+    <p>Automation and bulk forms help</p>
+  </header>
+  <main class="app-main">
+    <article class="app-panel help-guide">
+      <h1>Automation and bulk forms</h1>
+      <p>This static site supports people and browser-driving agents through the same trusted template, validation, and printing workflow.</p>
+      <p>Local JSON and CSV files are processed in your browser and are not uploaded by this workflow. Data shared with an external AI service is still subject to that service's data-handling policy.</p>
+
+      <h2>Share a specific form</h2>
+      <pre><code>./?template=FORM100
+./?template=FORM100&amp;version=2026.1</code></pre>
+      <p>Form codes are exact rather than fuzzy. Matching ignores case, spaces, and hyphens. An exact version makes a link reproducible.</p>
+      <p>If a code has multiple trusted versions and no version is supplied, the site reports an ambiguity instead of guessing.</p>
+
+      <h2>Create records in bulk</h2>
+      <ol>
+        <li>Open the form and choose <strong>Bulk CSV</strong>, or use <code>?template=FORM100&amp;version=2026.1&amp;action=bulk-csv</code>.</li>
+        <li>Keep the machine-readable headers in row 1 unchanged.</li>
+        <li>Use the labels in row 2 and examples in row 3 as guidance. Those reference rows are ignored during import.</li>
+        <li>Add one completed record per subsequent row using only known facts.</li>
+        <li>Return to the same form, choose <strong>Print CSV</strong>, and select the completed CSV.</li>
+        <li>After validation and rendering, choose <strong>Save as PDF</strong> in the normal print dialog.</li>
+      </ol>
+      <p>Do not invent signatures, acknowledgments, incidents, ratings, or dates. Conditional forms may require values that select the applicable layout before its related fields are accepted.</p>
+
+      <h2>Limits and automation</h2>
+      <p>Batches over 1,000 records require confirmation because large batches may consume substantial memory or make the browser unresponsive. ZIP downloads are limited to 65,535 submissions.</p>
+      <p>Browser automation can monitor <code>html[data-app-state]</code> for <code>loading</code>, <code>rendering</code>, <code>downloading</code>, <code>ready</code>, or <code>error</code>.</p>
+      <p>URLs cannot select a local file automatically, and plain HTTP clients do not execute browser actions. This MVP does not provide HTTP upload, conversion, or PDF-rendering endpoints.</p>
+
+      <p><a href="./">Return to forms-as-code</a> · <a href="./llms.txt">Plain-text automation help</a> · <a href="./agent.json">Machine-readable capabilities</a></p>
+    </article>
+  </main>
+</body>
+</html>

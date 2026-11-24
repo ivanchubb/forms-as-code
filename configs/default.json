@@ -1,0 +1,9 @@
+{
+  "siteName": "forms-as-code",
+  "tagline": "Portable form data, rendered with its versioned HTML template.",
+  "footer": "Local prototype. Add a public template catalog or select local templates to begin.",
+  "sourceUrl": "https://github.com/ivanchubb/forms-as-code",
+  "sourceLabel": "View source on GitHub",
+  "favicon": "./branding/favicon.svg",
+  "catalogs": []
+}

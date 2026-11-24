@@ -1,0 +1,23 @@
+__pycache__/
+.venv/
+certs/
+# Private Keys
+*.key
+*.keys
+*.priv
+*.rsa
+*.key.json
+*.ssh
+*.ssh-key
+id_rsa
+id_ed25519
+
+# Certificates & Keystores
+*.pem
+*.p12
+*.pfx
+*.cer
+*.crt
+*.csr
+*.der
+*.kdb

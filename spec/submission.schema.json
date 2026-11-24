@@ -7,45 +7,23 @@
   "additionalProperties": false,
   "required": ["formatVersion", "id", "template", "locked", "data"],
   "properties": {
-    "$schema": {
-      "type": "string",
-      "format": "uri-reference"
-    },
-    "formatVersion": {
-      "const": "0.1.0",
-      "description": "Version of the forms-as-code submission envelope format."
-    },
-    "id": {
-      "type": "string",
-      "format": "uuid"
-    },
-    "createdAt": {
-      "type": "string",
-      "format": "date-time"
-    },
+    "$schema": { "type": "string", "format": "uri-reference" },
+    "formatVersion": { "const": "0.1.0", "description": "Version of the forms-as-code submission envelope format." },
+    "id": { "type": "string", "format": "uuid" },
+    "createdAt": { "type": "string", "format": "date-time" },
     "template": {
       "type": "object",
       "additionalProperties": false,
       "required": ["uri", "version"],
       "properties": {
-        "uri": {
-          "type": "string",
-          "format": "uri",
-          "description": "Stable identifier for the template, not necessarily a directly fetchable URL."
-        },
-        "version": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Immutable template release/version identifier."
-        },
-        "sha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$",
-          "description": "Optional lowercase SHA-256 hex digest of the exact template artifact bytes."
-        }
+        "uri": { "type": "string", "format": "uri", "description": "Stable identifier for the template, not necessarily a directly fetchable URL." },
+        "version": { "type": "string", "minLength": 1, "description": "Immutable template release/version identifier." },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Optional lowercase SHA-256 hex digest of the exact template artifact bytes." }
       }
     },
-    "data": {
+    "data": { "type": "object", "description": "The form answers. Validate against the data schema published by the referenced template." },
+    "locked": { "type": "boolean", "description": "Whether the viewer should make the submission read-only. This remains application state and is not proof of signing." },
+    "integrity": {
       "type": "object",
       "description": "The form answers. Validate against the data schema published by the referenced template."
     },
@@ -60,7 +38,20 @@
         "type": "string",
         "minLength": 1
       },
-      "description": "Optional data-forms-as-code binding paths to render read-only when locked is false."
+      "description": "Optional data-forms-as-code binding paths to render read-only when locked is false.",
+      "additionalProperties": false,
+      "required": ["algorithm", "canonicalization", "digest"],
+      "properties": {
+        "algorithm": { "const": "SHA-256" },
+        "canonicalization": { "const": "RFC8785" },
+        "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Lowercase SHA-256 hex digest of the RFC 8785 canonical object containing only formatVersion, template (uri, version, and sha256 when present), and data. This detects changes but is not a signature." }
+      }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "locked": { "const": true } }, "required": ["locked"] },
+      "then": { "required": ["integrity"] }
+    }
+  ]
 }

@@ -1,63 +1,404 @@
 /* forms-as-code's shared application: trusted HTML resolution, rendering, data, and bulk workflows. */
 (() => {
   const FORMAT_VERSION = '0.1.0';
+  const FALLBACK_CONFIG = {
+    siteName: 'forms-as-code',
+    tagline: 'Portable form data, rendered with its versioned HTML template.',
+    footer: 'Local prototype. Add a public template catalog or select local templates to begin.',
+    sourceUrl: 'https://github.com/ivanchubb/forms-as-code',
+    sourceLabel: 'View source on GitHub',
+    favicon: './branding/favicon.svg',
+    catalogs: []
+  };
+  const CATALOG_URL_KEY = 'forms-as-code:catalog-url';
+  const SOURCES_KEY = 'forms-as-code:template-sources:v1';
+  const THEME_KEY = 'forms-as-code:theme';
+  const LOCAL_SOURCE_DB = 'forms-as-code-local-sources';
+  const LOCAL_SOURCE_STORE = 'sources';
+  const CATALOG_CACHE_PREFIX = 'forms-as-code:template-catalog:v1:';
+  const LABEL_ROW_MARKER = 'FIELD LABELS - DO NOT EDIT';
   const EXAMPLE_ROW_MARKER = 'EXAMPLE - REPLACE OR DELETE';
-  const templates = new Map([
-    ['https://forms.example.org/forms-as-code/da-form-5304@2020-07.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-5304', version: '2020-07.1', title: 'DA Form 5304', code: 'DA5304', path: '../../forms/da/5304/JUL2020.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-1594@2019-12.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-1594', version: '2019-12.1', title: 'DA Form 1594', code: 'DA1594', path: '../../forms/da/1594/DEC2019.html'
-    }],
-    ['https://forms.example.org/forms-as-code/dd-form-1750@1970-09.1', {
-      uri: 'https://forms.example.org/forms-as-code/dd-form-1750', version: '1970-09.1', title: 'DD Form 1750', code: 'DD1750', path: '../../forms/dd/1750/SEP70-EG.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-31@2023-10.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-31', version: '2023-10.1', title: 'DA Form 31', code: 'DA31', path: '../../forms/da/31/OCT2023.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-5960@2022-01.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-5960', version: '2022-01.1', title: 'DA Form 5960', code: 'DA5960', path: '../../forms/da/5960/OCT2026.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-705-aft@2026-04.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-705-aft', version: '2026-04.1', title: 'DA Form 705-AFT', code: 'DA705AFT', path: '../../forms/da/705-aft/APR2026.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-2062@2023-12.3', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-2062', version: '2023-12.3', title: 'DA Form 2062', code: 'DA2062', path: '../../forms/da/2062/DEC2023.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-5121@2026-10.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-5121', version: '2026-10.1', title: 'DA Form 5121', code: 'DA5121', path: '../../forms/da/5121/OCT2026.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-260@2018-06.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-260', version: '2018-06.1', title: 'DA Form 260', code: 'DA260', path: '../../forms/da/260/JUN2018.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-2404@2026-08.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-2404', version: '2026-08.1', title: 'DA Form 2404', code: 'DA2404', path: '../../forms/da/2404/AUG2026.html'
-    }],
-    ['https://forms.example.org/forms-as-code/da-form-5500@2026-07.1', {
-      uri: 'https://forms.example.org/forms-as-code/da-form-5500', version: '2026-07.1', title: 'DA Form 5500', code: 'DA5500', path: '../../forms/da/5500/JUL2026.html'
-    }]
-  ]);
+  const templates = new Map();
   const launcher = document.querySelector('#launcher');
   const workspace = document.querySelector('#workspace');
-  const templatePicker = document.querySelector('#template-picker');
+  const templateSourceLabel = document.querySelector('#template-source-label');
+  const sourceIndicator = document.querySelector('#source-indicator');
+  const settingsButton = document.querySelector('#settings-button');
+  const settingsPanel = document.querySelector('#settings-panel');
+  const closeSettingsButton = document.querySelector('#close-settings');
+  const sourceList = document.querySelector('#source-list');
+  const addRemoteSourceButton = document.querySelector('#add-remote-source');
+  const addLocalDirectoryButton = document.querySelector('#add-local-directory');
+  const remoteSourceForm = document.querySelector('#remote-source-form');
+  const newSourceUrl = document.querySelector('#new-source-url');
+  const cancelRemoteSourceButton = document.querySelector('#cancel-remote-source');
+  const themeToggle = document.querySelector('#theme-toggle');
+  const catalogStatus = document.querySelector('#catalog-status');
+  const localTemplateDirectory = document.querySelector('#local-template-directory');
+  const templateSearch = document.querySelector('#template-search');
+  const templateOptions = document.querySelector('#template-options');
   const templateHost = document.querySelector('#template-host');
+
+  function prepareEmptyDatesForPrint() {
+    for (const control of document.querySelectorAll('input[type="date"]')) {
+      if (control.value) continue;
+      control.dataset.formsAsCodePrintDate = 'empty';
+      control.type = 'text';
+      control.value = '';
+    }
+  }
+  function restoreEmptyDatesAfterPrint() {
+    for (const control of document.querySelectorAll('input[data-forms-as-code-print-date="empty"]')) {
+      control.type = 'date';
+      delete control.dataset.formsAsCodePrintDate;
+    }
+  }
+  window.addEventListener('beforeprint', prepareEmptyDatesForPrint);
+  window.addEventListener('afterprint', restoreEmptyDatesAfterPrint);
   const toolbar = document.querySelector('#app-toolbar');
   const notice = document.querySelector('#template-notice');
   const appStatus = document.querySelector('#app-status');
   const submissionFile = document.querySelector('#submission-file');
   const dropZone = document.querySelector('#drop-zone');
+  const siteName = document.querySelector('#site-name');
+  const siteTagline = document.querySelector('#site-tagline');
+  const siteFooter = document.querySelector('#site-footer');
+  const sourceLinkWrap = document.querySelector('#source-link-wrap');
+  const sourceLink = document.querySelector('#source-link');
+  const siteFavicon = document.querySelector('#site-favicon');
   const encoder = new TextEncoder();
   let activeTemplate = null;
   let activeForm = null;
   let pendingWindow = null;
   let pendingSubmission = null;
+  let catalogTemplates = [];
+  let selectedTemplateKey = null;
+  let sources = [];
+  let siteConfig = FALLBACK_CONFIG;
+  let draggedSourceId = null;
 
+  function setAppState(state) { document.documentElement.dataset.appState = state; }
   function setStatus(message) {
     appStatus.textContent = message;
     const formStatus = document.querySelector('#form-status');
     if (formStatus) formStatus.textContent = message;
   }
+  function setTemplateSourceLabel(label) {
+    templateSourceLabel.textContent = label;
+  }
+  function setSourceHealth(state, message) {
+    sourceIndicator.className = `source-indicator is-${state}`;
+    sourceIndicator.title = message;
+    sourceIndicator.setAttribute('aria-label', message);
+  }
   function templateKey(reference) { return `${reference?.uri}@${reference?.version}`; }
+  function normalizedFormCode(code) { return String(code || '').replace(/[\s-]+/g, '').toLocaleUpperCase(); }
+  function formDesignation(code) { return code; }
+  function templateDisplayName(template) {
+    return `${formDesignation(template.code)} - ${template.title}${template.edition ? ` (${template.edition})` : ''}`;
+  }
+  function sourceId() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`; }
+  function remoteSource(catalog, index) {
+    const url = new URL(catalog.url, document.baseURI);
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error(`Catalog ${index + 1} must use a public HTTP(S) URL.`);
+    return { id: sourceId(), type: 'remote', label: typeof catalog.label === 'string' && catalog.label.trim() ? catalog.label.trim() : url.hostname, url: url.href, status: 'loading', templates: [] };
+  }
+  function configuredSources() {
+    if (!Array.isArray(siteConfig.catalogs)) throw new Error('site.config.json catalogs must be an array.');
+    return siteConfig.catalogs.map(remoteSource);
+  }
+  async function loadSiteConfig() {
+    try {
+      const response = await fetch('./site.config.json', { credentials: 'same-origin', cache: 'no-cache' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const config = await response.json();
+      if (!config || typeof config !== 'object' || Array.isArray(config)) throw new Error('Configuration must be a JSON object.');
+      siteConfig = { ...FALLBACK_CONFIG, ...config };
+      configuredSources();
+    } catch (error) {
+      siteConfig = FALLBACK_CONFIG;
+      console.warn(`Could not load site.config.json; using built-in defaults: ${error.message}`);
+    }
+    const name = typeof siteConfig.siteName === 'string' && siteConfig.siteName.trim() ? siteConfig.siteName.trim() : FALLBACK_CONFIG.siteName;
+    siteName.textContent = name;
+    siteTagline.textContent = typeof siteConfig.tagline === 'string' ? siteConfig.tagline : FALLBACK_CONFIG.tagline;
+    siteFooter.textContent = typeof siteConfig.footer === 'string' ? siteConfig.footer : FALLBACK_CONFIG.footer;
+    if (siteConfig.sourceUrl === false) sourceLinkWrap.hidden = true;
+    else {
+      try {
+        const sourceUrl = new URL(typeof siteConfig.sourceUrl === 'string' ? siteConfig.sourceUrl : FALLBACK_CONFIG.sourceUrl);
+        if (!['http:', 'https:'].includes(sourceUrl.protocol) || sourceUrl.username || sourceUrl.password) throw new Error('Source URL must use HTTP(S) without credentials.');
+        sourceLink.href = sourceUrl.href;
+        sourceLink.textContent = typeof siteConfig.sourceLabel === 'string' && siteConfig.sourceLabel.trim() ? siteConfig.sourceLabel.trim() : FALLBACK_CONFIG.sourceLabel;
+      } catch (error) { sourceLinkWrap.hidden = true; console.warn(`Ignoring invalid source link configuration: ${error.message}`); }
+    }
+    document.title = name;
+    try {
+      const favicon = new URL(typeof siteConfig.favicon === 'string' ? siteConfig.favicon : FALLBACK_CONFIG.favicon, document.baseURI);
+      if (favicon.origin !== window.location.origin || favicon.username || favicon.password || !/\.(svg|png|ico)$/i.test(favicon.pathname)) throw new Error('Favicon must be a same-origin SVG, PNG, or ICO file.');
+      siteFavicon.href = favicon.href;
+      siteFavicon.type = favicon.pathname.toLocaleLowerCase().endsWith('.svg') ? 'image/svg+xml' : favicon.pathname.toLocaleLowerCase().endsWith('.png') ? 'image/png' : 'image/x-icon';
+    } catch (error) { console.warn(`Ignoring invalid favicon configuration: ${error.message}`); }
+    const colorProperties = {
+      primary: '--app-primary', primaryDark: '--app-primary-dark', accent: '--app-accent', headerText: '--app-header-text',
+      darkText: '--app-dark-text', darkBackground: '--app-dark-background', darkSurface: '--app-dark-surface', darkBorder: '--app-dark-border',
+      darkHover: '--app-dark-hover', darkDropZone: '--app-dark-drop-zone', darkDropZoneBorder: '--app-dark-drop-zone-border', darkMuted: '--app-dark-muted'
+    };
+    if (siteConfig.appearance && typeof siteConfig.appearance === 'object' && !Array.isArray(siteConfig.appearance)) {
+      for (const [name, property] of Object.entries(colorProperties)) {
+        const value = siteConfig.appearance[name];
+        if (typeof value === 'string' && CSS.supports('color', value)) document.documentElement.style.setProperty(property, value);
+      }
+    }
+  }
+  function canonicalString(value) {
+    for (let index = 0; index < value.length; index++) {
+      const unit = value.charCodeAt(index);
+      if (unit >= 0xd800 && unit <= 0xdbff) {
+        const next = value.charCodeAt(++index);
+        if (!(next >= 0xdc00 && next <= 0xdfff)) throw new Error('Integrity payload contains invalid Unicode.');
+      } else if (unit >= 0xdc00 && unit <= 0xdfff) throw new Error('Integrity payload contains invalid Unicode.');
+    }
+    return JSON.stringify(value);
+  }
+  function canonicalize(value) {
+    if (typeof value === 'string') return canonicalString(value);
+    if (value === null || typeof value === 'boolean') return JSON.stringify(value);
+    if (typeof value === 'number' && Number.isFinite(value)) return JSON.stringify(value);
+    if (Array.isArray(value)) return `[${value.map(canonicalize).join(',')}]`;
+    if (value && typeof value === 'object') return `{${Object.keys(value).sort().map(key => `${canonicalString(key)}:${canonicalize(value[key])}`).join(',')}}`;
+    throw new Error('Integrity payload contains a value that cannot be canonicalized.');
+  }
+  function integrityPayload(submission) {
+    const templateIdentity = { uri: submission.template.uri, version: submission.template.version };
+    if (submission.template.sha256) templateIdentity.sha256 = submission.template.sha256;
+    return { formatVersion: submission.formatVersion, template: templateIdentity, data: submission.data };
+  }
+  async function makeIntegrity(submission) {
+    const bytes = new TextEncoder().encode(canonicalize(integrityPayload(submission)));
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    return { algorithm: 'SHA-256', canonicalization: 'RFC8785', digest: [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('') };
+  }
+  async function verifyIntegrity(submission) {
+    if (!submission.integrity) throw new Error('Submission is missing its integrity digest.');
+    if (submission.integrity.algorithm !== 'SHA-256' || submission.integrity.canonicalization !== 'RFC8785' || !/^[a-f0-9]{64}$/.test(submission.integrity.digest || '')) throw new Error('Submission integrity metadata is invalid or unsupported.');
+    const expected = await makeIntegrity(submission);
+    if (expected.digest !== submission.integrity.digest) throw new Error('Submission integrity check failed. Its covered content changed after it was locked.');
+  }
+  function readSources() {
+    const queryUrl = new URLSearchParams(window.location.search).get('catalog');
+    if (queryUrl) return [{ id: sourceId(), type: 'remote', label: 'URL catalog', url: queryUrl, status: 'loading', templates: [] }];
+    try {
+      const saved = JSON.parse(localStorage.getItem(SOURCES_KEY));
+      if (Array.isArray(saved) && saved.length) return saved.filter(source => source && ['remote', 'local'].includes(source.type) && typeof source.id === 'string').map(source => ({ ...source, status: 'loading', templates: [] }));
+      const legacy = localStorage.getItem(CATALOG_URL_KEY);
+      if (legacy) return [{ id: sourceId(), type: 'remote', label: 'Remote catalog', url: legacy, status: 'loading', templates: [] }];
+    } catch { /* Use the configured sources when storage is unavailable or invalid. */ }
+    return configuredSources();
+  }
+  function saveSources() {
+    const persistent = sources.map(({ id, type, label, url }) => ({ id, type, label, ...(type === 'remote' ? { url } : {}) }));
+    try { localStorage.setItem(SOURCES_KEY, JSON.stringify(persistent)); } catch { /* Storage may be unavailable in private browsing. */ }
+  }
+  function openLocalSourceDatabase() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(LOCAL_SOURCE_DB, 1);
+      request.onupgradeneeded = () => request.result.createObjectStore(LOCAL_SOURCE_STORE, { keyPath: 'id' });
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('Local template storage is unavailable.'));
+    });
+  }
+  async function localSourceRecord(method, value) {
+    const database = await openLocalSourceDatabase();
+    return new Promise((resolve, reject) => {
+      const transaction = database.transaction(LOCAL_SOURCE_STORE, method === 'get' ? 'readonly' : 'readwrite');
+      const store = transaction.objectStore(LOCAL_SOURCE_STORE);
+      const request = method === 'put' ? store.put(value) : method === 'delete' ? store.delete(value) : store.get(value);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('Could not access local template storage.'));
+      transaction.oncomplete = () => database.close();
+    });
+  }
+  function catalogCacheKey(url) { return `${CATALOG_CACHE_PREFIX}${url}`; }
+  function validateCatalog(catalog, url) {
+    if (!catalog || catalog.formatVersion !== '1' || !Array.isArray(catalog.templates)) throw new Error('Invalid template catalog.');
+    const templates = [];
+    const warnings = [];
+    catalog.templates.forEach((template, index) => {
+      try {
+        if (!template || typeof template.uri !== 'string' || typeof template.version !== 'string' || typeof template.code !== 'string' || typeof template.path !== 'string') throw new Error('required identity metadata is missing');
+        const path = new URL(template.path, url);
+        if (path.origin !== new URL(url).origin || path.username || path.password || !path.pathname.toLocaleLowerCase().endsWith('.html')) throw new Error('template path is unsafe');
+        const titlePresent = typeof template.title === 'string' && template.title.trim();
+        const editionPresent = typeof template.edition === 'string' && template.edition.trim();
+        if (!titlePresent) warnings.push(`Entry ${index + 1} (${template.code}): title is missing`);
+        if (!editionPresent) warnings.push(`Entry ${index + 1} (${template.code}): edition is missing`);
+        templates.push({ ...template, title: titlePresent ? template.title.trim() : formDesignation(template.code), edition: editionPresent ? template.edition.trim() : '', path: path.href, catalogOrigin: new URL(url).origin, titleDeclared: Boolean(titlePresent), editionDeclared: Boolean(editionPresent) });
+      } catch (error) { warnings.push(`Entry ${index + 1}: ${error.message}`); }
+    });
+    return { templates, warnings };
+  }
+  function setCatalogTemplates(entries) {
+    catalogTemplates = entries;
+    templates.clear();
+    for (const template of entries) templates.set(templateKey(template), template);
+    selectedTemplateKey = null;
+    updateTemplateOptions();
+  }
+  function mergeSources() {
+    const merged = new Map();
+    for (const source of [...sources].reverse()) for (const template of source.templates || []) merged.set(templateKey(template), template);
+    setCatalogTemplates([...merged.values()]);
+    updateSourceSummary();
+    renderSources();
+  }
+  function updateSourceSummary() {
+    const failures = sources.filter(source => source.status === 'error');
+    const warnings = sources.filter(source => source.status === 'warning');
+    const loading = sources.filter(source => source.status === 'loading');
+    const remotes = sources.filter(source => source.type === 'remote');
+    setTemplateSourceLabel(`${sources.length} source${sources.length === 1 ? '' : 's'}, ${catalogTemplates.length} forms`);
+    if (loading.length) setSourceHealth('loading', `Loading and validating ${loading.length} template source${loading.length === 1 ? '' : 's'}.`);
+    else if (failures.length && failures.length < sources.length) setSourceHealth('warning', `${sources.length - failures.length} source${sources.length - failures.length === 1 ? '' : 's'} loaded and ${failures.length} failed. ${failures.map(source => `${source.label}: ${source.message}`).join(' ')}`);
+    else if (failures.length) setSourceHealth('error', `All ${failures.length} source${failures.length === 1 ? '' : 's'} failed. ${failures.map(source => `${source.label}: ${source.message}`).join(' ')}`);
+    else if (warnings.length) setSourceHealth('warning', `${warnings.length} source${warnings.length === 1 ? '' : 's'} loaded with warnings. ${warnings.map(source => `${source.label}: ${source.message}`).join(' ')}`);
+    else if (remotes.length) setSourceHealth('healthy', `Connected to and validated ${remotes.length} remote catalog${remotes.length === 1 ? '' : 's'}. ${catalogTemplates.length} forms are available.`);
+    else setSourceHealth('local', `${catalogTemplates.length} validated local forms are available. No network connection is required.`);
+  }
+  function renderSources() {
+    sourceList.replaceChildren(...sources.map((source, index) => {
+      const row = document.createElement('div');
+      row.className = `source-row is-${source.status}`; row.draggable = true; row.dataset.sourceId = source.id;
+      const handle = document.createElement('span'); handle.className = 'drag-handle'; handle.textContent = '⋮⋮'; handle.title = 'Drag to change precedence';
+      const details = document.createElement('div'); details.className = 'source-details';
+      const name = document.createElement('strong'); name.textContent = `${index + 1}. ${source.label}`;
+      let address;
+      if (source.type === 'remote') {
+        address = document.createElement('input'); address.type = 'url'; address.value = source.url; address.setAttribute('aria-label', `${source.label} catalog URL`);
+        address.addEventListener('change', () => {
+          try {
+            const url = new URL(address.value.trim());
+            if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('URL must be public HTTP(S).');
+            source.url = url.href; source.label = url.hostname; saveSources(); loadRemoteSource(source);
+          } catch (error) { source.status = 'error'; source.message = error.message; mergeSources(); }
+        });
+      } else {
+        address = document.createElement('span'); address.textContent = `${source.label} - stored in this browser`;
+      }
+      const status = document.createElement('span'); status.className = 'source-status'; status.textContent = source.status === 'healthy' ? `${source.templates.length} forms` : source.message || source.status;
+      details.append(name, address, status);
+      const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Remove'; remove.addEventListener('click', () => removeSource(source.id));
+      row.append(handle, details, remove);
+      row.addEventListener('dragstart', () => { draggedSourceId = source.id; row.classList.add('is-dragging'); });
+      row.addEventListener('dragend', () => { draggedSourceId = null; row.classList.remove('is-dragging'); });
+      row.addEventListener('dragover', event => event.preventDefault());
+      row.addEventListener('drop', event => { event.preventDefault(); reorderSource(draggedSourceId, source.id); });
+      return row;
+    }));
+  }
+  function reorderSource(sourceIdToMove, beforeId) {
+    if (!sourceIdToMove || sourceIdToMove === beforeId) return;
+    const from = sources.findIndex(source => source.id === sourceIdToMove);
+    const to = sources.findIndex(source => source.id === beforeId);
+    if (from < 0 || to < 0) return;
+    const [source] = sources.splice(from, 1);
+    sources.splice(to, 0, source);
+    saveSources(); mergeSources();
+  }
+  async function removeSource(id) {
+    const source = sources.find(item => item.id === id);
+    if (source?.type === 'local') {
+      for (const template of source.templates) URL.revokeObjectURL(template.path);
+      try { await localSourceRecord('delete', id); } catch (error) { setStatus(`Removed the source, but could not clear its browser copy: ${error.message}`); }
+    }
+    sources = sources.filter(item => item.id !== id);
+    saveSources(); mergeSources();
+  }
+  function parseLocalTemplate(html) {
+    const parsed = new DOMParser().parseFromString(html, 'text/html');
+    const uri = parsed.querySelector('meta[name="forms-as-code:template-id"]')?.content;
+    const version = parsed.querySelector('meta[name="forms-as-code:template-version"]')?.content;
+    const code = parsed.querySelector('meta[name="forms-as-code:form-code"]')?.content;
+    const declaredTitle = parsed.querySelector('meta[name="forms-as-code:form-title"]')?.content?.trim();
+    const declaredEdition = parsed.querySelector('meta[name="forms-as-code:form-edition"]')?.content?.trim();
+    if (!uri || !version || !code) throw new Error('required identity metadata is missing');
+    const documentTitle = parsed.title.trim().replace(/^.+?\s+Form\s+[^-]+\s+-\s+/i, '');
+    const template = { uri, version, code, title: declaredTitle || documentTitle || formDesignation(code), edition: declaredEdition || '', titleDeclared: Boolean(declaredTitle), editionDeclared: Boolean(declaredEdition), path: URL.createObjectURL(new Blob([html], { type: 'text/html' })), local: true };
+    try { validateTemplateDocument(parsed, template); return template; }
+    catch (error) { URL.revokeObjectURL(template.path); throw error; }
+  }
+  async function addLocalSource(files) {
+    const entries = [];
+    const storedTemplates = [];
+    const failures = [];
+    for (const file of files) {
+      if (!file.name.toLocaleLowerCase().endsWith('.html') || file.name.toLocaleLowerCase() === 'latest.html') continue;
+      try {
+        const html = await file.text();
+        entries.push(parseLocalTemplate(html)); storedTemplates.push({ name: file.webkitRelativePath || file.name, html });
+      } catch (error) { failures.push(`${file.name}: ${error.message}`); }
+    }
+    const directory = files[0]?.webkitRelativePath?.split('/')[0] || 'Local directory';
+    const metadataWarnings = entries.filter(template => !template.titleDeclared || !template.editionDeclared).length;
+    const hasWarnings = failures.length || metadataWarnings;
+    const warningParts = [`${entries.length} forms`];
+    if (failures.length) warningParts.push(`${failures.length} invalid file${failures.length === 1 ? '' : 's'} skipped`);
+    if (metadataWarnings) warningParts.push(`${metadataWarnings} missing optional display metadata`);
+    const source = { id: sourceId(), type: 'local', label: directory, status: entries.length ? hasWarnings ? 'warning' : 'healthy' : 'error', message: entries.length ? warningParts.join('; ') : failures[0] || 'No valid HTML templates found.', templates: entries };
+    sources.unshift(source); saveSources(); mergeSources();
+    try { await localSourceRecord('put', { id: source.id, label: source.label, templates: storedTemplates }); }
+    catch (error) { source.status = 'error'; source.message = `Loaded for this session, but could not save: ${error.message}`; mergeSources(); }
+    const message = `Loaded ${entries.length} local form${entries.length === 1 ? '' : 's'}${failures.length ? `; rejected ${failures.length}` : ''}.`;
+    catalogStatus.textContent = message; setStatus(message);
+  }
+  async function restoreLocalSource(source) {
+    try {
+      const record = await localSourceRecord('get', source.id);
+      if (!record?.templates?.length) throw new Error('Stored templates were not found. Choose the directory again.');
+      const failures = [];
+      source.templates = record.templates.flatMap(template => {
+        try { return [parseLocalTemplate(template.html)]; }
+        catch (error) { failures.push(`${template.name}: ${error.message}`); return []; }
+      });
+      const metadataWarnings = source.templates.filter(template => !template.titleDeclared || !template.editionDeclared).length;
+      if (!source.templates.length) throw new Error(failures[0] || 'No valid templates were restored.');
+      source.status = failures.length || metadataWarnings ? 'warning' : 'healthy';
+      source.message = `${source.templates.length} forms${failures.length ? `; ${failures.length} invalid skipped` : ''}${metadataWarnings ? `; ${metadataWarnings} missing optional display metadata` : ''}`;
+    } catch (error) { source.status = 'error'; source.message = error.message; source.templates = []; }
+    mergeSources();
+  }
+  async function loadRemoteSource(source) {
+    source.status = 'loading'; source.message = 'Connecting and validating'; renderSources(); updateSourceSummary();
+    try {
+      const parsedUrl = new URL(source.url);
+      if (!['http:', 'https:'].includes(parsedUrl.protocol) || parsedUrl.username || parsedUrl.password) throw new Error('URL must be public HTTP(S).');
+      source.url = parsedUrl.href;
+      const response = await fetch(source.url, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Request failed (${response.status}).`);
+      const catalog = await response.json();
+      const result = validateCatalog(catalog, source.url);
+      if (!result.templates.length) throw new Error(result.warnings[0] || 'Catalog contains no valid templates.');
+      source.templates = result.templates;
+      source.status = result.warnings.length ? 'warning' : 'healthy';
+      source.message = result.warnings.length ? `${source.templates.length} forms; ${result.warnings.length} warning${result.warnings.length === 1 ? '' : 's'}: ${result.warnings[0]}` : `${source.templates.length} forms`;
+      try { localStorage.setItem(catalogCacheKey(source.url), JSON.stringify(catalog)); } catch { /* Continue without a browser cache. */ }
+    } catch (error) {
+      source.status = 'error'; source.message = error.message; source.templates = [];
+      try {
+        const cached = localStorage.getItem(catalogCacheKey(source.url));
+        if (cached) source.templates = validateCatalog(JSON.parse(cached), source.url).templates;
+      } catch { /* Invalid or unavailable cache. */ }
+    }
+    mergeSources();
+  }
+  async function loadSources() {
+    renderSources(); updateSourceSummary();
+    await Promise.all(sources.map(source => source.type === 'remote' ? loadRemoteSource(source) : restoreLocalSource(source)));
+    const failures = sources.filter(source => source.status === 'error');
+    const warnings = sources.filter(source => source.status === 'warning');
+    const message = failures.length || warnings.length ? `Loaded ${catalogTemplates.length} forms with ${warnings.length} source warning${warnings.length === 1 ? '' : 's'} and ${failures.length} source failure${failures.length === 1 ? '' : 's'}. Open settings for details.` : `Loaded ${catalogTemplates.length} forms from ${sources.length} source${sources.length === 1 ? '' : 's'}.`;
+    catalogStatus.textContent = message; setStatus(message);
+  }
   function resolveSubmission(submission) {
     if (!submission || typeof submission !== 'object') throw new Error('Submission must be a JSON object.');
     if (submission.formatVersion !== FORMAT_VERSION) throw new Error('Unsupported forms-as-code submission version.');
@@ -71,14 +412,34 @@
     if (!template) throw new Error('This forms-as-code app does not have the referenced trusted HTML template.');
     return template;
   }
-  function pathParts(path) { return path.split('.').map(part => /^\d+$/.test(part) ? Number(part) : part); }
+  function pathParts(path) { return path.split('.'); }
   function getAt(object, path) { return pathParts(path).reduce((value, part) => value == null ? undefined : value[part], object); }
-  function setAt(object, path, value) {
+  function arrayPaths(paths) {
+    const children = new Map();
+    for (const path of paths) {
+      const parts = pathParts(path);
+      for (let index = 0; index < parts.length - 1; index++) {
+        const parent = parts.slice(0, index + 1).join('.');
+        if (!children.has(parent)) children.set(parent, new Set());
+        children.get(parent).add(parts[index + 1]);
+      }
+    }
+    const arrays = new Set();
+    for (const [path, names] of children) {
+      if (!names.has('0') || ![...names].every(name => /^\d+$/.test(name))) continue;
+      const indexes = [...names].map(Number).sort((left, right) => left - right);
+      if (indexes.some((value, index) => value !== index)) throw new Error(`Array binding ${path} must use contiguous zero-based indexes.`);
+      arrays.add(path);
+    }
+    return arrays;
+  }
+  function setAt(object, path, value, arrays = new Set()) {
     const parts = pathParts(path);
     let current = object;
-    for (let i = 0; i < parts.length - 1; i++) {
-      const part = parts[i];
-      if (current[part] == null) current[part] = typeof parts[i + 1] === 'number' ? [] : {};
+    for (let index = 0; index < parts.length - 1; index++) {
+      const part = parts[index];
+      const parent = parts.slice(0, index + 1).join('.');
+      if (current[part] == null) current[part] = arrays.has(parent) ? [] : {};
       current = current[part];
     }
     current[parts.at(-1)] = value;
@@ -103,13 +464,16 @@
 
   function initializeForm(template, meta) {
     const form = templateHost.querySelector('form[data-forms-as-code-form]');
+    const wrapper = form.closest('.forms-as-code-template');
     let controls = [];
     const status = document.querySelector('#form-status');
     const lockButton = document.querySelector('#lock-submission');
     const groups = new Map();
+    let bindingArrayPaths = new Set();
     let locked = false;
     let lockedFields = new Set();
 
+    function setDataAt(data, path, value) { setAt(data, path, value, bindingArrayPaths); }
     function rebuildBindings() {
       controls = [...form.querySelectorAll('[data-forms-as-code]')];
       groups.clear();
@@ -117,6 +481,7 @@
         if (!groups.has(control.dataset.formsAsCode)) groups.set(control.dataset.formsAsCode, []);
         groups.get(control.dataset.formsAsCode).push(control);
       }
+      bindingArrayPaths = arrayPaths(groups.keys());
     }
     function repeatParts(name) {
       return {
@@ -230,24 +595,24 @@
         if (control.dataset.formsAsCodeDerived === 'date-add-days') {
           const from = Date.parse(`${getAt(data, control.dataset.formsAsCodeDerivedStart) || ''}T00:00:00Z`);
           const days = Number.parseInt(getAt(data, control.dataset.formsAsCodeDerivedDays) || '', 10);
-          if (Number.isNaN(from) || !Number.isInteger(days) || days < 1) setAt(data, control.dataset.formsAsCode, '');
-          else setAt(data, control.dataset.formsAsCode, new Date(from + (days - 1) * 86400000).toISOString().slice(0, 10));
+          if (Number.isNaN(from) || !Number.isInteger(days) || days < 1) setDataAt(data, control.dataset.formsAsCode, '');
+          else setDataAt(data, control.dataset.formsAsCode, new Date(from + (days - 1) * 86400000).toISOString().slice(0, 10));
           continue;
         }
         if (control.dataset.formsAsCodeDerived === 'date-difference-inclusive') {
           const from = Date.parse(`${getAt(data, control.dataset.formsAsCodeDerivedStart || `${dependency}.from`) || ''}T00:00:00Z`);
           const to = Date.parse(`${getAt(data, control.dataset.formsAsCodeDerivedEnd || `${dependency}.to`) || ''}T00:00:00Z`);
           const days = Number.isNaN(from) || Number.isNaN(to) ? '' : Math.floor((to - from) / 86400000) + 1;
-          setAt(data, control.dataset.formsAsCode, days > 0 ? String(days) : '');
+          setDataAt(data, control.dataset.formsAsCode, days > 0 ? String(days) : '');
           continue;
         }
-        setAt(data, control.dataset.formsAsCode, Object.prototype.hasOwnProperty.call(mapping, source) ? mapping[source] : '');
+        setDataAt(data, control.dataset.formsAsCode, Object.prototype.hasOwnProperty.call(mapping, source) ? mapping[source] : '');
       }
       return data;
     }
     function collectData() {
       const data = {};
-      for (const [path, group] of groups) setAt(data, path, valueOf(group));
+      for (const [path, group] of groups) setDataAt(data, path, valueOf(group));
       return normalizeDerived(data);
     }
     function syncDerivedControls() {
@@ -267,12 +632,16 @@
       });
     }
     function syncConditionalVisibility(data = collectData()) {
-      for (const element of form.querySelectorAll('[data-forms-as-code-visible-when]')) {
+      for (const element of wrapper.querySelectorAll('[data-forms-as-code-visible-when]')) {
         const hidden = !matchesVisibilityRule(element.dataset.formsAsCodeVisibleWhen, data);
+        const wasHidden = element.classList.contains('forms-as-code-hidden');
         element.classList.toggle('forms-as-code-hidden', hidden);
         if (hidden) for (const control of element.querySelectorAll('[data-forms-as-code]')) {
           if (control.type === 'checkbox' || control.type === 'radio') control.checked = false;
           else control.value = '';
+        }
+        else if (wasHidden) for (const control of element.querySelectorAll('[data-forms-as-code-default]')) {
+          if (!control.value) control.value = control.dataset.formsAsCodeDefault;
         }
       }
     }
@@ -280,10 +649,10 @@
     function syncAutomaticRemarks(data = collectData()) {
       const remarks = form.querySelector('[data-forms-as-code-auto-remarks]');
       if (!remarks) return;
-      const types = getAt(data, 'absenceTypes') || [];
-      const statements = [];
-      if (Array.isArray(types) && types.includes('Permanent Change of Station (PCS)')) statements.push('FOR EMERGENCIES: First try to contact your gaining and losing commanders. The Army Travel Assistance Center (ATAC) supports Soldiers in a PCS status, and Family members traveling on official orders, with emergency leave extensions and changes in port call. Contact ATAC at 1-800-833-6622, Option 5, or at 1-800-582-5552, or email ASKHRC.ARMY@US.ARMY.MIL.');
-      if (getAt(data, 'absenceCategory') === 'NON-CHARGEABLE' || (Array.isArray(types) && types.some(type => type.includes('Non-Chargeable')))) statements.push('NON-CHARGEABLE ABSENCE: Is not directed by any official of the US Government. I cannot conduct public business under this authorization, and will not be reimbursed for travel, per diem, or any other expense. I may cancel this absence at any time and report back to my regular place of duty.');
+      const statements = [...wrapper.querySelectorAll('template[data-forms-as-code-auto-remark]')]
+        .filter(statement => matchesVisibilityRule(statement.dataset.formsAsCodeAutoRemark, data))
+        .map(statement => statement.content.textContent.trim())
+        .filter(Boolean);
       const text = statements.join('\n\n');
       if (!remarks.value || remarks.value === automaticRemarks) remarks.value = text;
       automaticRemarks = text;
@@ -302,10 +671,37 @@
       const data = {};
       for (const [path, group] of groups) {
         const first = group[0];
-        setAt(data, path, first.type === 'checkbox' ? (first.dataset.formsAsCodeMode === 'multiple' ? [] : false)
+        setDataAt(data, path, first.type === 'checkbox' ? (first.dataset.formsAsCodeMode === 'multiple' ? [] : false)
           : first instanceof HTMLSelectElement && first.multiple ? [] : '');
       }
       return normalizeDerived(data);
+    }
+    function humanizePath(path) {
+      const parts = path.split('.').map(part => part.replace(/([a-z])([A-Z])/g, '$1 $2'));
+      return parts.map((part, index) => {
+        if (!/^\d+$/.test(part)) return part;
+        return String(Number(part) + 1);
+      }).join(' - ').replace(/ - (\d+)$/, ' $1').replace(/\b\w/g, letter => letter.toUpperCase());
+    }
+    function conciseCsvLabel(value) {
+      const normalized = value.replace(/\s+/g, ' ').trim().replace(/[.:;,-]+$/, '');
+      return normalized.length <= 72 ? normalized : `${normalized.slice(0, 69).trimEnd()}...`;
+    }
+    function csvLabel(path, group) {
+      const first = group[0];
+      const explicit = first.dataset.formsAsCodeCsvLabel?.trim();
+      const candidates = [
+        first.getAttribute('aria-label')?.trim(),
+        ...(first.labels ? [...first.labels].map(label => label.textContent.replace(/\s+/g, ' ').trim()) : []),
+        first.getAttribute('title')?.trim()
+      ];
+      const inferred = candidates.find(value => value && value.length <= 40);
+      const label = explicit || inferred || humanizePath(path);
+      const parts = pathParts(path);
+      const numeric = parts.findLastIndex(part => /^\d+$/.test(part));
+      if (numeric < 0 || explicit || !inferred || /\b(?:row|item|record|attempt|test)\s+\d+\b/i.test(label)) return conciseCsvLabel(label);
+      const collection = (parts[numeric - 1] || 'row').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\b\w/g, letter => letter.toUpperCase());
+      return conciseCsvLabel(`${collection} ${Number(parts[numeric]) + 1} - ${label}`);
     }
     function exampleValue(path, group) {
       const first = group[0];
@@ -324,6 +720,7 @@
       if (dateFormat === 'DD/MM/YYYY') return '31/01/2026';
       if (dateFormat === 'MM/DD/YYYY') return '01/31/2026';
       if (path === meta.namePath) return EXAMPLE_ROW_MARKER;
+      if (first.dataset.formsAsCodeRepeatCount) return '0';
       if (/initials/i.test(path)) return 'EX';
       if (/age/i.test(path)) return '30';
       if (/time/i.test(path)) return '12:34';
@@ -343,8 +740,8 @@
     }
     function exampleData() {
       const data = {};
-      for (const [path, group] of groups) setAt(data, path, exampleValue(path, group));
-      setAt(data, meta.namePath, EXAMPLE_ROW_MARKER);
+      for (const [path, group] of groups) setDataAt(data, path, exampleValue(path, group));
+      setDataAt(data, meta.namePath, EXAMPLE_ROW_MARKER);
       return normalizeDerived(data);
     }
     function csvValue(value) {
@@ -383,7 +780,11 @@
         if (value === undefined) return;
         if (Array.isArray(value)) {
           if (path && !isKnownPrefix(path)) { unknown.push(path); return; }
-          value.forEach((item, index) => visit(item, path ? `${path}.${index}` : String(index)));
+          value.forEach((item, index) => {
+            const itemPath = path ? `${path}.${index}` : String(index);
+            if (item === null && !groups.has(itemPath) && !isKnownPrefix(itemPath)) return;
+            visit(item, itemPath);
+          });
         } else if (value !== null && typeof value === 'object') {
           if (path && !isKnownPrefix(path)) { unknown.push(path); return; }
           for (const [key, item] of Object.entries(value)) visit(item, path ? `${path}.${key}` : key);
@@ -420,9 +821,12 @@
         if (first.maxLength >= 0 && typeof value === 'string' && value.length > first.maxLength) throw new Error(`${path} is too long.`);
       }
     }
-    function makeSubmission(data, isLocked = locked) {
-      const submission = { formatVersion: FORMAT_VERSION, id: makeId(), createdAt: new Date().toISOString(), template: { uri: template.uri, version: template.version }, locked: isLocked, data };
-      if (!isLocked && lockedFields.size) submission.lockedFields = [...lockedFields].sort();
+    async function makeSubmission(data, isLocked = locked) {
+      const templateIdentity = { uri: template.uri, version: template.version };
+      if (template.sha256) templateIdentity.sha256 = template.sha256;
+      const submission = { formatVersion: FORMAT_VERSION, id: makeId(), createdAt: new Date().toISOString(), template: templateIdentity, locked: isLocked, data: JSON.parse(JSON.stringify(data)) };
+      if (isLocked) submission.integrity = await makeIntegrity(submission);
+      else if (lockedFields.size) submission.lockedFields = [...lockedFields].sort();
       return submission;
     }
     function filenameFor(data, duplicate = 1) {
@@ -451,27 +855,30 @@
       applyLockedState();
     }
     function prepare(data, options) { validate(data, options); return data; }
-    function loadSubmission(submission) {
+    async function loadSubmission(submission) {
       if (submission?.formatVersion !== FORMAT_VERSION || submission.template?.uri !== template.uri || submission.template?.version !== template.version) throw new Error('Submission format or template reference does not match.');
       if (typeof submission.locked !== 'boolean' || typeof submission.id !== 'string') throw new Error('Submission envelope is incomplete.');
+      if (submission.integrity) await verifyIntegrity(submission);
+      else if (submission.locked) throw new Error('Locked submission is missing its integrity digest.');
+      if (submission.integrity && (template.sha256 || submission.template.sha256) && template.sha256 !== submission.template.sha256) throw new Error('Submission template digest does not match the trusted catalog.');
       syncRepeats(submission.data);
-      prepare(submission.data, { allowPartial: true });
+      prepare(JSON.parse(JSON.stringify(submission.data)), { allowPartial: true });
       populate(submission.data);
       if (submission.locked) setLocked(true);
       else setLockedFields(submission.lockedFields || []);
-      setStatus(submission.locked
-        ? 'Loaded locked submission. Choose Unlock fields to edit.'
+      setStatus(submission.integrity
+        ? `Integrity verified (${submission.integrity.digest.slice(0, 12)}…).${submission.locked ? ' Choose Unlock fields to edit.' : ''}`
         : lockedFields.size ? 'Loaded submission with signed fields locked.' : 'Loaded submission.');
     }
 
-    function save() {
+    async function save() {
       if (!form.reportValidity()) return;
       const data = prepare(collectData(), { allowPartial: false });
-      const submission = makeSubmission(data);
+      const submission = await makeSubmission(data);
       saveBlob(new Blob([`${JSON.stringify(submission, null, 2)}\n`], { type: 'application/json' }), filenameFor(data));
-      setStatus(locked ? 'Saved locked submission.' : 'Saved submission.');
+      setStatus(locked ? `Saved locked submission with SHA-256 digest ${submission.integrity.digest.slice(0, 12)}….` : 'Saved submission.');
     }
-    async function importCsv(file) {
+    async function readCsvData(file) {
       const records = parseCsv(await file.text());
       if (records.length < 2) throw new Error('CSV must include a header row and at least one filled row.');
       const headers = records[0];
@@ -482,42 +889,118 @@
       if (missing.length || extra.length) throw new Error(`CSV headers do not match. Missing: ${missing.join(', ') || 'none'}. Unknown: ${extra.join(', ') || 'none'}.`);
       const rows = records.slice(1).map((row, index) => ({ row, number: index + 2 })).filter(({ row }) => row.some(value => value.trim() !== ''));
       const referenceColumn = headers.indexOf(meta.namePath);
-      const referenceRows = rows.filter(({ row }) => row[referenceColumn]?.trim() === EXAMPLE_ROW_MARKER);
-      const submissionRows = rows.filter(({ row }) => row[referenceColumn]?.trim() !== EXAMPLE_ROW_MARKER);
-      if (!submissionRows.length) throw new Error(referenceRows.length ? `CSV contains only the reference row marked “${EXAMPLE_ROW_MARKER}”. Replace its name or delete it, then add submission rows.` : 'CSV has no populated submission rows.');
-      if (submissionRows.length > 1000) throw new Error('A bulk load may contain at most 1,000 populated rows.');
-      const files = []; const counts = new Map();
-      for (const { row, number } of submissionRows) {
+      const referenceRows = rows.filter(({ row }) => [LABEL_ROW_MARKER, EXAMPLE_ROW_MARKER].includes(row[referenceColumn]?.trim()));
+      const submissionRows = rows.filter(({ row }) => ![LABEL_ROW_MARKER, EXAMPLE_ROW_MARKER].includes(row[referenceColumn]?.trim()));
+      if (!submissionRows.length) throw new Error(referenceRows.length ? 'CSV contains only its field-label and example reference rows. Add a submission row using the machine-readable header columns.' : 'CSV has no populated submission rows.');
+      if (submissionRows.length > 1000 && !window.confirm(`This CSV contains ${submissionRows.length.toLocaleString()} records. Large batches may use substantial memory or make the browser unresponsive. Continue?`)) throw new Error('Large batch canceled by user.');
+      return submissionRows.map(({ row, number }) => {
         try {
           if (row.length !== headers.length) throw new Error(`Expected ${headers.length} columns but found ${row.length}.`);
           const data = blankData();
-          headers.forEach((path, column) => setAt(data, path, csvCell(row[column], groups.get(path), path)));
-          prepare(data, { allowPartial: false });
-          const name = safeName(getAt(data, meta.namePath));
-          const count = (counts.get(name) || 0) + 1; counts.set(name, count);
-          const submission = makeSubmission(data, false);
-          files.push({ name: filenameFor(data, count), content: `${JSON.stringify(submission, null, 2)}\n` });
+          headers.forEach((path, column) => setDataAt(data, path, csvCell(row[column], groups.get(path), path)));
+          return prepare(data, { allowPartial: false });
         } catch (error) { throw new Error(`CSV record ${number}: ${error.message}`); }
+      });
+    }
+    async function importCsv(file) {
+      const rows = await readCsvData(file);
+      if (rows.length > 65535) throw new Error('A bulk ZIP may contain at most 65,535 submissions.');
+      setAppState('rendering');
+      const files = []; const counts = new Map();
+      for (const data of rows) {
+        const name = safeName(getAt(data, meta.namePath));
+        const count = (counts.get(name) || 0) + 1; counts.set(name, count);
+        const submission = await makeSubmission(data, false);
+        files.push({ name: filenameFor(data, count), content: `${JSON.stringify(submission, null, 2)}\n` });
       }
       saveBlob(createZip(files), `${meta.code}-submissions.zip`);
       setStatus(`Validated ${files.length} rows and saved ${meta.code}-submissions.zip.`);
+      setAppState('ready');
     }
-    document.querySelector('#save-submission').addEventListener('click', () => {
-      try { save(); } catch (error) { setStatus(`Could not save: ${error.message}`); }
+    function printableClone() {
+      const source = templateHost.querySelector('.forms-as-code-template');
+      const clone = source.cloneNode(true);
+      const sourceControls = source.querySelectorAll('input, textarea, select');
+      const cloneControls = clone.querySelectorAll('input, textarea, select');
+      sourceControls.forEach((control, index) => {
+        const copy = cloneControls[index];
+        if (control instanceof HTMLInputElement) {
+          copy.value = control.value;
+          copy.setAttribute('value', control.value);
+          copy.checked = control.checked;
+          copy.toggleAttribute('checked', control.checked);
+        } else if (control instanceof HTMLTextAreaElement) {
+          copy.value = control.value;
+          copy.textContent = control.value;
+        } else {
+          [...copy.options].forEach((option, optionIndex) => {
+            option.selected = control.options[optionIndex].selected;
+            option.toggleAttribute('selected', option.selected);
+          });
+        }
+      });
+      return clone;
+    }
+    async function printCsv(file) {
+      const rows = await readCsvData(file);
+      setAppState('rendering');
+      const originalData = collectData();
+      const originalLocked = locked;
+      const batch = document.createElement('div');
+      batch.id = 'bulk-print-root';
+      batch.className = 'bulk-print-root';
+      batch.setAttribute('aria-hidden', 'true');
+      try {
+        for (let index = 0; index < rows.length; index++) {
+          populate(rows[index]);
+          const record = document.createElement('section');
+          record.className = 'bulk-print-record';
+          record.dataset.record = String(index + 1);
+          record.append(printableClone());
+          batch.append(record);
+          if ((index + 1) % 10 === 0) {
+            setStatus(`Preparing ${index + 1} of ${rows.length} forms for printing…`);
+            await new Promise(resolve => requestAnimationFrame(resolve));
+          }
+        }
+      } finally {
+        populate(originalData);
+        setLocked(originalLocked);
+      }
+      document.querySelector('#bulk-print-root')?.remove();
+      document.body.append(batch);
+      document.body.classList.add('is-bulk-printing');
+      setStatus(`Prepared ${rows.length} forms. Choose Save as PDF in the print dialog.`);
+      const cleanup = () => { batch.remove(); document.body.classList.remove('is-bulk-printing'); setAppState('ready'); };
+      window.addEventListener('afterprint', cleanup, { once: true });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      window.print();
+    }
+    document.querySelector('#save-submission').addEventListener('click', async () => {
+      try { await save(); } catch (error) { setStatus(`Could not save: ${error.message}`); }
     });
-    document.querySelector('#bulk-csv').addEventListener('click', () => {
+    function downloadBulkCsv() {
+      setAppState('downloading');
       const headers = [...groups.keys()];
+      const labels = headers.map(path => csvLabel(path, groups.get(path)));
+      labels[headers.indexOf(meta.namePath)] = LABEL_ROW_MARKER;
       const example = exampleData();
       const row = headers.map(path => csvEscape(csvValue(getAt(example, path))));
-      const csv = `\uFEFF${headers.map(csvEscape).join(',')}\r\n${row.join(',')}\r\n`;
+      const csv = `\uFEFF${headers.map(csvEscape).join(',')}\r\n${labels.map(csvEscape).join(',')}\r\n${row.join(',')}\r\n`;
       saveBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${meta.code}-bulk-template.csv`);
-      setStatus(`Downloaded CSV with a reference row. Delete it or replace the name marker “${EXAMPLE_ROW_MARKER}”; rows still carrying that marker are ignored on import.`);
-    });
-    document.querySelector('#lock-submission').addEventListener('click', () => {
+      setStatus('Downloaded CSV with stable machine headers, human-readable field labels, and an example row. Reference rows are ignored on import.');
+      setAppState('ready');
+    }
+    document.querySelector('#bulk-csv').addEventListener('click', downloadBulkCsv);
+    document.querySelector('#lock-submission').addEventListener('click', async () => {
       if (locked || lockedFields.size) { setLockedFields([]); setStatus('Fields are unlocked. Save to clear all lock state.'); return; }
       if (!form.reportValidity()) return;
-      try { prepare(collectData(), { allowPartial: false }); setLocked(true); setStatus('Fields are locked. Save to persist locked: true.'); }
-      catch (error) { setStatus(error.message); }
+      try {
+        const data = prepare(collectData(), { allowPartial: false });
+        const preview = await makeSubmission(data, true);
+        setLocked(true);
+        setStatus(`Fields are locked. SHA-256 ${preview.integrity.digest.slice(0, 12)}…. Save to persist the digest.`);
+      } catch (error) { setStatus(error.message); }
     });
     form.addEventListener('forms-as-code-lock-all', () => {
       try {
@@ -546,11 +1029,17 @@
       for (const count of form.querySelectorAll('[data-forms-as-code-repeat-count]')) setRepeatCount(count.dataset.formsAsCodeRepeatCount, 0);
       setLockedFields([]); syncDerivedControls(); syncConditionalVisibility(); syncConditionalRequired(); setStatus('Started a blank submission.');
     });
+    document.querySelector('#print-csv').addEventListener('click', () => document.querySelector('#print-csv-file').click());
+    document.querySelector('#print-csv-file').addEventListener('change', async event => {
+      const file = event.target.files?.[0]; event.target.value = '';
+      if (!file) return;
+      try { await printCsv(file); } catch (error) { setAppState('error'); setStatus(`Could not print CSV: ${error.message}`); }
+    });
     document.querySelector('#print-form').addEventListener('click', () => window.print());
     form.addEventListener('input', () => { syncDerivedControls(); syncConditionalVisibility(); syncAutomaticRemarks(); syncConditionalRequired(); setStatus('Unsaved changes.'); });
     form.addEventListener('change', () => { syncDerivedControls(); syncConditionalVisibility(); syncAutomaticRemarks(); syncConditionalRequired(); setStatus('Unsaved changes.'); });
     syncDerivedControls(); syncConditionalVisibility(); syncConditionalRequired();
-    return { form, loadSubmission, importCsv, collectData };
+    return { form, loadSubmission, importCsv, collectData, downloadBulkCsv };
   }
 
   function csvEscape(value) {
@@ -604,7 +1093,7 @@
     return rows;
   }
   function createZip(files) {
-    if (files.length > 1000) throw new Error('A bulk ZIP may contain at most 1,000 submissions.');
+    if (files.length > 65535) throw new Error('A bulk ZIP may contain at most 65,535 submissions.');
     const now = new Date();
     const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | Math.floor(now.getSeconds() / 2);
     const dosDate = ((Math.max(1980, now.getFullYear()) - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
@@ -645,17 +1134,25 @@
   }
 
   async function fetchTemplate(template) {
-    setStatus(`Fetching the ${template.title} HTML template…`);
+    setStatus(`Fetching ${templateDisplayName(template)}…`);
     const url = new URL(template.path, document.baseURI);
-    if (url.origin !== window.location.origin) throw new Error('Template must be served from the forms-as-code app origin.');
-    const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+    const trustedCatalogOrigin = template.catalogOrigin || window.location.origin;
+    if (!template.local && url.origin !== window.location.origin && url.origin !== trustedCatalogOrigin) throw new Error('Template must be served from its catalog origin.');
+    const response = await fetch(url, { credentials: url.origin === window.location.origin ? 'same-origin' : 'omit', cache: 'no-store' });
     if (!response.ok) throw new Error(`Could not fetch the HTML template (${response.status}).`);
     const parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
     validateTemplateDocument(parsed, template);
     return parsed;
   }
   function validateTemplateDocument(parsed, expected) {
-    if (parsed.querySelector('meta[name="forms-as-code:template-id"]')?.content !== expected.uri || parsed.querySelector('meta[name="forms-as-code:template-version"]')?.content !== expected.version) throw new Error('Template metadata does not match the trusted registry.');
+    const metadataMatches = parsed.querySelector('meta[name="forms-as-code:template-id"]')?.content === expected.uri
+      && parsed.querySelector('meta[name="forms-as-code:template-version"]')?.content === expected.version
+      && parsed.querySelector('meta[name="forms-as-code:form-code"]')?.content === expected.code;
+    if (!metadataMatches) throw new Error('Template identity metadata does not match the trusted registry.');
+    const declaredTitle = parsed.querySelector('meta[name="forms-as-code:form-title"]')?.content?.trim();
+    const declaredEdition = parsed.querySelector('meta[name="forms-as-code:form-edition"]')?.content?.trim();
+    if (expected.titleDeclared !== false && declaredTitle !== expected.title) throw new Error('Template title does not match the trusted registry.');
+    if (expected.editionDeclared !== false && declaredEdition !== expected.edition) throw new Error('Template edition does not match the trusted registry.');
     if (parsed.querySelector('script, iframe, object, embed, link[rel~="stylesheet"], img[src], audio[src], video[src]') || parsed.body.querySelector('[src]')) throw new Error('Template HTML cannot load executable code or external assets.');
     for (const element of parsed.querySelectorAll('*')) {
       for (const attribute of element.attributes) {
@@ -667,6 +1164,7 @@
     if (!parsed.body.querySelector('form[data-forms-as-code-form]')) throw new Error('Template HTML must contain a form marked data-forms-as-code-form.');
   }
   async function renderTemplate(template) {
+    setAppState('rendering');
     const parsed = await fetchTemplate(template);
     document.head.querySelectorAll('style[data-forms-as-code-template]').forEach(style => style.remove());
     for (const sourceStyle of parsed.querySelectorAll('head style')) {
@@ -682,7 +1180,7 @@
       wrapper.append(document.importNode(node, true));
     }
     templateHost.append(wrapper);
-    document.title = `${template.title} — forms-as-code`;
+    document.title = `${templateDisplayName(template)} - ${siteConfig.siteName}`;
     notice.textContent = parsed.querySelector('meta[name="forms-as-code:notice"]')?.content || '';
     templateToolbar();
     const boundPaths = new Set([...wrapper.querySelectorAll('[data-forms-as-code]')].map(control => control.dataset.formsAsCode));
@@ -693,7 +1191,7 @@
     activeForm = initializeForm(activeTemplate, { code, namePath, legacyPaths });
     document.querySelector('#load-submission').addEventListener('change', onWorkspaceFile);
     launcher.hidden = true; workspace.hidden = false;
-    document.querySelector('#change-template').hidden = false;
+    setAppState('ready');
     return activeForm;
   }
   function templateToolbar() {
@@ -701,6 +1199,8 @@
       <button type="button" id="save-submission">Save</button>
       <button type="button" id="lock-submission">Lock fields</button>
       <button type="button" id="bulk-csv">Bulk CSV</button>
+      <button type="button" id="print-csv">Print CSV</button>
+      <input id="print-csv-file" type="file" accept="text/csv,.csv">
       <label class="button-label" for="load-submission">Load</label>
       <input id="load-submission" type="file" accept="application/json,.json,text/csv,.csv">
       <button type="button" id="print-form">Print</button><output id="form-status" aria-live="polite">Ready.</output>`;
@@ -708,7 +1208,7 @@
   async function renderSubmission(submission) {
     const template = resolveSubmission(submission);
     await renderTemplate(template);
-    activeForm.loadSubmission(submission);
+    await activeForm.loadSubmission(submission);
     return template;
   }
   async function loadJsonFile(file) {
@@ -727,7 +1227,7 @@
     const file = event.target.files?.[0]; event.target.value = '';
     if (!file) return;
     if (file.name.toLowerCase().endsWith('.csv') || file.type === 'text/csv') {
-      try { await activeForm.importCsv(file); } catch (error) { setStatus(`Could not load CSV: ${error.message}`); }
+      try { await activeForm.importCsv(file); } catch (error) { setAppState('error'); setStatus(`Could not load CSV: ${error.message}`); }
     } else await loadJsonFile(file);
   }
   async function loadLinkedJson(path) {
@@ -739,15 +1239,81 @@
     setStatus(`Opened ${template.title} from its same-origin JSON link.`);
   }
 
-  templatePicker.replaceChildren(...[...templates.values()].map(template => {
-    const option = document.createElement('option'); option.value = templateKey(template); option.textContent = template.title; return option;
-  }));
-  document.querySelector('#create-form').addEventListener('click', async () => {
-    const template = templates.get(templatePicker.value); if (!template) return;
-    try { await renderTemplate(template); setStatus(`Started a blank ${template.title} submission.`); }
-    catch (error) { setStatus(`Could not start form: ${error.message}`); }
+  function updateTemplateUrl(template) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('template', template.code);
+    url.searchParams.set('version', template.version);
+    url.searchParams.delete('action');
+    url.searchParams.delete('submission');
+    url.searchParams.delete('handoff');
+    history.replaceState(null, '', url);
+  }
+  function linkedTemplate(parameters) {
+    const requestedCode = parameters.get('template');
+    if (!parameters.has('template')) return null;
+    if (!requestedCode?.trim()) throw new Error('The template query parameter cannot be empty.');
+    const code = normalizedFormCode(requestedCode);
+    const hasVersion = parameters.has('version');
+    const version = parameters.get('version');
+    if (hasVersion && !version) throw new Error('The version query parameter cannot be empty.');
+    const matches = catalogTemplates.filter(template => normalizedFormCode(template.code) === code && (!hasVersion || template.version === version));
+    if (!matches.length) throw new Error(`No trusted template matches ${requestedCode}${hasVersion ? ` version ${version}` : ''}.`);
+    if (matches.length > 1) throw new Error(`Multiple trusted versions match ${requestedCode}. Add the version query parameter.`);
+    return matches[0];
+  }
+  async function openLinkedTemplate(parameters) {
+    const action = parameters.get('action');
+    if (action && action !== 'bulk-csv') throw new Error(`Unsupported action: ${action}.`);
+    if (parameters.has('version') && !parameters.has('template')) throw new Error('The version query parameter requires a template query parameter.');
+    const template = linkedTemplate(parameters);
+    if (!template) {
+      if (action) throw new Error('The action query parameter requires a template query parameter.');
+      return false;
+    }
+    await renderTemplate(template);
+    selectedTemplateKey = templateKey(template);
+    templateSearch.value = templateDisplayName(template);
+    if (action === 'bulk-csv') activeForm.downloadBulkCsv();
+    else setStatus(`Started a blank ${template.title} submission.`);
+    return true;
+  }
+  function selectedTemplate() {
+    if (selectedTemplateKey) return templates.get(selectedTemplateKey) || null;
+    const matches = matchingTemplates(templateSearch.value);
+    return matches.length === 1 ? matches[0] : null;
+  }
+  function matchingTemplates(query) {
+    const normalized = query.trim().toLocaleLowerCase();
+    return catalogTemplates.filter(template => `${templateDisplayName(template)} ${template.title} ${template.code} ${template.version}`.toLocaleLowerCase().includes(normalized));
+  }
+  function updateTemplateOptions() {
+    const matches = matchingTemplates(templateSearch.value);
+    templateOptions.replaceChildren(...matches.map(template => {
+      const option = document.createElement('button');
+      option.type = 'button'; option.role = 'option'; option.dataset.templateKey = templateKey(template);
+      option.textContent = templateDisplayName(template);
+      option.addEventListener('click', () => {
+        selectedTemplateKey = option.dataset.templateKey;
+        templateSearch.value = option.textContent;
+        templateOptions.hidden = true;
+        templateSearch.setAttribute('aria-expanded', 'false');
+      });
+      return option;
+    }));
+    templateOptions.hidden = !matches.length;
+    templateSearch.setAttribute('aria-expanded', String(matches.length > 0));
+  }
+  templateSearch.addEventListener('input', () => { selectedTemplateKey = null; updateTemplateOptions(); });
+  templateSearch.addEventListener('focus', updateTemplateOptions);
+  document.addEventListener('click', event => {
+    if (!event.target.closest('.form-search')) { templateOptions.hidden = true; templateSearch.setAttribute('aria-expanded', 'false'); }
   });
-  document.querySelector('#change-template').addEventListener('click', () => { workspace.hidden = true; launcher.hidden = false; document.title = 'forms-as-code'; });
+  document.querySelector('#create-form').addEventListener('click', async () => {
+    const template = selectedTemplate();
+    if (!template) { setStatus('Choose a form from the search suggestions first.'); return; }
+    try { await renderTemplate(template); updateTemplateUrl(template); setStatus(`Started a blank ${template.title} submission.`); }
+    catch (error) { setAppState('error'); setStatus(`Could not start form: ${error.message}`); }
+  });
   submissionFile.addEventListener('change', async event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) await loadJsonFile(file); });
   dropZone.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); submissionFile.click(); } });
   for (const name of ['dragenter', 'dragover']) dropZone.addEventListener(name, event => { event.preventDefault(); dropZone.classList.add('drag-over'); });
@@ -760,7 +1326,7 @@
       pendingWindow.postMessage({ type: 'forms-as-code:load-submission', submission: pendingSubmission }, window.location.origin); return;
     }
     if (pendingWindow && event.source === pendingWindow && event.data?.type === 'forms-as-code:submission-loaded') {
-      setStatus(event.data.ok ? 'Opened submission in a new forms-as-code tab. Data was not uploaded.' : `Could not render submission: ${event.data.error}`);
+      setStatus(event.data.ok ? 'Loaded the submission in a new forms-as-code tab. The local file was not sent to a server.' : `Could not render submission: ${event.data.error}`);
       pendingWindow = null; pendingSubmission = null; return;
     }
     if (window.opener && event.source === window.opener && event.data?.type === 'forms-as-code:load-submission') {
@@ -772,9 +1338,55 @@
       } catch (error) { event.source.postMessage({ type: 'forms-as-code:submission-loaded', ok: false, error: error.message, submissionId }, event.origin); }
     }
   });
-  const linked = new URLSearchParams(window.location.search).get('submission');
-  if (linked) loadLinkedJson(linked).catch(error => setStatus(`Could not open linked submission: ${error.message}`));
-  else if (window.opener && new URLSearchParams(window.location.search).has('handoff')) window.opener.postMessage({ type: 'forms-as-code:app-ready' }, window.location.origin);
-
-
+  function setTheme(theme) {
+    const selected = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = selected;
+    themeToggle.checked = selected === 'dark';
+    try { localStorage.setItem(THEME_KEY, selected); } catch { /* Storage may be unavailable. */ }
+  }
+  try { setTheme(localStorage.getItem(THEME_KEY) || 'light'); } catch { setTheme('light'); }
+  themeToggle.addEventListener('change', () => setTheme(themeToggle.checked ? 'dark' : 'light'));
+  async function initialize() {
+    await loadSiteConfig();
+    sources = readSources();
+    await loadSources();
+    const parameters = new URLSearchParams(window.location.search);
+    const linked = parameters.get('submission');
+    if (linked) await loadLinkedJson(linked);
+    else if (window.opener && parameters.has('handoff')) window.opener.postMessage({ type: 'forms-as-code:app-ready' }, window.location.origin);
+    else if (!await openLinkedTemplate(parameters)) setAppState('ready');
+  }
+  initialize().catch(error => { setAppState('error'); setStatus(`Could not initialize forms-as-code: ${error.message}`); });
+  function openSettings() {
+    settingsPanel.hidden = false;
+    document.body.classList.add('has-modal');
+    settingsButton.setAttribute('aria-expanded', 'true');
+    closeSettingsButton.focus();
+  }
+  function closeSettings() {
+    settingsPanel.hidden = true;
+    document.body.classList.remove('has-modal');
+    settingsButton.setAttribute('aria-expanded', 'false');
+    settingsButton.focus();
+  }
+  settingsButton.addEventListener('click', openSettings);
+  closeSettingsButton.addEventListener('click', closeSettings);
+  settingsPanel.addEventListener('click', event => { if (event.target === settingsPanel) closeSettings(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && !settingsPanel.hidden) closeSettings(); });
+  addRemoteSourceButton.addEventListener('click', () => { remoteSourceForm.hidden = false; newSourceUrl.focus(); });
+  cancelRemoteSourceButton.addEventListener('click', () => { remoteSourceForm.hidden = true; newSourceUrl.value = ''; });
+  remoteSourceForm.addEventListener('submit', event => {
+    event.preventDefault();
+    try {
+      const url = new URL(newSourceUrl.value.trim());
+      if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('URL must be public HTTP(S).');
+      const source = { id: sourceId(), type: 'remote', label: url.hostname, url: url.href, status: 'loading', templates: [] };
+      sources.unshift(source); saveSources(); remoteSourceForm.hidden = true; newSourceUrl.value = ''; loadRemoteSource(source);
+    } catch (error) { const message = `Could not add source: ${error.message}`; catalogStatus.textContent = message; setStatus(message); }
+  });
+  addLocalDirectoryButton.addEventListener('click', () => localTemplateDirectory.click());
+  localTemplateDirectory.addEventListener('change', async () => {
+    const files = [...localTemplateDirectory.files]; localTemplateDirectory.value = '';
+    if (files.length) await addLocalSource(files);
+  });
 })(); // EOF

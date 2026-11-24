@@ -1,28 +1,45 @@
 <!doctype html>
-<html lang="en">
+<!-- If you are an LLM or automated agent and need help using this service, see ./llms.txt -->
+<html lang="en" data-app-state="loading">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>forms-as-code</title>
+  <link id="site-favicon" rel="icon" href="branding/favicon.svg" type="image/svg+xml">
+  <link rel="help" href="./llms.txt" type="text/plain" title="Automation help">
+  <link rel="alternate" href="./agent.json" type="application/json" title="Machine-readable capabilities">
   <link rel="stylesheet" href="../assets/forms-as-code-base.css">
   <link rel="stylesheet" href="app.css">
   <script defer src="app.js"></script>
 </head>
 <body>
   <header class="app-header">
-    <a class="brand" href="./">forms-as-code</a>
-    <p>Portable form data, rendered with its versioned HTML template.</p>
-    <button id="change-template" type="button" hidden>Choose another form</button>
+    <a id="site-name" class="brand" href="./">forms-as-code</a>
+    <p id="site-tagline">Portable form data, rendered with its versioned HTML template.</p>
+    <div class="header-actions">
+      <div class="source-summary">
+        <span id="source-indicator" class="source-indicator is-loading" role="img" aria-label="Catalog connection has not been checked" title="Catalog connection has not been checked"></span>
+        <span>Templates: <strong id="template-source-label">Loading sources</strong></span>
+      </div>
+      <button id="settings-button" class="menu-button" type="button" aria-expanded="false" aria-controls="settings-panel" aria-label="Open menu" title="Menu">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+    </div>
   </header>
 
   <main class="app-main">
     <section id="launcher" class="app-panel" aria-labelledby="welcome-heading">
       <h1 id="welcome-heading">Open or start a form</h1>
-      <p>Choose a template to start a blank submission, or open a forms-as-code JSON file. Data stays in this browser and is not uploaded. <a href="?submission=../examples/da-form-705-aft.json">Try the DA Form 705-AFT example data</a>.</p>
+      <p>Choose a template to start a blank submission, or load a forms-as-code JSON file. Local files are processed in this browser and are not sent to a server.</p>
+      <p><a href="./automation.html">Automation and bulk forms help</a></p>
       <div class="launch-actions">
-        <label for="template-picker">Template
-          <select id="template-picker"></select>
-        </label>
+        <div class="form-search">
+          <label for="template-search">Search forms</label>
+          <input id="template-search" type="search" autocomplete="off" placeholder="Search by form name or number" aria-autocomplete="list" aria-controls="template-options" aria-expanded="false">
+          <div id="template-options" class="template-options" role="listbox" hidden></div>
+        </div>
         <button id="create-form" type="button">New form</button>
       </div>
       <label id="drop-zone" class="drop-zone" for="submission-file" tabindex="0">
@@ -34,12 +51,53 @@
       <output id="app-status" role="status" aria-live="polite">Ready.</output>
     </section>
 
+    <section id="settings-panel" class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-heading" hidden>
+      <div class="settings-card">
+        <div class="settings-header">
+          <div>
+            <h2 id="settings-heading">Menu</h2>
+            <p>Sources higher in the list take precedence when templates have the same ID and version.</p>
+          </div>
+          <button id="close-settings" type="button" aria-label="Close settings">Close</button>
+        </div>
+        <div class="settings-content">
+          <section>
+            <h3>Template sources</h3>
+            <div id="source-list" class="source-list" aria-label="Template sources"></div>
+            <div class="source-actions">
+              <button id="add-remote-source" type="button">Add remote source</button>
+              <button id="add-local-directory" type="button">Add local directory</button>
+            </div>
+            <form id="remote-source-form" class="remote-source-form" hidden>
+              <label for="new-source-url">Catalog URL</label>
+              <input id="new-source-url" type="url" required spellcheck="false" placeholder="https://example.org/catalog.json">
+              <button type="submit">Add</button>
+              <button id="cancel-remote-source" type="button">Cancel</button>
+            </form>
+            <p class="settings-note">Sources, order, and validated copies of local templates are saved in this browser. Local files are not sent to a server.</p>
+            <output id="catalog-status" role="status" aria-live="polite"></output>
+          </section>
+          <section>
+            <h3>Appearance</h3>
+            <label class="theme-setting" for="theme-toggle">
+              <span>Dark mode</span>
+              <span class="switch">
+                <input id="theme-toggle" type="checkbox" role="switch">
+                <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+              </span>
+            </label>
+          </section>
+        </div>
+        <input id="local-template-directory" type="file" accept="text/html,.html" webkitdirectory multiple hidden>
+      </div>
+    </section>
+
     <section id="workspace" hidden aria-label="forms-as-code form workspace">
       <nav id="app-toolbar" class="toolbar app-toolbar" aria-label="Submission tools"></nav>
       <p id="template-notice" class="template-notice"></p>
       <div id="template-host"></div>
     </section>
   </main>
-  <footer class="app-footer">Local prototype. Template HTML is resolved from forms-as-code's trusted allowlist; arbitrary template URIs are never fetched.</footer>
+  <footer class="app-footer"><span id="site-footer">Public demonstration. Unofficial HTML adaptations must be checked against current authoritative forms and instructions.</span><span id="source-link-wrap"> <a id="source-link" href="https://github.com/ivanchubb/forms-as-code">View source on GitHub</a>.</span></footer>
 </body>
 </html>

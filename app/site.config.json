@@ -1,0 +1,14 @@
+{
+  "siteName": "forms-as-code",
+  "tagline": "Portable form data, rendered with its versioned HTML template.",
+  "footer": "Public demonstration. Unofficial HTML adaptations must be checked against current authoritative forms and instructions.",
+  "sourceUrl": "https://github.com/ivanchubb/forms-as-code",
+  "sourceLabel": "View source on GitHub",
+  "favicon": "./branding/favicon.svg",
+  "catalogs": [
+    {
+      "label": "Bundled example forms",
+      "url": "../examples/catalog.json"
+    }
+  ]
+}

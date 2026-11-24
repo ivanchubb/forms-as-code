@@ -1,0 +1,29 @@
+{
+  "formatVersion": "1",
+  "templates": [
+    {
+      "uri": "https://ivanchubb.github.io/forms-as-code/examples/irs-w9",
+      "version": "2024-03.2",
+      "title": "Request for Taxpayer Identification Number and Certification",
+      "edition": "Rev. March 2024",
+      "code": "W9",
+      "path": "templates/irs-w9.html"
+    },
+    {
+      "uri": "https://ivanchubb.github.io/forms-as-code/examples/osha-301",
+      "version": "2004-01.3",
+      "title": "Injury and Illness Incident Report",
+      "edition": "Rev. 01/2004",
+      "code": "OSHA301",
+      "path": "templates/osha-301.html"
+    },
+    {
+      "uri": "https://ivanchubb.github.io/forms-as-code/examples/gsa-sf91",
+      "version": "2020-11.2",
+      "title": "Motor Vehicle Accident Report",
+      "edition": "Rev. November 2020",
+      "code": "SF91",
+      "path": "templates/gsa-sf91.html"
+    }
+  ]
+}

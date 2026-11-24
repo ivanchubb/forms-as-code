@@ -1,0 +1,28 @@
+{
+  "siteName": "Community Forms",
+  "tagline": "Fill, save, and process versioned forms in your browser.",
+  "footer": "Example deployment. Verify requirements with the organization receiving the form.",
+  "sourceUrl": "https://github.com/ivanchubb/forms-as-code",
+  "sourceLabel": "View project source",
+  "favicon": "./branding/favicon.svg",
+  "appearance": {
+    "primary": "#315b46",
+    "primaryDark": "#204031",
+    "accent": "#d5a62e",
+    "headerText": "#ffffff",
+    "darkText": "#f2f5f3",
+    "darkBackground": "#141a17",
+    "darkSurface": "#222b26",
+    "darkBorder": "#617067",
+    "darkHover": "#303d36",
+    "darkDropZone": "#1b231f",
+    "darkDropZoneBorder": "#78867e",
+    "darkMuted": "#c7d0cb"
+  },
+  "catalogs": [
+    {
+      "label": "Bundled example forms",
+      "url": "../examples/catalog.json"
+    }
+  ]
+}
